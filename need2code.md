@@ -18,3 +18,4 @@
 3. be able to create 1+ answer boxes in a puzzle
 4. create multipuzzles (puzzles with many answers)
 5. make solved puzzles show answers (on the room page and when you click on a solved puzzle)
+6. rules button disappears after leaving starting room

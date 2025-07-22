@@ -4,7 +4,7 @@
 3. in image rooms, puzzles can clip out of view
 4. mind map doesnt draw some arrows
 5. solving locks linked to a meta doesnt make the meta solved
-6. starting room meta doesn't seem to be working... it says "0 out of 2 required answers" when there are 3 boxes and it says "put the first name of the killer in the first box, the last name in the second, and the time of the murder in the second"........ help
+6. Starting room meta - it says love mr. bob so we think the last name is bob, right? but bob goes in the first answer box where the first name should go...
 7. AKLSDHLFKEJALF THE X IS ON TOP OF THE THREE DOTS AND THE FULL SCREEN BUTTON IS ON TOP OF THE PRINT BUTTON.
 
 ## Visual

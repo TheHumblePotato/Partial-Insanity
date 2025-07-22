@@ -15,3 +15,4 @@
 2. make hints more customized
 3. be able to create 1+ answer boxes in a puzzle
 4. create multipuzzles (puzzles with many answers)
+5. make solved puzzles show answers

@@ -11,6 +11,7 @@
 1. scroll bars around pdf
 2. locks don't looks good
 3. need better background
+4. FAVICON.
 
 ## Suggestions
 1. make answer box auto lowercase, strip spaces and unnecessary chars

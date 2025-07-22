@@ -455,6 +455,15 @@ function renderCurrentRoom() {
   }
 }
 
+function normalizeAnswer(answer) {
+    if (typeof answer !== 'string') {
+        answer = String(answer);
+    }
+    return answer.toLowerCase()
+        .replace(/[^a-z0-9]/g, '') // Remove all non-alphanumeric characters
+        .trim();
+}
+
 function createRoomButton(roomId) {
     const btn = document.createElement("button");
     btn.className = "nav-btn";
@@ -605,8 +614,17 @@ function createPuzzleElement(puzzle, puzzleId) {
 function createFloatingPuzzleElement(puzzle, puzzleId) {
   const element = document.createElement("div");
   element.className = "floating-puzzle";
-  element.style.left = puzzle.position.x + "px";
-  element.style.top = puzzle.position.y + "px";
+
+  const container = document.getElementById("image-room");
+  const containerWidth = container.offsetWidth;
+  const containerHeight = container.offsetHeight;
+  
+  element.style.left = (puzzle.position.x / 1000 * containerWidth) + "px";
+  element.style.top = (puzzle.position.y / 1000 * containerHeight) + "px";
+  element.style.transform = `rotate(${puzzle.position.rotation}deg)`;
+  element.style.width = "150px";
+  element.style.height = "100px";
+
   element.style.transform = `rotate(${puzzle.position.rotation}deg)`;
 
   const solved = (teamProgress.solvedPuzzles || []).includes(puzzleId);
@@ -730,8 +748,9 @@ function closePuzzleModal() {
 }
 
 function toggleFullscreen() {
-  const frame = document.getElementById("puzzle-frame");
-  frame.classList.toggle("fullscreen");
+    const frame = document.getElementById("puzzle-frame");
+    frame.classList.toggle("fullscreen");
+    document.body.style.overflow = frame.classList.contains("fullscreen") ? "hidden" : "";
 }
 
 function updateGuessCounter(puzzleId, isMulti) {
@@ -850,7 +869,7 @@ async function revealHint(hintIndex) {
 async function submitAnswer() {
   const puzzleId = currentPuzzle;
   const puzzle = puzzleData[puzzleId];
-  const answer = document.getElementById("puzzle-answer").value.trim();
+  const answer = normalizeAnswer(document.getElementById("puzzle-answer").value);
 
   if (!answer) {
     showNotification("Please enter an answer", "error");
@@ -885,10 +904,10 @@ async function submitMultipleAnswers() {
   const inputsContainer = document.getElementById("answer-inputs");
   const inputs = inputsContainer.getElementsByTagName("input");
 
-  const answers = [];
-  for (let i = 0; i < inputs.length; i++) {
-    answers.push(inputs[i].value.trim());
-  }
+    const answers = [];
+    for (let i = 0; i < inputs.length; i++) {
+        answers.push(normalizeAnswer(inputs[i].value));
+    }
 
   if (answers.some((a) => !a)) {
     showNotification("Please fill in all answers", "error");

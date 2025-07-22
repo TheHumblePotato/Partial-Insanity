@@ -943,3 +943,49 @@
     font-size: 30px;
     background: rgba(255,255,255,0.9);
 }
+
+.pdf-frame {
+    width: 100%;
+    height: calc(100% - 150px); /* Increased space at top */
+    margin-top: 50px; /* Added margin */
+    border: none;
+}
+
+.fullscreen-btn {
+    position: absolute;
+    right: 60px;
+    top: 65px; /* Moved down */
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1001;
+    color: #333;
+}
+
+.exit-fullscreen-btn {
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1003;
+    color: #333;
+    display: none;
+    background: white;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.pdf-frame.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1002;
+    background: white;
+    margin-top: 0;
+}
+
+.pdf-frame.fullscreen ~ .exit-fullscreen-btn {
+    display: block;
+}

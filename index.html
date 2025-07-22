@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025 Partial Insanity Puzzle Hunt</title>
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Login/Registration Page -->
+        <div id="auth-page">
+            <div class="header">
+                <h1>2025 Partial Insanity Puzzle Hunt</h1>
+                <p>Welcome to the ultimate puzzle challenge!</p>
+            </div>
+
+            <div class="auth-section">
+                <div id="login-form">
+                    <h2>Team Login</h2>
+                    <div class="form-group">
+                        <label for="team-name">Team Name:</label>
+                        <input type="text" id="team-name" placeholder="Enter your team name">
+                    </div>
+                    <div class="form-group">
+                        <label for="team-password">Team Password:</label>
+                        <input type="password" id="team-password" placeholder="Enter your team password">
+                    </div>
+                    <button class="btn btn-primary" onclick="loginTeam()">Login</button>
+                    <button class="btn btn-secondary" onclick="showRegisterForm()">Create New Team</button>
+                    <div class="forgot-key-form">
+                        <button class="btn btn-secondary" onclick="showForgotKeyForm()">Forgot Password?</button>
+                    </div>
+                </div>
+
+                <div id="register-form" class="hidden">
+                    <h2>Create Team</h2>
+                    <div class="form-group">
+                        <label for="new-team-name">Team Name:</label>
+                        <input type="text" id="new-team-name" placeholder="Enter your team name">
+                    </div>
+                    <div class="form-group">
+                        <label for="team-email">Team Email:</label>
+                        <input type="email" id="team-email" placeholder="Enter team email for password recovery">
+                    </div>
+                    <div class="form-group">
+                        <label for="team-password-register">Team Password:</label>
+                        <input type="password" id="team-password-register" placeholder="Create a team password">
+                    </div>
+                    <button class="btn btn-primary" onclick="registerTeam()">Create Team</button>
+                    <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
+                </div>
+
+                <div id="forgot-key-form" class="hidden">
+                    <h2>Recover Password</h2>
+                    <div class="form-group">
+                        <label for="recover-team-name">Team Name:</label>
+                        <input type="text" id="recover-team-name" placeholder="Enter your team name">
+                    </div>
+                    <div class="form-group">
+                        <label for="recover-team-email">Team Email:</label>
+                        <input type="email" id="recover-team-email" placeholder="Enter your team email">
+                    </div>
+                    <button class="btn btn-primary" onclick="recoverPassword()">Send Password Reset</button>
+                    <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
+                    <div id="reset-message" class="reset-message hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Puzzle Pages -->
+        <div id="puzzle-page" class="puzzle-page">
+            <div class="nav-buttons">
+                <button class="nav-btn" onclick="logout()">Logout</button>
+                <span id="team-info" style="color: white; margin-left: 20px;"></span>
+            </div>
+
+            <h2 class="room-title" id="current-room-title">Starting Room</h2>
+          <!-- In puzzle-page div, add this below the room title -->
+<div id="room-description" class="room-description"></div>
+
+            <div class="nav-buttons" id="room-nav-buttons">
+    <div class="room-nav-group">
+        <!-- Dynamic buttons will be added here -->
+    </div>
+    <div class="cleared-rooms-dropdown">
+        <button class="nav-btn">Cleared Rooms ▼</button>
+        <div class="dropdown-content"></div>
+    </div>
+</div>
+
+            <!-- Normal Room Layout -->
+            <div id="normal-room" class="puzzle-grid">
+                <!-- Puzzles will be dynamically added here -->
+            </div>
+
+            <!-- Image Room Layout -->
+            <div id="image-room" class="image-puzzle-room hidden">
+                <!-- Floating puzzles will be dynamically positioned here -->
+            </div>
+        </div>
+
+        <!-- Rules Page -->
+        <div id="rules-page" class="rules-page">
+            <h1>Partial Insanity</h1>
+            <div id="rules-content">
+                <h3>Rules and Instructions</h3>
+                <p>Welcome to the 2025 Partial Insanity Puzzle Hunt! This is an escape room style puzzle hunt where you'll solve puzzles to progress through different rooms.</p>
+
+                <h4>How to Play:</h4>
+                <ul>
+                    <li>Click on puzzles to view them in full size</li>
+                    <li>Some puzzles have answer submission boxes - enter your answers there</li>
+                    <li>Correct answers will unlock new content or rooms</li>
+                    <li>Metapuzzles may require solving multiple regular puzzles first</li>
+                    <li>Work as a team - everyone can use the same login credentials</li>
+                </ul>
+
+                <h4>Puzzle Types:</h4>
+                <ul>
+                    <li><strong>Regular Puzzles:</strong> PDF-based puzzles with optional answer submission</li>
+                    <li><strong>Metapuzzles:</strong> Special puzzles that combine elements from other puzzles</li>
+                    <li><strong>Locks:</strong> Answer-only challenges that unlock new areas</li>
+                </ul>
+
+                <h4>Important Notes:</h4>
+                <ul>
+                    <li>You have limited guesses per puzzle, so think carefully!</li>
+                    <li>Your progress is automatically saved</li>
+                    <li>If you get stuck, try looking at solved puzzles for clues</li>
+                    <li>Some rooms have special layouts - explore carefully!</li>
+                </ul>
+
+                <button class="btn btn-primary" onclick="showPuzzlePage()">Back to Puzzles</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Puzzle Modal -->
+    <div id="puzzle-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closePuzzleModal()">&times;</span>
+            <span class="fullscreen-btn" onclick="toggleFullscreen()">⛶</span>
+            <iframe id="puzzle-frame" class="pdf-frame" src="about:blank"></iframe>
+            <div id="answer-section" class="answer-section hidden">
+                <div id="lock-description" class="hidden"></div>
+
+                <div id="single-answer" class="hidden">
+                    <input type="text" id="puzzle-answer" class="answer-input" placeholder="Enter your answer">
+                    <button class="submit-btn" onclick="submitAnswer()">Submit</button>
+                    <div class="guess-counter" id="guess-counter"></div>
+                    <div id="solved-answer" class="solved-answer hidden"></div>
+                </div>
+                <div id="multiple-answers" class="hidden">
+                    <div id="answer-inputs"></div>
+                    <button class="submit-btn" onclick="submitMultipleAnswers()">Submit All</button>
+                    <div class="guess-counter" id="multi-guess-counter"></div>
+                    <div id="solved-multi-answer" class="solved-answer hidden"></div>
+                </div>
+<div id="hint-section" class="hidden">
+    <div class="hint-counter">Hints Used: <span id="hint-counter">0</span>/10</div>
+    <div id="hint-list"></div>
+</div>
+                <div id="followup-section" class="hidden">
+                    <button class="btn btn-primary" onclick="viewFollowup()">View Follow-up Content</button>
+                </div>
+                <div id="unlock-section" class="hidden">
+                    <button class="btn btn-primary" onclick="goToUnlockedRoom()">Enter New Room</button>
+                </div>
+                <div id="unlocked-new-section" class="hidden">
+                    <p>This puzzle unlocked new content!</p>
+                    <button class="btn btn-primary" onclick="goToUnlockedNew()">Go to New Content</button>
+                    <button class="btn btn-secondary" onclick="viewOriginalPuzzle()">Stay Here</button>
+                </div>
+                <div id="solve-message-section" class="hidden">
+                    <button class="btn btn-primary" onclick="showSolveMessage(currentPuzzle)">View Solve Message</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Solve Message Modal -->
+    <div id="solve-message-modal" class="solve-message-modal">
+        <div class="solve-message-content">
+            <span class="solve-message-close" onclick="closeSolveMessageModal()">&times;</span>
+            <h3 style="margin-bottom: 20px; color: #28a745;">Puzzle Solved!</h3>
+            <div id="solve-message-content" class="solve-message-text">
+                <!-- Solve message will be inserted here -->
+            </div>
+            <button class="solve-message-button" onclick="closeSolveMessageModal()">Continue</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <script src="script.js"></script>
+</body>
+</html>

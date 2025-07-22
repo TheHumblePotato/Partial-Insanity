@@ -128,39 +128,31 @@
               />
             </div>
             <div id="answerFields" class="hidden">
-              <div class="property-group">
-                <label>Answers (comma separated):</label>
-                <textarea
-                  id="puzzleAnswers"
-                  placeholder="answer1, answer2, answer3"
-                ></textarea>
-              </div>
-              <div class="form-row">
-                <div class="property-group">
-                  <label>Max Guesses:</label>
-                  <input
-                    type="number"
-                    id="puzzleMaxGuesses"
-                    value="3"
-                    min="0"
-                  />
-                </div>
-                <div
-                  class="property-group"
-                  id="requiredCorrectField"
-                  class="hidden"
-                >
-                  <label>Required Correct (for locks):</label>
-                  <input
-                    type="number"
-                    id="puzzleRequiredCorrect"
-                    value="1"
-                    min="1"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+  <div class="property-group">
+    <label>Required Correct Answers:</label>
+    <input type="number" id="puzzleRequiredCorrect" value="1" min="1" />
+  </div>
+  <div class="property-group">
+    <label>Max Guesses:</label>
+    <input type="number" id="puzzleMaxGuesses" value="3" min="0" />
+  </div>
+  <div class="property-group">
+    <label>Answers:</label>
+    <div id="answersContainer" class="multi-answer-container">
+      <div class="answer-entry">
+        <input type="text" class="answer-input" placeholder="Answer" />
+        <button class="btn btn-sm btn-danger" onclick="removeAnswer(this)">×</button>
+      </div>
+    </div>
+    <button class="btn btn-sm" onclick="addAnswer()">Add Answer</button>
+  </div>
+  <div class="property-group">
+    <label>Solve-linked Puzzles (when this puzzle is solved):</label>
+    <select id="puzzleSolveLinks" multiple style="height: 100px">
+      <!-- Will be populated with puzzles -->
+    </select>
+  </div>
+</div>
           <div class="property-group">
             <label>Room:</label>
             <select id="puzzleRoom">
@@ -177,14 +169,23 @@
             ></textarea>
           </div>
 
-          <div id="pdfField" class="property-group">
-            <label>PDF URL:</label>
-            <input
-              type="text"
-              id="puzzlePdf"
-              placeholder="https://example.com/puzzle.pdf"
-            />
-          </div>
+<div id="mediaField" class="property-group">
+  <label>Media:</label>
+  <select id="mediaType" onchange="updateMediaFields()">
+    <option value="pdf">PDF</option>
+    <option value="images">Images</option>
+  </select>
+  <div id="pdfField">
+    <input type="text" id="puzzlePdf" placeholder="https://example.com/puzzle.pdf" />
+  </div>
+  <div id="imagesField" class="hidden image-urls-container">
+    <div class="image-url-entry">
+      <input type="text" class="image-url" placeholder="https://example.com/image1.jpg" />
+      <button class="btn btn-sm btn-danger" onclick="removeImageUrl(this)">×</button>
+    </div>
+    <button class="btn btn-sm" onclick="addImageUrl()">Add Image</button>
+  </div>
+</div>
 
           <div class="property-group">
             <label>Follow-up Puzzle:</label>

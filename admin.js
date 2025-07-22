@@ -170,6 +170,56 @@
         loadDiagramData();
       }
 
+      function addAnswer() {
+  const container = document.getElementById("answersContainer");
+  const div = document.createElement("div");
+  div.className = "answer-entry";
+  div.innerHTML = `
+    <input type="text" class="answer-input" placeholder="Answer" />
+    <button class="btn btn-sm btn-danger" onclick="removeAnswer(this)">×</button>
+  `;
+  container.appendChild(div);
+}
+
+function removeAnswer(btn) {
+  btn.closest(".answer-entry").remove();
+}
+
+function addImageUrl() {
+  const container = document.getElementById("imagesField");
+  const div = document.createElement("div");
+  div.className = "image-url-entry";
+  div.innerHTML = `
+    <input type="text" class="image-url" placeholder="https://example.com/image.jpg" />
+    <button class="btn btn-sm btn-danger" onclick="removeImageUrl(this)">×</button>
+  `;
+  container.appendChild(div);
+}
+
+function removeImageUrl(btn) {
+  btn.closest(".image-url-entry").remove();
+}
+
+function updateMediaFields() {
+  const type = document.getElementById("mediaType").value;
+  document.getElementById("pdfField").classList.toggle("hidden", type !== "pdf");
+  document.getElementById("imagesField").classList.toggle("hidden", type !== "images");
+}
+
+// Simple reversible encoding (not secure, just obfuscates)
+function encodeAnswer(answer) {
+  return btoa(unescape(encodeURIComponent(answer)));
+}
+
+function decodeAnswer(encoded) {
+  try {
+    return decodeURIComponent(escape(atob(encoded)));
+  } catch {
+    return encoded; // fallback if not encoded
+  }
+}
+
+
       async function loadDiagramData() {
         try {
           const [puzzlesDoc, roomsDoc] = await Promise.all([
@@ -220,6 +270,31 @@
             nodeDataArray: [...groups, ...nodes],
             linkDataArray: links,
           });
+              Object.entries(roomData).forEach(([roomId, room]) => {
+      if (room.clearUnlock && room.clearUnlock.type === "room") {
+        links.push({
+          from: roomId,
+          to: room.clearUnlock.id,
+          category: "roomUnlock"
+        });
+      }
+    });
+
+    diagram.linkTemplateMap.add("roomUnlock",
+      $(go.Link,
+        { routing: go.Link.AvoidsNodes, curve: go.Link.JumpOver },
+        $(go.Shape, { stroke: "#4CAF50", strokeWidth: 3, strokeDashArray: [5, 5] }),
+        $(go.Shape, { toArrow: "Standard", fill: "#4CAF50", stroke: null })
+      )
+    );
+
+    diagram.model = new go.GraphLinksModel({
+      nodeCategoryProperty: "category",
+      linkCategoryProperty: "category",
+      nodeDataArray: [...groups, ...nodes],
+      linkDataArray: links,
+    });
+
 
           diagram.commit(function (diag) {
             diag.nodes.each(function (node) {
@@ -660,36 +735,48 @@
       }
 
       async function togglePuzzleStatus(puzzleId, done) {
-        const teamRef = db.collection("progress").doc(selectedTeam.id);
-        try {
-          if (done) {
-            await teamRef.update({
-              solvedPuzzles: firebase.firestore.FieldValue.arrayUnion(puzzleId),
-            });
-            selectedTeam.progress.solvedPuzzles = [
-              ...(selectedTeam.progress.solvedPuzzles || []),
-              puzzleId,
-            ];
-          } else {
-            await teamRef.update({
-              solvedPuzzles:
-                firebase.firestore.FieldValue.arrayRemove(puzzleId),
-            });
-            selectedTeam.progress.solvedPuzzles = (
-              selectedTeam.progress.solvedPuzzles || []
-            ).filter((id) => id !== puzzleId);
-          }
-          // Update the diagram bindings
-          if (teamDiagram) {
-            teamDiagram.startTransaction("update puzzle status");
-            teamDiagram.updateAllTargetBindings();
-            teamDiagram.commitTransaction("update puzzle status");
-          }
-        } catch (error) {
-          console.error("Error updating puzzle status:", error);
-          alert("Error updating puzzle status");
-        }
+  const teamRef = db.collection("progress").doc(selectedTeam.id);
+  try {
+    if (done) {
+      const updates = {
+        solvedPuzzles: firebase.firestore.FieldValue.arrayUnion(puzzleId)
+      };
+
+      // Handle solve-linked puzzles
+      const puzzle = puzzleData[puzzleId];
+      if (puzzle.solveLinks) {
+        updates.solvedPuzzles = firebase.firestore.FieldValue.arrayUnion(
+          ...puzzle.solveLinks.filter(pId => !selectedTeam.progress.solvedPuzzles?.includes(pId))
+        );
       }
+
+      await teamRef.update(updates);
+      selectedTeam.progress.solvedPuzzles = [
+        ...new Set([
+          ...(selectedTeam.progress.solvedPuzzles || []),
+          puzzleId,
+          ...(puzzle.solveLinks || [])
+        ])
+      ];
+    } else {
+      await teamRef.update({
+        solvedPuzzles: firebase.firestore.FieldValue.arrayRemove(puzzleId)
+      });
+      selectedTeam.progress.solvedPuzzles = (
+        selectedTeam.progress.solvedPuzzles || []
+      ).filter(id => id !== puzzleId);
+    }
+
+    if (teamDiagram) {
+      teamDiagram.startTransaction("update puzzle status");
+      teamDiagram.updateAllTargetBindings();
+      teamDiagram.commitTransaction("update puzzle status");
+    }
+  } catch (error) {
+    console.error("Error updating puzzle status:", error);
+    alert("Error updating puzzle status");
+  }
+}
 
       function showPuzzleEditor(puzzleId = null) {
         currentEditingPuzzle = puzzleId;
@@ -766,9 +853,62 @@
         document.getElementById("puzzleHasAnswer").checked =
           puzzle.hasAnswer !== false;
 
-        document.getElementById("puzzleAnswers").value = puzzle.answers
-          ? SECURITY_MESSAGE
-          : "";
+          const answersContainer = document.getElementById("answersContainer");
+  answersContainer.innerHTML = "";
+  if (puzzle.answers && puzzle.answers.length > 0) {
+    puzzle.answers.forEach(answer => {
+      const decoded = decodeAnswer(answer);
+      const div = document.createElement("div");
+      div.className = "answer-entry";
+      div.innerHTML = `
+        <input type="text" class="answer-input" value="${decoded}" />
+        <button class="btn btn-sm btn-danger" onclick="removeAnswer(this)">×</button>
+      `;
+      answersContainer.appendChild(div);
+    });
+  } else {
+    addAnswer();
+  }
+
+  // Update media handling
+  if (puzzle.images && puzzle.images.length > 0) {
+    document.getElementById("mediaType").value = "images";
+    const imagesField = document.getElementById("imagesField");
+    imagesField.innerHTML = "";
+    puzzle.images.forEach(url => {
+      const div = document.createElement("div");
+      div.className = "image-url-entry";
+      div.innerHTML = `
+        <input type="text" class="image-url" value="${url}" />
+        <button class="btn btn-sm btn-danger" onclick="removeImageUrl(this)">×</button>
+      `;
+      imagesField.appendChild(div);
+    });
+    addImageUrl();
+    updateMediaFields();
+  } else if (puzzle.pdf) {
+    document.getElementById("mediaType").value = "pdf";
+    document.getElementById("puzzlePdf").value = puzzle.pdf;
+    updateMediaFields();
+  }
+
+  // Populate solve-linked puzzles
+  const solveLinksSelect = document.getElementById("puzzleSolveLinks");
+  solveLinksSelect.innerHTML = "";
+  Object.keys(puzzleData).forEach(pId => {
+    if (pId !== puzzleId) {
+      const option = document.createElement("option");
+      option.value = pId;
+      option.textContent = puzzleData[pId].name || pId;
+      solveLinksSelect.appendChild(option);
+    }
+  });
+  if (puzzle.solveLinks) {
+    puzzle.solveLinks.forEach(pId => {
+      const option = solveLinksSelect.querySelector(`option[value="${pId}"]`);
+      if (option) option.selected = true;
+    });
+  }
 
         document.getElementById("puzzleMaxGuesses").value =
           puzzle.maxGuesses || 3;
@@ -776,7 +916,6 @@
           puzzle.requiredCorrect || 1;
         document.getElementById("puzzleDescription").value =
           puzzle.description || "";
-        document.getElementById("puzzlePdf").value = puzzle.pdf || "";
         document.getElementById("puzzleFollowup").value = puzzle.followup || "";
         document.getElementById("puzzleUnlocks").value = puzzle.unlocks || "";
         document.getElementById("puzzleSolveMessage").value =
@@ -921,21 +1060,38 @@
           }
         }
 
-        if (hasAnswer) {
-          const answersText = document
-            .getElementById("puzzleAnswers")
-            .value.trim();
-          if (answersText !== SECURITY_MESSAGE) {
-            puzzle.answers = answersText
-              ? answersText
-                  .split(",")
-                  .map((a) =>
-                    CryptoJS.SHA256(a.trim() + SECURITY_SALT).toString()
-                  )
-              : [];
-          } else if (currentPuzzle.answers) {
-            puzzle.answers = currentPuzzle.answers;
-          }
+  if (hasAnswer) {
+    const answers = [];
+    document.querySelectorAll(".answer-input").forEach(input => {
+      const answer = input.value.trim();
+      if (answer) answers.push(encodeAnswer(answer));
+    });
+    puzzle.answers = answers;
+    
+    puzzle.requiredCorrect = parseInt(document.getElementById("puzzleRequiredCorrect").value) || 1;
+    puzzle.maxGuesses = parseInt(document.getElementById("puzzleMaxGuesses").value) || 0;
+  }
+
+  // Handle media
+  const mediaType = document.getElementById("mediaType").value;
+  if (mediaType === "pdf") {
+    puzzle.pdf = document.getElementById("puzzlePdf").value.trim();
+    puzzle.images = undefined;
+  } else {
+    const images = [];
+    document.querySelectorAll(".image-url").forEach(input => {
+      const url = input.value.trim();
+      if (url) images.push(url);
+    });
+    if (images.length > 0) {
+      puzzle.images = images;
+      puzzle.pdf = undefined;
+    }
+  }
+
+  // Handle solve-linked puzzles
+  const solveLinksSelect = document.getElementById("puzzleSolveLinks");
+  puzzle.solveLinks = Array.from(solveLinksSelect.selectedOptions).map(option => option.value);
 
           puzzle.maxGuesses =
             parseInt(document.getElementById("puzzleMaxGuesses").value) || 0;
@@ -975,7 +1131,6 @@
           };
         }
 
-        if (currentPuzzle.pdf) puzzle.pdf = currentPuzzle.pdf;
         if (currentPuzzle.description)
           puzzle.description = currentPuzzle.description;
         if (currentPuzzle.solveMessage)
@@ -1014,7 +1169,7 @@
           console.error("Error saving puzzle:", error);
           alert("Error saving puzzle: " + error.message);
         }
-      }
+      
 
       async function deletePuzzle() {
         if (!currentEditingPuzzle) return;

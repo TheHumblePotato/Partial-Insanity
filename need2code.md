@@ -3,6 +3,7 @@
 2. in image rooms, the image doesnt take the full page
 3. in image rooms, puzzles can clip out of view
 4. mind map doesnt draw some arrows
+5. solving locks linked to a meta doesnt make the meta solved
 
 ## Visual
 1. scroll bars around pdf
@@ -12,3 +13,5 @@
 ## Suggestions
 1. make answer box auto lowercase, strip spaces and unnecessary chars
 2. make hints more customized
+3. be able to create 1+ answer boxes in a puzzle
+4. create multipuzzles (puzzles with many answers)

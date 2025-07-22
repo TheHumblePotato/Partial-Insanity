@@ -4,6 +4,7 @@
 3. in image rooms, puzzles can clip out of view
 4. mind map doesnt draw some arrows
 5. solving locks linked to a meta doesnt make the meta solved
+6. AKLSDHLFKEJALF THE X IS ON TOP OF THE THREE DOTS AND THE FULL SCREEN BUTTON IS ON TOP OF THE PRINT BUTTON.
 
 ## Visual
 1. scroll bars around pdf
@@ -15,4 +16,4 @@
 2. make hints more customized
 3. be able to create 1+ answer boxes in a puzzle
 4. create multipuzzles (puzzles with many answers)
-5. make solved puzzles show answers
+5. make solved puzzles show answers (on the room page and when you click on a solved puzzle)

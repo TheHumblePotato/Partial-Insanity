@@ -420,13 +420,11 @@ function renderCurrentRoom() {
   const navGroup = document.querySelector("#room-nav-buttons .room-nav-group");
   navGroup.innerHTML = "";
 
-  if (currentRoom === "starting_room") {
     const rulesBtn = document.createElement("button");
     rulesBtn.className = "nav-btn";
     rulesBtn.textContent = "Rules";
     rulesBtn.onclick = showRulesPage;
     navGroup.appendChild(rulesBtn);
-  }
 
   const clearedRooms = teamProgress.clearedRooms || [];
   const unlockedRooms = teamProgress.unlockedRooms || ["starting_room"];

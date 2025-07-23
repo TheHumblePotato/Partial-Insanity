@@ -1132,7 +1132,43 @@ function fillPuzzleEditor(puzzle) {
   document.getElementById("puzzleRequiredCorrect").value =
     puzzle.requiredCorrect || 1;
   document.getElementById("puzzleDescription").value = puzzle.description || "";
-  document.getElementById("puzzlePdf").value = puzzle.pdf || "";
+  document.getElementById("mediaList").innerHTML = "";
+
+  if (puzzle.media) {
+    puzzle.media.forEach((media) => {
+      const mediaList = document.getElementById("mediaList");
+      const mediaId = `media_${Date.now()}`;
+
+      const mediaItem = document.createElement("div");
+      mediaItem.className = "media-item";
+      mediaItem.id = mediaId;
+      mediaItem.dataset.type = media.type;
+      mediaItem.dataset.url = media.url;
+
+      let previewContent = "";
+      if (media.type === "pdf") {
+        previewContent = `<i class="fas fa-file-pdf" style="font-size: 40px; color: #e74c3c; display: block; text-align: center;"></i>`;
+      } else if (media.type === "sheet") {
+        previewContent = `<i class="fas fa-table" style="font-size: 40px; color: #2ecc71; display: block; text-align: center;"></i>`;
+      } else {
+        previewContent = `<img src="${media.url}" onerror="this.parentNode.remove()" style="max-width: 100px; max-height: 80px;">`;
+      }
+
+      mediaItem.innerHTML = `
+        ${previewContent}
+        <div class="media-type">${media.type.toUpperCase()}</div>
+        <div class="media-actions">
+          <button onclick="moveMediaUp('${mediaId}')">↑</button>
+          <button onclick="moveMediaDown('${mediaId}')">↓</button>
+          <button onclick="removeMedia('${mediaId}')">×</button>
+        </div>
+      `;
+
+      mediaList.appendChild(mediaItem);
+    });
+  }
+
+  checkPdfRequirement();
   document.getElementById("puzzleFollowup").value = puzzle.followup || "";
   document.getElementById("puzzleUnlocks").value = puzzle.unlocks || "";
   document.getElementById("puzzleSolveMessage").value =
@@ -1320,7 +1356,24 @@ async function savePuzzle() {
     };
   }
 
-  if (currentPuzzle.pdf) puzzle.pdf = currentPuzzle.pdf;
+  const hasPdf = Array.from(document.querySelectorAll(".media-item")).some(
+    (item) => item.dataset.type === "pdf"
+  );
+
+  if (!hasPdf) {
+    alert("At least one PDF is required for the puzzle");
+    return;
+  }
+
+  const media = Array.from(document.querySelectorAll(".media-item")).map(
+    (item) => ({
+      type: item.dataset.type,
+      url: item.dataset.url,
+      order: Array.from(item.parentNode.children).indexOf(item),
+    })
+  );
+
+  puzzle.media = media;
   if (currentPuzzle.description) puzzle.description = currentPuzzle.description;
   if (currentPuzzle.solveMessage)
     puzzle.solveMessage = currentPuzzle.solveMessage;
@@ -1329,8 +1382,6 @@ async function savePuzzle() {
     puzzle.description = document
       .getElementById("puzzleDescription")
       .value.trim();
-  } else {
-    puzzle.pdf = document.getElementById("puzzlePdf").value.trim();
   }
 
   const followup = document.getElementById("puzzleFollowup").value.trim();
@@ -1579,36 +1630,88 @@ function generateId() {
   return "item_" + Math.random().toString(36).substr(2, 9);
 }
 
-async function saveDiagramLayout() {
+function addMedia() {
+  const type = document.getElementById("mediaType").value;
+  const url = document.getElementById("mediaUrl").value.trim();
+
+  if (!url) {
+    alert("Please enter a URL");
+    return;
+  }
+
+  // Validate URL format
   try {
-    const positions = {};
-    diagram.nodes.each((node) => {
-      const data = node.data;
-      if (data.category === "room") {
-        if (!roomData[data.key]) roomData[data.key] = {};
-        roomData[data.key].position = {
-          x: node.position.x,
-          y: node.position.y,
-        };
-      } else {
-        if (!puzzleData[data.key]) puzzleData[data.key] = {};
-        puzzleData[data.key].position = {
-          x: node.position.x,
-          y: node.position.y,
-          rotation: puzzleData[data.key].position?.rotation || 0,
-        };
-      }
-    });
+    new URL(url);
+  } catch (e) {
+    alert("Please enter a valid URL");
+    return;
+  }
 
-    await Promise.all([
-      db.collection("puzzles").doc("config").set(puzzleData),
-      db.collection("rooms").doc("config").set(roomData),
-    ]);
+  const mediaList = document.getElementById("mediaList");
+  const mediaId = `media_${Date.now()}`;
 
-    alert("Layout saved successfully!");
-  } catch (error) {
-    console.error("Error saving layout:", error);
-    alert("Error saving layout: " + error.message);
+  const mediaItem = document.createElement("div");
+  mediaItem.className = "media-item";
+  mediaItem.id = mediaId;
+  mediaItem.dataset.type = type;
+  mediaItem.dataset.url = url;
+
+  let previewContent = "";
+  if (type === "pdf") {
+    previewContent = `<i class="fas fa-file-pdf" style="font-size: 40px; color: #e74c3c; display: block; text-align: center;"></i>`;
+  } else if (type === "sheet") {
+    previewContent = `<i class="fas fa-table" style="font-size: 40px; color: #2ecc71; display: block; text-align: center;"></i>`;
+  } else {
+    previewContent = `<img src="${url}" onerror="this.parentNode.remove()" style="max-width: 100px; max-height: 80px;">`;
+  }
+
+  mediaItem.innerHTML = `
+    ${previewContent}
+    <div class="media-type">${type.toUpperCase()}</div>
+    <div class="media-actions">
+      <button onclick="moveMediaUp('${mediaId}')">↑</button>
+      <button onclick="moveMediaDown('${mediaId}')">↓</button>
+      <button onclick="removeMedia('${mediaId}')">×</button>
+    </div>
+  `;
+
+  mediaList.appendChild(mediaItem);
+  document.getElementById("mediaUrl").value = "";
+  checkPdfRequirement();
+}
+
+function removeMedia(mediaId) {
+  const item = document.getElementById(mediaId);
+  if (item) {
+    item.remove();
+    checkPdfRequirement();
+  }
+}
+
+function moveMediaUp(mediaId) {
+  const item = document.getElementById(mediaId);
+  if (item && item.previousElementSibling) {
+    item.parentNode.insertBefore(item, item.previousElementSibling);
+  }
+}
+
+function moveMediaDown(mediaId) {
+  const item = document.getElementById(mediaId);
+  if (item && item.nextElementSibling) {
+    item.parentNode.insertBefore(item.nextElementSibling, item);
+  }
+}
+
+function checkPdfRequirement() {
+  const hasPdf = Array.from(document.querySelectorAll(".media-item")).some(
+    (item) => item.dataset.type === "pdf"
+  );
+
+  const warning = document.getElementById("pdfWarning");
+  if (hasPdf) {
+    warning.classList.add("hidden");
+  } else {
+    warning.classList.remove("hidden");
   }
 }
 

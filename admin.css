@@ -270,32 +270,32 @@
 }
 
 .diagram-toolbar {
-  margin-bottom: 8px; 
+  margin-bottom: 8px;
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 
 .diagram-toolbar .btn {
-  padding: 6px 12px; 
+  padding: 6px 12px;
   font-size: 13px;
 }
 
 .modal-content {
   background-color: #fefefe;
-  margin: 3% auto; 
-  padding: 15px; 
+  margin: 3% auto;
+  padding: 15px;
   border: 1px solid #888;
   border-radius: 8px;
-  max-height: 90vh; 
+  max-height: 90vh;
   overflow-y: auto;
 }
 
 .team-card {
   background: white;
-  padding: 12px; 
-  margin-bottom: 8px; 
-  border-radius: 6px; 
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 6px;
   cursor: pointer;
   border: 1px solid #ddd;
   transition: all 0.2s ease;
@@ -313,22 +313,22 @@
 }
 
 .property-editor {
-  max-width: 450px; 
+  max-width: 450px;
   background: #f5f5f5;
-  padding: 12px; 
+  padding: 12px;
   border-radius: 6px;
   display: inline-block;
   vertical-align: top;
-  margin-left: 15px; 
+  margin-left: 15px;
 }
 
 .property-group {
-  margin-bottom: 12px; 
+  margin-bottom: 12px;
 }
 
 .property-group label {
   display: block;
-  margin-bottom: 4px; 
+  margin-bottom: 4px;
   font-weight: bold;
   font-size: 13px;
 }
@@ -337,25 +337,22 @@
 .property-group textarea,
 .property-group select {
   width: 100%;
-  padding: 6px; 
+  padding: 6px;
   box-sizing: border-box;
   font-size: 13px;
 }
 
 .puzzle-grid {
   display: grid;
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(180px, 1fr)
-  ); 
-  gap: 12px; 
-  margin-top: 15px; 
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 15px;
 }
 
 .puzzle-preview {
   background: white;
-  padding: 12px; 
-  border-radius: 6px; 
+  padding: 12px;
+  border-radius: 6px;
   border: 2px solid #ddd;
   font-size: 13px;
 }
@@ -372,17 +369,17 @@
 
 .progress-stats {
   display: flex;
-  gap: 15px; 
-  margin-bottom: 15px; 
+  gap: 15px;
+  margin-bottom: 15px;
   flex-wrap: wrap;
 }
 
 .stat-card {
   background: white;
-  padding: 12px; 
-  border-radius: 6px; 
+  padding: 12px;
+  border-radius: 6px;
   text-align: center;
-  min-width: 100px; 
+  min-width: 100px;
   border: 1px solid #ddd;
 }
 
@@ -399,11 +396,11 @@
 }
 
 .navigation-tabs {
-  margin-bottom: 15px; 
+  margin-bottom: 15px;
 }
 
 .tab-button {
-  padding: 8px 16px; 
+  padding: 8px 16px;
   background: #f8f9fa;
   border: 1px solid #ddd;
   cursor: pointer;
@@ -427,25 +424,25 @@
 
 .hint-entry {
   display: flex;
-  gap: 8px; 
-  margin-bottom: 8px; 
+  gap: 8px;
+  margin-bottom: 8px;
   align-items: flex-start;
 }
 
 .hint-entry textarea {
   flex: 1;
-  min-height: 50px; 
+  min-height: 50px;
   font-size: 13px;
 }
 
 .hint-problem {
   border-right: 2px solid #ddd;
-  padding-right: 8px; 
+  padding-right: 8px;
 }
 
 .form-row {
   display: flex;
-  gap: 8px; 
+  gap: 8px;
 }
 
 #mindmapDiagram::-webkit-scrollbar,
@@ -483,4 +480,114 @@
     height: 28px;
     font-size: 14px;
   }
+}
+
+/* Add to admin.css */
+.media-manager {
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 6px;
+  background: #f9f9f9;
+}
+
+.media-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.media-item {
+  position: relative;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px;
+  background: white;
+  width: 120px;
+}
+
+.media-item img {
+  max-width: 100%;
+  max-height: 80px;
+  display: block;
+  margin: 0 auto;
+}
+
+.media-item .media-type {
+  font-size: 10px;
+  color: #666;
+  text-align: center;
+  margin-top: 3px;
+}
+
+.media-item .media-actions {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: flex;
+  gap: 2px;
+}
+
+.media-item .media-actions button {
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.media-item .media-actions button:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.media-upload-section {
+  margin-top: 10px;
+}
+
+.media-upload-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.media-upload-row select {
+  flex: 1;
+}
+
+.media-upload-row input[type="text"] {
+  flex: 3;
+}
+
+.media-upload-row button {
+  flex: 0 0 auto;
+}
+
+.media-preview-container {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 10px;
+  border: 1px solid #ddd;
+  padding: 5px;
+  background: white;
+}
+
+.media-preview-container img {
+  max-width: 100%;
+  max-height: 150px;
+  display: block;
+  margin: 0 auto;
+}
+
+.pdf-warning {
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: 5px;
 }

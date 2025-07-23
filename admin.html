@@ -12,6 +12,7 @@
       rel="icon"
       href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧩</text></svg>"
     />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   </head>
   <body>
     <div id="admin-login" class="auth-section">
@@ -173,13 +174,38 @@
             ></textarea>
           </div>
 
-          <div id="pdfField" class="property-group">
-            <label>PDF URL:</label>
-            <input
-              type="text"
-              id="puzzlePdf"
-              placeholder="https://example.com/puzzle.pdf"
-            />
+          <div class="media-manager">
+            <h4>Puzzle Media</h4>
+            <div class="pdf-warning hidden" id="pdfWarning">
+              At least one PDF is required
+            </div>
+
+            <div class="media-list" id="mediaList">
+              <!-- Media items will be added here dynamically -->
+            </div>
+
+            <div class="media-upload-section">
+              <div class="media-upload-row">
+                <select id="mediaType">
+                  <option value="pdf">PDF (Required)</option>
+                  <option value="jpg">JPG Cover Image</option>
+                  <option value="jpg-content">JPG Content Image</option>
+                  <option value="sheet">Google Sheet</option>
+                </select>
+                <input
+                  type="text"
+                  id="mediaUrl"
+                  placeholder="https://example.com/file.pdf"
+                />
+                <button class="btn btn-sm" onclick="addMedia()">Add</button>
+              </div>
+              <div
+                class="media-preview-container hidden"
+                id="mediaPreviewContainer"
+              >
+                <img id="mediaPreview" src="" alt="Preview" />
+              </div>
+            </div>
           </div>
 
           <div class="property-group">

@@ -2,8 +2,7 @@
 1. Certain room clears don't get detected (partial solve)
 2. in image rooms, the image doesnt take the full page
 3. in image rooms, puzzles can clip out of view
-4. mind map doesnt draw some arrows
-5. solving locks linked to a meta doesnt make the meta solved
+4. solving locks linked to a meta doesnt make the meta solved
 
 ## Visual
 1. scroll bars around pdf

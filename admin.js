@@ -51,7 +51,6 @@ async function adminLogin() {
       if (
         !document.getElementById("admin-panel").classList.contains("hidden")
       ) {
-        
         lastDataHash = generateDataHash(puzzleData, roomData);
         startAutoRefresh();
       }
@@ -176,6 +175,29 @@ function initializeDiagram() {
     $(go.Shape, { toArrow: "Standard", fill: "#333", stroke: null })
   );
 
+  diagram.linkTemplateMap.add(
+    "roomUnlock",
+    $(
+      go.Link,
+      {
+        routing: go.Link.AvoidsNodes,
+        curve: go.Link.JumpOver,
+        layerName: "Background",
+      },
+      $(go.Shape, {
+        stroke: "#FF6B35",
+        strokeWidth: 3,
+        strokeDashArray: [8, 4],
+      }),
+      $(go.Shape, {
+        toArrow: "Standard",
+        fill: "#FF6B35",
+        stroke: null,
+        scale: 1.5,
+      })
+    )
+  );
+
   loadDiagramData();
 }
 
@@ -224,8 +246,29 @@ async function loadDiagramData() {
       }
     });
 
+    Object.entries(roomData).forEach(([roomId, room]) => {
+      if (room.clearUnlock) {
+        const targetId = room.clearUnlock.id;
+
+        if (room.clearUnlock.type === "room" && roomData[targetId]) {
+          links.push({
+            from: roomId,
+            to: targetId,
+            category: "roomUnlock",
+          });
+        } else if (room.clearUnlock.type === "puzzle" && puzzleData[targetId]) {
+          links.push({
+            from: roomId,
+            to: targetId,
+            category: "roomUnlock",
+          });
+        }
+      }
+    });
+
     diagram.model = new go.GraphLinksModel({
       nodeCategoryProperty: "category",
+      linkCategoryProperty: "category",
       nodeDataArray: [...groups, ...nodes],
       linkDataArray: links,
     });
@@ -481,7 +524,7 @@ function initializeTeamMindmap() {
       go.Panel,
       "Auto",
       $(go.Shape, "Rectangle", {
-        stroke: "#D269E1",
+        stroke: "#D2691E",
         strokeWidth: 3,
       }).bind("fill", "", function (data) {
         if ((selectedTeam.progress.clearedRooms || []).includes(data.key))
@@ -507,19 +550,6 @@ function initializeTeamMindmap() {
           togglePuzzleStatus(puzzleId, !isDone);
         }
       },
-      mouseEnter: function (e, node) {
-        if (!node.containingGroup && !teamDiagram.findNodeForKey("ungrouped")) {
-          teamDiagram.model.addNodeData({
-            key: "ungrouped",
-            isGroup: true,
-            name: "Ungrouped Puzzles",
-            category: "room",
-          });
-        }
-        if (!node.containingGroup) {
-          teamDiagram.model.setGroupKeyForNodeData(node.data, "ungrouped");
-        }
-      },
     },
     $(go.Shape, "Rectangle", {
       width: 100,
@@ -529,7 +559,9 @@ function initializeTeamMindmap() {
     }).bind("fill", "", function (data) {
       if ((selectedTeam.progress.solvedPuzzles || []).includes(data.key))
         return "#90EE90";
-      if (isPuzzleUnlocked(data.key)) return "#FFFF99";
+
+      if (isPuzzleUnlockedForTeam(data.key)) return "#FFFF99";
+
       return "#FF9999";
     }),
     $(
@@ -544,17 +576,39 @@ function initializeTeamMindmap() {
     )
   );
 
+  teamDiagram.linkTemplate = $(
+    go.Link,
+    { routing: go.Link.AvoidsNodes, curve: go.Link.JumpOver },
+    $(go.Shape, { stroke: "#333", strokeWidth: 2 }),
+    $(go.Shape, { toArrow: "Standard", fill: "#333", stroke: null })
+  );
+
+  teamDiagram.linkTemplateMap.add(
+    "roomUnlock",
+    $(
+      go.Link,
+      {
+        routing: go.Link.AvoidsNodes,
+        curve: go.Link.JumpOver,
+        layerName: "Background",
+      },
+      $(go.Shape, {
+        stroke: "#FF6B35",
+        strokeWidth: 3,
+        strokeDashArray: [8, 4],
+      }),
+      $(go.Shape, {
+        toArrow: "Standard",
+        fill: "#FF6B35",
+        stroke: null,
+        scale: 1.5,
+      })
+    )
+  );
+
   const nodes = [];
   const groups = [];
   const links = [];
-
-  
-  groups.push({
-    key: "ungrouped",
-    isGroup: true,
-    name: "Ungrouped Puzzles",
-    category: "room",
-  });
 
   Object.entries(roomData).forEach(([id, room]) => {
     groups.push({
@@ -566,32 +620,56 @@ function initializeTeamMindmap() {
   });
 
   Object.entries(puzzleData).forEach(([id, puzzle]) => {
-    nodes.push({
+    const nodeData = {
       key: id,
       name: puzzle.name || id,
-      group: puzzle.room || "ungrouped", 
       category: "puzzle",
-    });
+    };
+
+    if (puzzle.room && roomData[puzzle.room]) {
+      nodeData.group = puzzle.room;
+    }
+
+    nodes.push(nodeData);
 
     if (puzzle.unlocks) links.push({ from: id, to: puzzle.unlocks });
     if (puzzle.followup) links.push({ from: id, to: puzzle.followup });
+  });
+
+  Object.entries(roomData).forEach(([roomId, room]) => {
+    if (room.clearUnlock) {
+      const targetId = room.clearUnlock.id;
+      if (room.clearUnlock.type === "room" && roomData[targetId]) {
+        links.push({
+          from: roomId,
+          to: targetId,
+          category: "roomUnlock",
+        });
+      } else if (room.clearUnlock.type === "puzzle" && puzzleData[targetId]) {
+        links.push({
+          from: roomId,
+          to: targetId,
+          category: "roomUnlock",
+        });
+      }
+    }
   });
 
   teamDiagram.model = new go.GraphLinksModel({
     nodeDataArray: [...groups, ...nodes],
     linkDataArray: links,
     nodeCategoryProperty: "category",
+    linkCategoryProperty: "category",
   });
+
   teamDiagram.layoutDiagram(true);
 }
 
-function isPuzzleUnlocked(puzzleId) {
+function isPuzzleUnlockedForTeam(puzzleId) {
   const puzzle = puzzleData[puzzleId];
 
-  
-  if (!puzzle.room) return true;
+  if (!puzzle.room || !roomData[puzzle.room]) return true;
 
-  
   const roomId = puzzle.room;
   if (
     (selectedTeam.progress.unlockedRooms || []).includes(roomId) ||
@@ -600,14 +678,12 @@ function isPuzzleUnlocked(puzzleId) {
     return true;
   }
 
-  
   return Object.values(puzzleData).some(
     (p) =>
       p.followup === puzzleId &&
       (selectedTeam.progress.solvedPuzzles || []).includes(p.key)
   );
 }
-
 async function toggleRoomStatus(roomId, unlock, wasCleared) {
   const teamRef = db.collection("progress").doc(selectedTeam.id);
   const updates = {};
@@ -626,7 +702,7 @@ async function toggleRoomStatus(roomId, unlock, wasCleared) {
 
   try {
     await teamRef.update(updates);
-    
+
     if (unlock) {
       selectedTeam.progress.unlockedRooms = [
         ...(selectedTeam.progress.unlockedRooms || []),
@@ -645,7 +721,7 @@ async function toggleRoomStatus(roomId, unlock, wasCleared) {
         selectedTeam.progress.clearedRooms || []
       ).filter((id) => id !== roomId);
     }
-    
+
     if (teamDiagram) {
       teamDiagram.startTransaction("update room status");
       teamDiagram.updateAllTargetBindings();
@@ -676,7 +752,7 @@ async function togglePuzzleStatus(puzzleId, done) {
         selectedTeam.progress.solvedPuzzles || []
       ).filter((id) => id !== puzzleId);
     }
-    
+
     if (teamDiagram) {
       teamDiagram.startTransaction("update puzzle status");
       teamDiagram.updateAllTargetBindings();
@@ -886,12 +962,11 @@ async function savePuzzle() {
     }
   });
 
-  
   const puzzle = {
     name: puzzleName,
     type: type,
     hasAnswer: hasAnswer,
-    hints: hints, 
+    hints: hints,
   };
 
   if (roomId) {
@@ -1094,7 +1169,6 @@ function populateMustSolvePuzzles() {
     select.appendChild(option);
   });
 
-  
   if (currentEditingRoom && roomData[currentEditingRoom]?.mustSolvePuzzles) {
     roomData[currentEditingRoom].mustSolvePuzzles.forEach((puzzleId) => {
       const option = select.querySelector(`option[value="${puzzleId}"]`);
@@ -1107,7 +1181,6 @@ function populateClearUnlockDropdown() {
   const select = document.getElementById("roomClearUnlock");
   select.innerHTML = '<option value="">-- None --</option>';
 
-  
   select.innerHTML += '<optgroup label="Rooms">';
   Object.keys(roomData).forEach((roomId) => {
     if (roomId !== currentEditingRoom) {
@@ -1117,7 +1190,6 @@ function populateClearUnlockDropdown() {
     }
   });
 
-  
   select.innerHTML += '<optgroup label="Puzzles">';
   Object.keys(puzzleData).forEach((puzzleId) => {
     select.innerHTML += `<option value="puzzle:${puzzleId}">Puzzle: ${
@@ -1125,7 +1197,6 @@ function populateClearUnlockDropdown() {
     }</option>`;
   });
 
-  
   if (currentEditingRoom && roomData[currentEditingRoom]?.clearUnlock) {
     const clearUnlock = roomData[currentEditingRoom].clearUnlock;
     const value =
@@ -1177,7 +1248,6 @@ async function saveRoom() {
     );
   }
 
-  
   const clearUnlockValue = document.getElementById("roomClearUnlock").value;
   if (clearUnlockValue) {
     const [type, id] = clearUnlockValue.split(":");
@@ -1295,7 +1365,6 @@ function checkUserEditing() {
   );
 }
 
-
 function generateDataHash(puzzleData, roomData) {
   const dataString = JSON.stringify({
     puzzles: puzzleData,
@@ -1304,10 +1373,8 @@ function generateDataHash(puzzleData, roomData) {
   return CryptoJS.SHA256(dataString).toString();
 }
 
-
 async function refreshAllData(forceRefresh = false) {
   try {
-    
     if (!forceRefresh && checkUserEditing()) {
       console.log("Skipping auto-refresh: user is editing");
       return;
@@ -1315,12 +1382,10 @@ async function refreshAllData(forceRefresh = false) {
 
     console.log("Refreshing data...");
 
-    
     const wasEditingPuzzle = currentEditingPuzzle;
     const wasEditingRoom = currentEditingRoom;
     const selectedTeamId = selectedTeam?.id;
 
-    
     const [puzzlesDoc, roomsDoc] = await Promise.all([
       db.collection("puzzles").doc("config").get(),
       db.collection("rooms").doc("config").get(),
@@ -1329,7 +1394,6 @@ async function refreshAllData(forceRefresh = false) {
     const newPuzzleData = puzzlesDoc.exists ? puzzlesDoc.data() : {};
     const newRoomData = roomsDoc.exists ? roomsDoc.data() : {};
 
-    
     const newDataHash = generateDataHash(newPuzzleData, newRoomData);
 
     if (!forceRefresh && lastDataHash === newDataHash) {
@@ -1340,22 +1404,18 @@ async function refreshAllData(forceRefresh = false) {
     console.log("Data changes detected, updating...");
     lastDataHash = newDataHash;
 
-    
     puzzleData = newPuzzleData;
     roomData = newRoomData;
 
-    
     const mindmapSection = document.getElementById("admin-mindmap");
     if (!mindmapSection.classList.contains("hidden") && !checkUserEditing()) {
       loadDiagramData();
     }
 
-    
     const progressSection = document.getElementById("admin-progress");
     if (!progressSection.classList.contains("hidden")) {
       await loadTeamProgress();
 
-      
       if (selectedTeamId) {
         const teamCards = document.querySelectorAll(".team-card");
         teamCards.forEach((card) => {
@@ -1366,7 +1426,6 @@ async function refreshAllData(forceRefresh = false) {
       }
     }
 
-    
     if (
       teamDiagram &&
       document.getElementById("teamMindmapModal").style.display === "block"
@@ -1374,7 +1433,6 @@ async function refreshAllData(forceRefresh = false) {
       initializeTeamMindmap();
     }
 
-    
     if (document.getElementById("puzzleEditor").style.display === "block") {
       updatePuzzleEditorDropdowns();
     }
@@ -1389,7 +1447,6 @@ async function refreshAllData(forceRefresh = false) {
   }
 }
 
-
 function updatePuzzleEditorDropdowns() {
   const roomSelect = document.getElementById("puzzleRoom");
   const currentRoomValue = roomSelect.value;
@@ -1400,7 +1457,7 @@ function updatePuzzleEditorDropdowns() {
       roomData[roomId].name || roomId
     }</option>`;
   });
-  roomSelect.value = currentRoomValue; 
+  roomSelect.value = currentRoomValue;
 
   const followupSelect = document.getElementById("puzzleFollowup");
   const currentFollowupValue = followupSelect.value;
@@ -1414,7 +1471,7 @@ function updatePuzzleEditorDropdowns() {
       }</option>`;
     }
   });
-  followupSelect.value = currentFollowupValue; 
+  followupSelect.value = currentFollowupValue;
 
   const unlocksSelect = document.getElementById("puzzleUnlocks");
   const currentUnlocksValue = unlocksSelect.value;
@@ -1434,9 +1491,8 @@ function updatePuzzleEditorDropdowns() {
       }</option>`;
     }
   });
-  unlocksSelect.value = currentUnlocksValue; 
+  unlocksSelect.value = currentUnlocksValue;
 }
-
 
 function updateRoomEditorDropdowns() {
   populateClearUnlockDropdown();
@@ -1445,26 +1501,22 @@ function updateRoomEditorDropdowns() {
   }
 }
 
-
 function manualRefresh() {
   console.log("Manual refresh triggered");
-  refreshAllData(true); 
+  refreshAllData(true);
 }
-
 
 function startAutoRefresh() {
   if (autoRefreshInterval) {
     clearInterval(autoRefreshInterval);
   }
 
-  
   autoRefreshInterval = setInterval(() => {
     refreshAllData(false);
   }, 30000);
 
   console.log("Auto-refresh started (30 second interval)");
 }
-
 
 function stopAutoRefresh() {
   if (autoRefreshInterval) {

@@ -529,6 +529,237 @@ function closeTeamMindmap() {
   }
 }
 
+function initializeTeamMindmap() {
+  const $ = go.GraphObject.make;
+  if (teamDiagram) teamDiagram.div = null;
+
+  teamDiagram = $(go.Diagram, "teamMindmapDiagram", {
+    "undoManager.isEnabled": false,
+    layout: $(go.ForceDirectedLayout, {
+      maxIterations: 300,
+      defaultSpringLength: 80, // Reduced from 120
+      defaultElectricalCharge: 100, // Reduced from 150
+      defaultGravitationalMass: 0.5,
+    }),
+    // Enable zoom and pan
+    allowZoom: true,
+    allowHorizontalScroll: true,
+    allowVerticalScroll: true,
+    initialContentAlignment: go.Spot.Center,
+    "toolManager.mouseWheelBehavior": go.ToolManager.WheelZoom,
+    minScale: 0.3,
+    maxScale: 3.0,
+    initialScale: 0.8,
+  });
+
+  // Compact room group template for team mindmap
+  teamDiagram.groupTemplate = $(
+    go.Group,
+    "Vertical",
+    {
+      click: function (e, group) {
+        const roomId = group.data.key;
+        const isUnlocked = (selectedTeam.progress.unlockedRooms || []).includes(
+          roomId
+        );
+        const isCleared = (selectedTeam.progress.clearedRooms || []).includes(
+          roomId
+        );
+
+        if (
+          confirm(
+            `${
+              isCleared
+                ? "Room is cleared. Lock it?"
+                : isUnlocked
+                ? "Lock this room?"
+                : "Unlock this room?"
+            }`
+          )
+        ) {
+          toggleRoomStatus(roomId, !isUnlocked, isCleared);
+        }
+      },
+    },
+    $(
+      go.TextBlock,
+      {
+        font: "bold 10pt sans-serif",
+        margin: new go.Margin(2, 4),
+      },
+      new go.Binding("text", "name")
+    ),
+    $(
+      go.Panel,
+      "Auto",
+      $(go.Shape, "Rectangle", {
+        stroke: "#D2691E",
+        strokeWidth: 2,
+      }).bind("fill", "", function (data) {
+        if ((selectedTeam.progress.clearedRooms || []).includes(data.key))
+          return "#90EE90"; // Green for cleared
+        if ((selectedTeam.progress.unlockedRooms || []).includes(data.key))
+          return "#FFFF99"; // Yellow for unlocked
+        return "#FF9999"; // Red for locked
+      }),
+      $(go.Placeholder, { padding: 8 })
+    )
+  );
+
+  // Flexible puzzle node template for team mindmap
+  teamDiagram.nodeTemplate = $(
+    go.Node,
+    "Auto",
+    {
+      click: function (e, node) {
+        const puzzleId = node.data.key;
+        const isDone = (selectedTeam.progress.solvedPuzzles || []).includes(
+          puzzleId
+        );
+        if (confirm(`Mark puzzle as ${isDone ? "not done" : "done"}?`)) {
+          togglePuzzleStatus(puzzleId, !isDone);
+        }
+      },
+    },
+    $(go.Shape, "Rectangle", {
+      minSize: new go.Size(60, 40),
+      maxSize: new go.Size(150, 60),
+      strokeWidth: 1.5,
+      stroke: "#333",
+    })
+      .bind("fill", "", function (data) {
+        if ((selectedTeam.progress.solvedPuzzles || []).includes(data.key))
+          return "#90EE90"; // Green for solved
+
+        if (isPuzzleUnlockedForTeam(data.key)) return "#FFFF99"; // Yellow for unlocked but not solved
+
+        return "#FF9999"; // Red for locked
+      })
+      .bind("width", "name", function (name) {
+        const baseWidth = 60;
+        const charWidth = 6;
+        return Math.max(baseWidth, Math.min(150, name.length * charWidth + 20));
+      }),
+    $(
+      go.TextBlock,
+      {
+        margin: new go.Margin(4, 6),
+        font: "9px sans-serif",
+        wrap: go.TextBlock.WrapFit,
+        textAlign: "center",
+        overflow: go.TextBlock.OverflowEllipsis,
+      },
+      new go.Binding("text", "name")
+    )
+  );
+
+  // Compact links for team mindmap
+  teamDiagram.linkTemplate = $(
+    go.Link,
+    {
+      routing: go.Link.AvoidsNodes,
+      curve: go.Link.JumpOver,
+      corner: 8,
+    },
+    $(go.Shape, { stroke: "#333", strokeWidth: 1.5 }),
+    $(go.Shape, {
+      toArrow: "Standard",
+      fill: "#333",
+      stroke: null,
+      scale: 0.8,
+    })
+  );
+
+  // Compact room unlock links for team mindmap
+  teamDiagram.linkTemplateMap.add(
+    "roomUnlock",
+    $(
+      go.Link,
+      {
+        routing: go.Link.AvoidsNodes,
+        curve: go.Link.JumpOver,
+        layerName: "Background",
+        corner: 8,
+      },
+      $(go.Shape, {
+        stroke: "#FF6B35",
+        strokeWidth: 2,
+        strokeDashArray: [6, 3],
+      }),
+      $(go.Shape, {
+        toArrow: "Standard",
+        fill: "#FF6B35",
+        stroke: null,
+        scale: 1.2,
+      })
+    )
+  );
+
+  const nodes = [];
+  const groups = [];
+  const links = [];
+
+  // Create room groups (same as puzzle mindmap)
+  Object.entries(roomData).forEach(([id, room]) => {
+    groups.push({
+      key: id,
+      isGroup: true,
+      name: room.name || id,
+      category: "room",
+    });
+  });
+
+  // Create puzzle nodes (same structure as puzzle mindmap)
+  Object.entries(puzzleData).forEach(([id, puzzle]) => {
+    const nodeData = {
+      key: id,
+      name: puzzle.name || id,
+      category: "puzzle",
+    };
+
+    if (puzzle.room && roomData[puzzle.room]) {
+      nodeData.group = puzzle.room;
+    }
+
+    nodes.push(nodeData);
+
+    if (puzzle.unlocks) links.push({ from: id, to: puzzle.unlocks });
+    if (puzzle.followup) links.push({ from: id, to: puzzle.followup });
+  });
+
+  // Add room-to-room links
+  Object.entries(roomData).forEach(([roomId, room]) => {
+    if (room.clearUnlock) {
+      const targetId = room.clearUnlock.id;
+      if (room.clearUnlock.type === "room" && roomData[targetId]) {
+        links.push({
+          from: roomId,
+          to: targetId,
+          category: "roomUnlock",
+        });
+      } else if (room.clearUnlock.type === "puzzle" && puzzleData[targetId]) {
+        links.push({
+          from: roomId,
+          to: targetId,
+          category: "roomUnlock",
+        });
+      }
+    }
+  });
+
+  teamDiagram.model = new go.GraphLinksModel({
+    nodeDataArray: [...groups, ...nodes],
+    linkDataArray: links,
+    nodeCategoryProperty: "category",
+    linkCategoryProperty: "category",
+  });
+
+  // Add zoom controls for team mindmap
+  addZoomControls("teamMindmapDiagram", teamDiagram);
+
+  teamDiagram.layoutDiagram(true);
+}
+
 function initializeDiagram() {
   const $ = go.GraphObject.make;
   diagram = $(go.Diagram, "mindmapDiagram", {

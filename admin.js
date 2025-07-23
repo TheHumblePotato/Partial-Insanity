@@ -93,24 +93,23 @@ function initializeDiagram() {
     "undoManager.isEnabled": true,
     layout: $(go.ForceDirectedLayout, {
       maxIterations: 300,
-      defaultSpringLength: 80, // Reduced from 120
-      defaultElectricalCharge: 100, // Reduced from 150
-      defaultGravitationalMass: 0.5, // Add gravity to pull nodes together
+      defaultSpringLength: 80,
+      defaultElectricalCharge: 100,
+      defaultGravitationalMass: 0.5,
     }),
     "toolManager.hoverDelay": 500,
-    // Enable zoom and pan
+
     allowZoom: true,
     allowHorizontalScroll: true,
     allowVerticalScroll: true,
     initialContentAlignment: go.Spot.Center,
-    // Set zoom limits
+
     "toolManager.mouseWheelBehavior": go.ToolManager.WheelZoom,
     minScale: 0.3,
     maxScale: 3.0,
-    initialScale: 0.8, // Start zoomed out a bit
+    initialScale: 0.8,
   });
 
-  // Compact room group template
   diagram.groupTemplate = $(
     go.Group,
     "Vertical",
@@ -118,8 +117,8 @@ function initializeDiagram() {
       selectionChanged: function (group) {},
       ungroupable: true,
       layout: $(go.GridLayout, {
-        wrappingColumn: 3, // More columns for compactness
-        spacing: new go.Size(5, 5), // Reduced spacing
+        wrappingColumn: 3,
+        spacing: new go.Size(5, 5),
       }),
       click: function (e, group) {
         editRoom(group.data.key);
@@ -128,9 +127,9 @@ function initializeDiagram() {
     $(
       go.TextBlock,
       {
-        font: "bold 10pt sans-serif", // Smaller font
+        font: "bold 10pt sans-serif",
         editable: true,
-        margin: new go.Margin(2, 4), // Reduced margin
+        margin: new go.Margin(2, 4),
       },
       new go.Binding("text", "name")
     ),
@@ -140,13 +139,12 @@ function initializeDiagram() {
       $(go.Shape, "Rectangle", {
         fill: "transparent",
         stroke: "#D2691E",
-        strokeWidth: 2, // Reduced from 3
+        strokeWidth: 2,
       }),
-      $(go.Placeholder, { padding: 8 }) // Reduced padding
+      $(go.Placeholder, { padding: 8 })
     )
   );
 
-  // Flexible puzzle node template
   diagram.nodeTemplate = $(
     go.Node,
     "Auto",
@@ -160,9 +158,9 @@ function initializeDiagram() {
       go.Shape,
       "Rectangle",
       {
-        minSize: new go.Size(60, 40), // Minimum size
-        maxSize: new go.Size(150, 60), // Maximum size
-        strokeWidth: 1.5, // Slightly thinner border
+        minSize: new go.Size(60, 40),
+        maxSize: new go.Size(150, 60),
+        strokeWidth: 1.5,
         stroke: "#333",
       },
       new go.Binding("fill", "type", function (type) {
@@ -175,10 +173,10 @@ function initializeDiagram() {
             return "#ADD8E6";
         }
       }),
-      // Dynamic width based on text length
+
       new go.Binding("width", "name", function (name) {
         const baseWidth = 60;
-        const charWidth = 6; // Approximate pixels per character
+        const charWidth = 6;
         const calculatedWidth = Math.max(
           baseWidth,
           Math.min(150, name.length * charWidth + 20)
@@ -189,34 +187,32 @@ function initializeDiagram() {
     $(
       go.TextBlock,
       {
-        margin: new go.Margin(4, 6), // Reduced margin
-        font: "9px sans-serif", // Smaller font
+        margin: new go.Margin(4, 6),
+        font: "9px sans-serif",
         wrap: go.TextBlock.WrapFit,
         textAlign: "center",
-        overflow: go.TextBlock.OverflowEllipsis, // Add ellipsis for long text
+        overflow: go.TextBlock.OverflowEllipsis,
       },
       new go.Binding("text", "name")
     )
   );
 
-  // Thinner links for compactness
   diagram.linkTemplate = $(
     go.Link,
     {
       routing: go.Link.AvoidsNodes,
       curve: go.Link.JumpOver,
-      corner: 8, // Softer corners
+      corner: 8,
     },
-    $(go.Shape, { stroke: "#333", strokeWidth: 1.5 }), // Thinner lines
+    $(go.Shape, { stroke: "#333", strokeWidth: 1.5 }),
     $(go.Shape, {
       toArrow: "Standard",
       fill: "#333",
       stroke: null,
-      scale: 0.8, // Smaller arrows
+      scale: 0.8,
     })
   );
 
-  // Compact room unlock links
   diagram.linkTemplateMap.add(
     "roomUnlock",
     $(
@@ -229,19 +225,18 @@ function initializeDiagram() {
       },
       $(go.Shape, {
         stroke: "#FF6B35",
-        strokeWidth: 2, // Reduced from 3
-        strokeDashArray: [6, 3], // Smaller dashes
+        strokeWidth: 2,
+        strokeDashArray: [6, 3],
       }),
       $(go.Shape, {
         toArrow: "Standard",
         fill: "#FF6B35",
         stroke: null,
-        scale: 1.2, // Smaller than before
+        scale: 1.2,
       })
     )
   );
 
-  // Add zoom controls
   addZoomControls("mindmapDiagram", diagram);
 
   loadDiagramData();
@@ -261,7 +256,6 @@ async function loadDiagramData() {
     const links = [];
     const groups = [];
 
-    // Create room groups
     Object.entries(roomData).forEach(([roomId, room]) => {
       groups.push({
         key: roomId,
@@ -271,7 +265,6 @@ async function loadDiagramData() {
       });
     });
 
-    // Create puzzle nodes
     Object.entries(puzzleData).forEach(([puzzleId, puzzle]) => {
       const nodeData = {
         key: puzzleId,
@@ -294,7 +287,6 @@ async function loadDiagramData() {
       }
     });
 
-    // Add room-to-room links
     Object.entries(roomData).forEach(([roomId, room]) => {
       if (room.clearUnlock) {
         const targetId = room.clearUnlock.id;
@@ -327,7 +319,6 @@ async function loadDiagramData() {
       });
     });
 
-    // Auto-fit after a short delay to ensure layout is complete
     setTimeout(() => {
       if (diagram) {
         diagram.zoomToFit();
@@ -537,11 +528,11 @@ function initializeTeamMindmap() {
     "undoManager.isEnabled": false,
     layout: $(go.ForceDirectedLayout, {
       maxIterations: 300,
-      defaultSpringLength: 80, // Reduced from 120
-      defaultElectricalCharge: 100, // Reduced from 150
+      defaultSpringLength: 80,
+      defaultElectricalCharge: 100,
       defaultGravitationalMass: 0.5,
     }),
-    // Enable zoom and pan
+
     allowZoom: true,
     allowHorizontalScroll: true,
     allowVerticalScroll: true,
@@ -552,7 +543,6 @@ function initializeTeamMindmap() {
     initialScale: 0.8,
   });
 
-  // Compact room group template for team mindmap
   teamDiagram.groupTemplate = $(
     go.Group,
     "Vertical",
@@ -597,16 +587,15 @@ function initializeTeamMindmap() {
         strokeWidth: 2,
       }).bind("fill", "", function (data) {
         if ((selectedTeam.progress.clearedRooms || []).includes(data.key))
-          return "#90EE90"; // Green for cleared
+          return "#90EE90";
         if ((selectedTeam.progress.unlockedRooms || []).includes(data.key))
-          return "#FFFF99"; // Yellow for unlocked
-        return "#FF9999"; // Red for locked
+          return "#FFFF99";
+        return "#FF9999";
       }),
       $(go.Placeholder, { padding: 8 })
     )
   );
 
-  // Flexible puzzle node template for team mindmap
   teamDiagram.nodeTemplate = $(
     go.Node,
     "Auto",
@@ -629,11 +618,11 @@ function initializeTeamMindmap() {
     })
       .bind("fill", "", function (data) {
         if ((selectedTeam.progress.solvedPuzzles || []).includes(data.key))
-          return "#90EE90"; // Green for solved
+          return "#90EE90";
 
-        if (isPuzzleUnlockedForTeam(data.key)) return "#FFFF99"; // Yellow for unlocked but not solved
+        if (isPuzzleUnlockedForTeam(data.key)) return "#FFFF99";
 
-        return "#FF9999"; // Red for locked
+        return "#FF9999";
       })
       .bind("width", "name", function (name) {
         const baseWidth = 60;
@@ -653,7 +642,6 @@ function initializeTeamMindmap() {
     )
   );
 
-  // Compact links for team mindmap
   teamDiagram.linkTemplate = $(
     go.Link,
     {
@@ -670,7 +658,6 @@ function initializeTeamMindmap() {
     })
   );
 
-  // Compact room unlock links for team mindmap
   teamDiagram.linkTemplateMap.add(
     "roomUnlock",
     $(
@@ -699,7 +686,6 @@ function initializeTeamMindmap() {
   const groups = [];
   const links = [];
 
-  // Create room groups (same as puzzle mindmap)
   Object.entries(roomData).forEach(([id, room]) => {
     groups.push({
       key: id,
@@ -709,7 +695,6 @@ function initializeTeamMindmap() {
     });
   });
 
-  // Create puzzle nodes (same structure as puzzle mindmap)
   Object.entries(puzzleData).forEach(([id, puzzle]) => {
     const nodeData = {
       key: id,
@@ -727,7 +712,6 @@ function initializeTeamMindmap() {
     if (puzzle.followup) links.push({ from: id, to: puzzle.followup });
   });
 
-  // Add room-to-room links
   Object.entries(roomData).forEach(([roomId, room]) => {
     if (room.clearUnlock) {
       const targetId = room.clearUnlock.id;
@@ -754,7 +738,6 @@ function initializeTeamMindmap() {
     linkCategoryProperty: "category",
   });
 
-  // Add zoom controls for team mindmap
   addZoomControls("teamMindmapDiagram", teamDiagram);
 
   teamDiagram.layoutDiagram(true);
@@ -766,24 +749,23 @@ function initializeDiagram() {
     "undoManager.isEnabled": true,
     layout: $(go.ForceDirectedLayout, {
       maxIterations: 300,
-      defaultSpringLength: 80, // Reduced from 120
-      defaultElectricalCharge: 100, // Reduced from 150
-      defaultGravitationalMass: 0.5, // Add gravity to pull nodes together
+      defaultSpringLength: 80,
+      defaultElectricalCharge: 100,
+      defaultGravitationalMass: 0.5,
     }),
     "toolManager.hoverDelay": 500,
-    // Enable zoom and pan
+
     allowZoom: true,
     allowHorizontalScroll: true,
     allowVerticalScroll: true,
     initialContentAlignment: go.Spot.Center,
-    // Set zoom limits
+
     "toolManager.mouseWheelBehavior": go.ToolManager.WheelZoom,
     minScale: 0.3,
     maxScale: 3.0,
-    initialScale: 0.8, // Start zoomed out a bit
+    initialScale: 0.8,
   });
 
-  // Compact room group template
   diagram.groupTemplate = $(
     go.Group,
     "Vertical",
@@ -791,8 +773,8 @@ function initializeDiagram() {
       selectionChanged: function (group) {},
       ungroupable: true,
       layout: $(go.GridLayout, {
-        wrappingColumn: 3, // More columns for compactness
-        spacing: new go.Size(5, 5), // Reduced spacing
+        wrappingColumn: 3,
+        spacing: new go.Size(5, 5),
       }),
       click: function (e, group) {
         editRoom(group.data.key);
@@ -801,9 +783,9 @@ function initializeDiagram() {
     $(
       go.TextBlock,
       {
-        font: "bold 10pt sans-serif", // Smaller font
+        font: "bold 10pt sans-serif",
         editable: true,
-        margin: new go.Margin(2, 4), // Reduced margin
+        margin: new go.Margin(2, 4),
       },
       new go.Binding("text", "name")
     ),
@@ -813,13 +795,12 @@ function initializeDiagram() {
       $(go.Shape, "Rectangle", {
         fill: "transparent",
         stroke: "#D2691E",
-        strokeWidth: 2, // Reduced from 3
+        strokeWidth: 2,
       }),
-      $(go.Placeholder, { padding: 8 }) // Reduced padding
+      $(go.Placeholder, { padding: 8 })
     )
   );
 
-  // Flexible puzzle node template
   diagram.nodeTemplate = $(
     go.Node,
     "Auto",
@@ -833,9 +814,9 @@ function initializeDiagram() {
       go.Shape,
       "Rectangle",
       {
-        minSize: new go.Size(60, 40), // Minimum size
-        maxSize: new go.Size(150, 60), // Maximum size
-        strokeWidth: 1.5, // Slightly thinner border
+        minSize: new go.Size(60, 40),
+        maxSize: new go.Size(150, 60),
+        strokeWidth: 1.5,
         stroke: "#333",
       },
       new go.Binding("fill", "type", function (type) {
@@ -848,10 +829,10 @@ function initializeDiagram() {
             return "#ADD8E6";
         }
       }),
-      // Dynamic width based on text length
+
       new go.Binding("width", "name", function (name) {
         const baseWidth = 60;
-        const charWidth = 6; // Approximate pixels per character
+        const charWidth = 6;
         const calculatedWidth = Math.max(
           baseWidth,
           Math.min(150, name.length * charWidth + 20)
@@ -862,34 +843,32 @@ function initializeDiagram() {
     $(
       go.TextBlock,
       {
-        margin: new go.Margin(4, 6), // Reduced margin
-        font: "9px sans-serif", // Smaller font
+        margin: new go.Margin(4, 6),
+        font: "9px sans-serif",
         wrap: go.TextBlock.WrapFit,
         textAlign: "center",
-        overflow: go.TextBlock.OverflowEllipsis, // Add ellipsis for long text
+        overflow: go.TextBlock.OverflowEllipsis,
       },
       new go.Binding("text", "name")
     )
   );
 
-  // Thinner links for compactness
   diagram.linkTemplate = $(
     go.Link,
     {
       routing: go.Link.AvoidsNodes,
       curve: go.Link.JumpOver,
-      corner: 8, // Softer corners
+      corner: 8,
     },
-    $(go.Shape, { stroke: "#333", strokeWidth: 1.5 }), // Thinner lines
+    $(go.Shape, { stroke: "#333", strokeWidth: 1.5 }),
     $(go.Shape, {
       toArrow: "Standard",
       fill: "#333",
       stroke: null,
-      scale: 0.8, // Smaller arrows
+      scale: 0.8,
     })
   );
 
-  // Compact room unlock links
   diagram.linkTemplateMap.add(
     "roomUnlock",
     $(
@@ -902,19 +881,18 @@ function initializeDiagram() {
       },
       $(go.Shape, {
         stroke: "#FF6B35",
-        strokeWidth: 2, // Reduced from 3
-        strokeDashArray: [6, 3], // Smaller dashes
+        strokeWidth: 2,
+        strokeDashArray: [6, 3],
       }),
       $(go.Shape, {
         toArrow: "Standard",
         fill: "#FF6B35",
         stroke: null,
-        scale: 1.2, // Smaller than before
+        scale: 1.2,
       })
     )
   );
 
-  // Add zoom controls
   addZoomControls("mindmapDiagram", diagram);
 
   loadDiagramData();
@@ -923,13 +901,11 @@ function initializeDiagram() {
 function addZoomControls(containerId, diagramInstance) {
   const container = document.getElementById(containerId);
 
-  // Remove existing zoom controls if any
   const existingControls = container.querySelector(".zoom-controls");
   if (existingControls) {
     existingControls.remove();
   }
 
-  // Create zoom controls
   const zoomControls = document.createElement("div");
   zoomControls.className = "zoom-controls";
   zoomControls.innerHTML = `
@@ -942,7 +918,6 @@ function addZoomControls(containerId, diagramInstance) {
   container.appendChild(zoomControls);
 }
 
-// Zoom control functions
 function zoomIn(containerId) {
   const diagramInstance =
     containerId === "mindmapDiagram" ? diagram : teamDiagram;
@@ -1637,21 +1612,6 @@ async function saveDiagramLayout() {
   }
 }
 
-function resetDiagramLayout() {
-  if (
-    confirm(
-      "Are you sure you want to reset the diagram layout? This will remove all custom positions."
-    )
-  ) {
-    diagram.layout = go.GraphObject.make(go.ForceDirectedLayout, {
-      maxIterations: 200,
-      defaultSpringLength: 120,
-      defaultElectricalCharge: 150,
-    });
-    diagram.layoutDiagram(true);
-  }
-}
-
 window.onclick = function (event) {
   const puzzleModal = document.getElementById("puzzleEditor");
   const roomModal = document.getElementById("roomEditor");
@@ -1744,7 +1704,6 @@ async function refreshAllData(forceRefresh = false) {
     if (document.getElementById("roomEditor").style.display === "block") {
       updateRoomEditorDropdowns();
     }
-
   } catch (error) {
     console.error("Error refreshing data:", error);
   }

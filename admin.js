@@ -1201,7 +1201,7 @@ function clearPuzzleEditor() {
   document.getElementById("puzzleMaxGuesses").value = 3;
   document.getElementById("puzzleRequiredCorrect").value = 1;
   document.getElementById("puzzleDescription").value = "";
-  document.getElementById("puzzlePdf").value = "";
+  document.getElementById("mediaList").value = "";
   document.getElementById("puzzleFollowup").value = "";
   document.getElementById("puzzleUnlocks").value = "";
   document.getElementById("puzzleSolveMessage").value = "";

@@ -209,3 +209,293 @@
   color: #007bff;
   font-weight: bold;
 }
+
+/* Add to admin.css - Zoom controls and compact layout styles */
+
+/* Zoom controls positioning */
+.zoom-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 8px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid #ddd;
+}
+
+.zoom-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #007bff;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.zoom-btn:hover {
+  background: #0056b3;
+  transform: scale(1.05);
+}
+
+.zoom-btn:active {
+  transform: scale(0.95);
+}
+
+/* Specific button styles */
+.zoom-btn[title="Zoom In"] {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.zoom-btn[title="Zoom Out"] {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.zoom-btn[title="Fit to Screen"] {
+  font-size: 18px;
+}
+
+.zoom-btn[title="Reset Zoom"] {
+  font-size: 10px;
+  font-weight: normal;
+}
+
+/* Compact diagram toolbar */
+.diagram-toolbar {
+  margin-bottom: 8px; /* Reduced from 10px */
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.diagram-toolbar .btn {
+  padding: 6px 12px; /* Smaller buttons */
+  font-size: 13px;
+}
+
+/* Compact modal sizing */
+.modal-content {
+  background-color: #fefefe;
+  margin: 3% auto; /* Reduced from 5% */
+  padding: 15px; /* Reduced from 20px */
+  border: 1px solid #888;
+  border-radius: 8px;
+  max-height: 90vh; /* Increased from 80vh */
+  overflow-y: auto;
+}
+
+/* Compact team list */
+.team-card {
+  background: white;
+  padding: 12px; /* Reduced from 15px */
+  margin-bottom: 8px; /* Reduced from 10px */
+  border-radius: 6px; /* Reduced from 8px */
+  cursor: pointer;
+  border: 1px solid #ddd;
+  transition: all 0.2s ease;
+}
+
+.team-card h4 {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+}
+
+.team-card p {
+  margin: 3px 0;
+  font-size: 12px;
+  color: #666;
+}
+
+/* Compact property editor */
+.property-editor {
+  max-width: 450px; /* Reduced from 500px */
+  background: #f5f5f5;
+  padding: 12px; /* Reduced from 15px */
+  border-radius: 6px;
+  display: inline-block;
+  vertical-align: top;
+  margin-left: 15px; /* Reduced from 20px */
+}
+
+.property-group {
+  margin-bottom: 12px; /* Reduced from 15px */
+}
+
+.property-group label {
+  display: block;
+  margin-bottom: 4px; /* Reduced from 5px */
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.property-group input,
+.property-group textarea,
+.property-group select {
+  width: 100%;
+  padding: 6px; /* Reduced from 8px */
+  box-sizing: border-box;
+  font-size: 13px;
+}
+
+/* Compact puzzle grid */
+.puzzle-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(180px, 1fr)
+  ); /* Reduced from 200px */
+  gap: 12px; /* Reduced from 15px */
+  margin-top: 15px; /* Reduced from 20px */
+}
+
+.puzzle-preview {
+  background: white;
+  padding: 12px; /* Reduced from 15px */
+  border-radius: 6px; /* Reduced from 8px */
+  border: 2px solid #ddd;
+  font-size: 13px;
+}
+
+.puzzle-preview h5 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.puzzle-preview p {
+  margin: 4px 0;
+  font-size: 12px;
+}
+
+/* Compact progress stats */
+.progress-stats {
+  display: flex;
+  gap: 15px; /* Reduced from 20px */
+  margin-bottom: 15px; /* Reduced from 20px */
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  background: white;
+  padding: 12px; /* Reduced from 15px */
+  border-radius: 6px; /* Reduced from 8px */
+  text-align: center;
+  min-width: 100px; /* Reduced from 120px */
+  border: 1px solid #ddd;
+}
+
+.stat-card h4 {
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  color: #007bff;
+}
+
+.stat-card p {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+}
+
+/* Compact navigation tabs */
+.navigation-tabs {
+  margin-bottom: 15px; /* Reduced from 20px */
+}
+
+.tab-button {
+  padding: 8px 16px; /* Reduced from 10px 20px */
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  display: inline-block;
+  font-size: 13px;
+}
+
+/* Responsive zoom controls for smaller screens */
+@media (max-width: 768px) {
+  .zoom-controls {
+    top: 5px;
+    right: 5px;
+    padding: 6px;
+  }
+
+  .zoom-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+}
+
+/* Compact hint entries */
+.hint-entry {
+  display: flex;
+  gap: 8px; /* Reduced from 10px */
+  margin-bottom: 8px; /* Reduced from 10px */
+  align-items: flex-start;
+}
+
+.hint-entry textarea {
+  flex: 1;
+  min-height: 50px; /* Reduced from 60px */
+  font-size: 13px;
+}
+
+.hint-problem {
+  border-right: 2px solid #ddd;
+  padding-right: 8px; /* Reduced from 10px */
+}
+
+/* Compact form rows */
+.form-row {
+  display: flex;
+  gap: 8px; /* Reduced from 10px */
+}
+
+/* Hide scrollbars on diagrams to make them cleaner */
+#mindmapDiagram::-webkit-scrollbar,
+#teamMindmapDiagram::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+#mindmapDiagram::-webkit-scrollbar-track,
+#teamMindmapDiagram::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+#mindmapDiagram::-webkit-scrollbar-thumb,
+#teamMindmapDiagram::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+#mindmapDiagram::-webkit-scrollbar-thumb:hover,
+#teamMindmapDiagram::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+@media (max-width: 768px) {
+  .zoom-controls {
+    top: 5px;
+    right: 5px;
+    padding: 6px;
+  }
+
+  .zoom-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+}

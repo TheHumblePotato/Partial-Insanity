@@ -71,7 +71,7 @@ function adminLogout() {
 }
 
 function showAdminError(message) {
-  const errorDiv = docufment.getElementById("admin-error");
+  const errorDiv = document.getElementById("admin-error");
   errorDiv.textContent = message;
   errorDiv.classList.remove("hidden");
   setTimeout(() => errorDiv.classList.add("hidden"), 3000);

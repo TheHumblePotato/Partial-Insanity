@@ -1686,12 +1686,8 @@ function generateDataHash(puzzleData, roomData) {
 async function refreshAllData(forceRefresh = false) {
   try {
     if (!forceRefresh && checkUserEditing()) {
-      console.log("Skipping auto-refresh: user is editing");
       return;
     }
-
-    console.log("Refreshing data...");
-
     const wasEditingPuzzle = currentEditingPuzzle;
     const wasEditingRoom = currentEditingRoom;
     const selectedTeamId = selectedTeam?.id;
@@ -1707,11 +1703,9 @@ async function refreshAllData(forceRefresh = false) {
     const newDataHash = generateDataHash(newPuzzleData, newRoomData);
 
     if (!forceRefresh && lastDataHash === newDataHash) {
-      console.log("No data changes detected");
       return;
     }
 
-    console.log("Data changes detected, updating...");
     lastDataHash = newDataHash;
 
     puzzleData = newPuzzleData;
@@ -1751,7 +1745,6 @@ async function refreshAllData(forceRefresh = false) {
       updateRoomEditorDropdowns();
     }
 
-    console.log("Data refresh completed");
   } catch (error) {
     console.error("Error refreshing data:", error);
   }
@@ -1812,7 +1805,6 @@ function updateRoomEditorDropdowns() {
 }
 
 function manualRefresh() {
-  console.log("Manual refresh triggered");
   refreshAllData(true);
 }
 
@@ -1823,9 +1815,7 @@ function startAutoRefresh() {
 
   autoRefreshInterval = setInterval(() => {
     refreshAllData(false);
-  }, 30000);
-
-  console.log("Auto-refresh started (30 second interval)");
+  }, 300000);
 }
 
 function stopAutoRefresh() {

@@ -7,10 +7,9 @@
     <link href="style.css" rel="stylesheet" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gojs/2.2.15/go.js"></script>
-    <link href="admin.css" rel="stylesheet">
+    <link href="admin.css" rel="stylesheet" />
   </head>
   <body>
-    <!-- Admin Login -->
     <div id="admin-login" class="auth-section">
       <h2>Admin Login</h2>
       <div class="form-group">
@@ -25,7 +24,6 @@
       <div id="admin-error" class="error-message hidden"></div>
     </div>
 
-    <!-- Admin Panel -->
     <div id="admin-panel" class="hidden">
       <div class="nav-buttons">
         <button class="btn btn-primary" onclick="showAdminSection('mindmap')">
@@ -34,12 +32,18 @@
         <button class="btn btn-primary" onclick="showAdminSection('progress')">
           Team Progress
         </button>
+        <button
+          class="btn btn-secondary"
+          onclick="manualRefresh()"
+          title="Refresh all data"
+        >
+          🔄 Refresh
+        </button>
         <button class="btn btn-secondary" onclick="adminLogout()">
           Logout
         </button>
       </div>
 
-      <!-- Mindmap Section -->
       <div id="admin-mindmap" class="admin-section">
         <div class="diagram-toolbar">
           <button class="btn btn-sm" onclick="showPuzzleEditor()">
@@ -69,7 +73,6 @@
         ></div>
       </div>
 
-      <!-- Team Progress Section -->
       <div id="admin-progress" class="admin-section hidden">
         <div class="team-list" id="teamList"></div>
         <div id="teamDetails" class="property-editor hidden">
@@ -97,7 +100,6 @@
         </div>
       </div>
 
-      <!-- Puzzle Editor Modal -->
       <div id="puzzleEditor" class="modal">
         <div class="modal-content" style="max-width: 700px">
           <span class="close" onclick="closePuzzleEditor()">&times;</span>
@@ -165,7 +167,6 @@
             <label>Room:</label>
             <select id="puzzleRoom">
               <option value="">-- Select Room --</option>
-              <!-- Rooms will be populated by JavaScript -->
             </select>
           </div>
 
@@ -270,7 +271,6 @@
         </div>
       </div>
 
-      <!-- Room Editor Modal -->
       <div id="roomEditor" class="modal">
         <div class="modal-content" style="max-width: 700px">
           <span class="close" onclick="closeRoomEditor()">&times;</span>
@@ -325,16 +325,17 @@
 
           <div class="property-group" id="mustSolvePuzzlesGroup" class="hidden">
             <label>Must Solve Puzzles (select multiple):</label>
-            <select id="roomMustSolvePuzzles" multiple style="height: 100px">
-              <!-- Will be populated with puzzles -->
-            </select>
+            <select
+              id="roomMustSolvePuzzles"
+              multiple
+              style="height: 100px"
+            ></select>
           </div>
 
           <div class="property-group" id="clearUnlockGroup">
             <label>Unlocks on Clear:</label>
             <select id="roomClearUnlock">
               <option value="">-- None --</option>
-              <!-- Will be populated with rooms and puzzles -->
             </select>
           </div>
 
@@ -365,7 +366,7 @@
         </div>
       </div>
     </div>
-    <!-- Firebase SDK -->
+
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 

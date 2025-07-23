@@ -55,36 +55,36 @@ async function loadTeamData() {
       if (progressDoc.exists) {
         teamProgress = progressDoc.data();
 
-        // Initialize progress fields
+        
         teamProgress.solvedPuzzles = teamProgress.solvedPuzzles || [];
         teamProgress.unlockedRooms = teamProgress.unlockedRooms || ["starting_room"];
         teamProgress.guessCount = teamProgress.guessCount || {};
         teamProgress.clearedRooms = teamProgress.clearedRooms || [];
         teamProgress.viewedUnlocks = teamProgress.viewedUnlocks || [];
 
-        // Get the first uncleared room
+        
         const unlockedRooms = teamProgress.unlockedRooms;
         const clearedRooms = teamProgress.clearedRooms;
         
-        // Find first uncleared room
+        
         let firstUncleared = unlockedRooms.find(roomId => !clearedRooms.includes(roomId));
         
-        // If all rooms cleared, use last unlocked room
+        
         if (!firstUncleared && unlockedRooms.length > 0) {
           firstUncleared = unlockedRooms[unlockedRooms.length - 1];
         }
 
-        // Default to starting room if something went wrong
+        
         currentRoom = firstUncleared || "starting_room";
 
-        // Update current room if different from stored
+        
         if (teamProgress.currentRoom !== currentRoom) {
           teamProgress.currentRoom = currentRoom;
           await db.collection("progress").doc(currentUser.uid).set(teamProgress);
         }
 
       } else {
-        // Initialize new team progress
+        
         teamProgress = {
           solvedPuzzles: [],
           currentRoom: "starting_room",
@@ -115,7 +115,7 @@ function isRoomCleared(roomId) {
   const roomPuzzles = room.puzzles || [];
   const clearCondition = room.clearCondition;
 
-  // Handle both string (legacy) and object formats
+  
   const conditionType = typeof clearCondition === 'string' 
     ? clearCondition 
     : clearCondition.type;
@@ -184,7 +184,7 @@ function checkForNewlyUnlockedContent() {
 
   const unlockedRooms = teamProgress.unlockedRooms || ["starting_room"];
   
-  // Check puzzle-based unlocks
+  
   Object.keys(puzzleData).forEach(puzzleId => {
     const puzzle = puzzleData[puzzleId];
     if (puzzle.unlocks && 
@@ -194,7 +194,7 @@ function checkForNewlyUnlockedContent() {
     }
   });
 
-  // Check room clear-based unlocks
+  
   teamProgress.clearedRooms.forEach(roomId => {
     const room = roomData[roomId];
     if (room.clearUnlock) {
@@ -221,7 +221,7 @@ function showNotification(message, type = 'info', duration = 3000) {
   
   document.body.appendChild(notification);
   
-  // Auto-remove after duration
+  
   setTimeout(() => {
     if (notification.parentNode) {
       notification.remove();
@@ -429,7 +429,7 @@ function renderCurrentRoom() {
   const clearedRooms = teamProgress.clearedRooms || [];
   const unlockedRooms = teamProgress.unlockedRooms || ["starting_room"];
   
-  // Add uncleared rooms
+  
   unlockedRooms
     .filter(roomId => !clearedRooms.includes(roomId))
     .forEach(roomId => {
@@ -437,7 +437,7 @@ function renderCurrentRoom() {
         navGroup.appendChild(btn);
     });
 
-  // Add cleared rooms dropdown
+  
   const dropdown = document.querySelector(".cleared-rooms-dropdown .dropdown-content");
   dropdown.innerHTML = clearedRooms
     .map(roomId => {
@@ -458,7 +458,7 @@ function normalizeAnswer(answer) {
         answer = String(answer);
     }
     return answer.toLowerCase()
-        .replace(/[^a-z0-9]/g, '') // Remove all non-alphanumeric characters
+        .replace(/[^a-z0-9]/g, '') 
         .trim();
 }
 
@@ -482,7 +482,7 @@ function renderNormalRoom(room) {
   const container = document.getElementById("normal-room");
   container.innerHTML = "";
 
-  // Add original room puzzles
+  
   room.puzzles.forEach((puzzleId) => {
     const puzzle = puzzleData[puzzleId];
     if (!puzzle) return;
@@ -490,18 +490,18 @@ function renderNormalRoom(room) {
     const puzzleElement = createPuzzleElement(puzzle, puzzleId);
     container.appendChild(puzzleElement);
 
-    // Recursively add all follow-up puzzles in the same room
+    
     addFollowupPuzzles(puzzleId, container);
   });
 
-  // Add newly unlocked puzzles to the same room
+  
   Object.entries(unlockedNewContent).forEach(([unlockId, puzzleId]) => {
     if (!room.puzzles.includes(unlockId) && puzzleData[unlockId] && !roomData[unlockId]) {
       const puzzle = puzzleData[unlockId];
       const puzzleElement = createPuzzleElement(puzzle, unlockId);
       container.appendChild(puzzleElement);
       
-      // Also add any follow-ups for newly unlocked puzzles
+      
       addFollowupPuzzles(unlockId, container);
     }
   });
@@ -518,7 +518,7 @@ function addFollowupPuzzles(puzzleId, container) {
       followupElement.classList.add('followup-puzzle');
       container.appendChild(followupElement);
       
-      // Recursively check for more follow-ups
+      
       addFollowupPuzzles(puzzle.followup, container);
     }
   }
@@ -539,18 +539,18 @@ function renderImageRoom(room) {
     const puzzleElement = createFloatingPuzzleElement(puzzle, puzzleId);
     container.appendChild(puzzleElement);
 
-    // Recursively add all follow-up puzzles in the same room
+    
     addFloatingFollowupPuzzles(puzzleId, container);
   });
 
-  // Add newly unlocked puzzles to the same room
+  
   Object.entries(unlockedNewContent).forEach(([unlockId, puzzleId]) => {
     if (!room.puzzles.includes(unlockId) && puzzleData[unlockId] && !roomData[unlockId]) {
       const puzzle = puzzleData[unlockId];
       const puzzleElement = createFloatingPuzzleElement(puzzle, unlockId);
       container.appendChild(puzzleElement);
       
-      // Also add any follow-ups for newly unlocked puzzles
+      
       addFloatingFollowupPuzzles(unlockId, container);
     }
   });
@@ -565,7 +565,7 @@ function addFloatingFollowupPuzzles(puzzleId, container) {
     if (followupPuzzle) {
       const followupElement = createFloatingPuzzleElement(followupPuzzle, puzzle.followup);
       followupElement.classList.add('followup-puzzle');
-      // Position followup near the original puzzle
+      
       const parentElement = container.querySelector(`[onclick="openPuzzle('${puzzleId}')"]`);
       if (parentElement) {
         const parentLeft = parseInt(parentElement.style.left) || 100;
@@ -575,7 +575,7 @@ function addFloatingFollowupPuzzles(puzzleId, container) {
       }
       container.appendChild(followupElement);
       
-      // Recursively check for more follow-ups
+      
       addFloatingFollowupPuzzles(puzzle.followup, container);
     }
   }
@@ -592,7 +592,7 @@ function createPuzzleElement(puzzle, puzzleId) {
 
   element.onclick = () => openPuzzle(puzzleId);
 
-  // Use the lock PDF for all locks
+  
   const pdfUrl = puzzle.type === "lock" 
     ? "https://cdn.glitch.global/316e5bad-dde2-4c91-86f7-fc36f9e2d9b9/Lock.pdf?v=1748885916342"
     : puzzle.pdf;
@@ -693,7 +693,7 @@ function openPuzzle(puzzleId) {
       document.getElementById("unlock-section").classList.remove("hidden");
     }
 
-    // Show solve message button if puzzle has solve message
+    
     if (puzzle.solveMessage) {
       document.getElementById("solve-message-section").classList.remove("hidden");
     }
@@ -771,20 +771,20 @@ function renderHints(puzzle) {
     const hintList = document.getElementById('hint-list');
     hintList.innerHTML = '';
     
-    // Safely handle puzzles without hints
+    
     if (!puzzle.hints || !Array.isArray(puzzle.hints) || puzzle.hints.length === 0) {
         document.getElementById('hint-section').classList.add('hidden');
         return;
     }
     
-    // Show hint section only if there are hints
+    
     document.getElementById('hint-section').classList.remove('hidden');
     
-    // Initialize viewedHints array if it doesn't exist
+    
     teamProgress.viewedHints = teamProgress.viewedHints || [];
     
     puzzle.hints.forEach((hint, index) => {
-        // Skip invalid hints
+        
         if (!hint || typeof hint !== 'object' || !hint.problem || !hint.text) {
             console.warn('Invalid hint found at index', index, 'in puzzle', currentPuzzle);
             return;
@@ -813,7 +813,7 @@ async function revealHint(hintIndex) {
     try {
         const puzzle = puzzleData[currentPuzzle];
         
-        // Validate puzzle and hint data
+        
         if (!puzzle || !puzzle.hints || !Array.isArray(puzzle.hints)) {
             showNotification('Puzzle data not found', 'error');
             return;
@@ -830,7 +830,7 @@ async function revealHint(hintIndex) {
             return;
         }
         
-        // Initialize viewedHints if it doesn't exist
+        
         teamProgress.viewedHints = teamProgress.viewedHints || [];
         
         if (teamProgress.viewedHints.length >= 10) {
@@ -842,7 +842,7 @@ async function revealHint(hintIndex) {
             teamProgress.viewedHints.push(hint.text);
             await db.collection("progress").doc(currentUser.uid).set(teamProgress);
             
-            // Update UI
+            
             const hintItems = document.querySelectorAll('.hint-item');
             if (hintItems[hintIndex]) {
                 const btn = hintItems[hintIndex].querySelector('button');
@@ -878,7 +878,7 @@ async function submitAnswer() {
     if (checkAnswer(answer, puzzle.answers)) {
       await handleCorrectAnswer(puzzleId);
     } else {
-      // Check if they're out of guesses before counting this attempt
+      
       const currentGuesses = (teamProgress.guessCount || {})[puzzleId] || 0;
       const maxGuesses = puzzle.maxGuesses || 0;
       
@@ -924,7 +924,7 @@ async function submitMultipleAnswers() {
     if (correctCount >= requiredCorrect) {
       await handleCorrectAnswer(puzzleId);
     } else {
-      // Check if they're out of guesses before counting this attempt
+      
       const currentGuesses = (teamProgress.guessCount || {})[puzzleId] || 0;
       const maxGuesses = puzzle.maxGuesses || 0;
       
@@ -949,32 +949,32 @@ async function handleCorrectAnswer(puzzleId) {
     teamProgress.solvedPuzzles.push(puzzleId);
   }
 
-  // Handle puzzle unlocks
+  
   if (puzzle.unlocks && !teamProgress.unlockedRooms.includes(puzzle.unlocks)) {
     teamProgress.unlockedRooms.push(puzzle.unlocks);
     unlockedNewContent[puzzle.unlocks] = puzzleId;
   }
 
-  // Check and handle room clearance
+  
   const roomId = currentRoom;
   if (isRoomCleared(roomId) && !teamProgress.clearedRooms.includes(roomId)) {
     teamProgress.clearedRooms.push(roomId);
     
-    // Handle room clear unlock
+    
     const room = roomData[roomId];
     if (room.clearUnlock) {
-      // Fixed handling for clearUnlock format
-      const unlockType = room.clearUnlock.type; // 'room' or 'puzzle'
+      
+      const unlockType = room.clearUnlock.type; 
       const unlockId = room.clearUnlock.id;
       
       if (unlockType === 'room' && !teamProgress.unlockedRooms.includes(unlockId)) {
         teamProgress.unlockedRooms.push(unlockId);
         unlockedNewContent[unlockId] = roomId;
       }
-      // Add puzzle unlock logic if needed
+      
     }
 
-    // Find next uncleared room
+    
     const nextRoom = teamProgress.unlockedRooms.find(r => 
       !teamProgress.clearedRooms.includes(r)
     );
@@ -1041,7 +1041,7 @@ function scheduleDailyGuessReset() {
 function switchRoom(roomId) {
   currentRoom = roomId;
 
-  // Mark new unlocks as viewed
+  
   if (unlockedNewContent[roomId]) {
     const sourceId = unlockedNewContent[roomId];
     delete unlockedNewContent[roomId];

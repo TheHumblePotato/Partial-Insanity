@@ -22,6 +22,8 @@ let puzzleData = {};
 let roomData = {};
 let teamProgress = {};
 let unlockedNewContent = {};
+let answerBoxVisible = false;
+let hintBoxVisible = false;
 
 auth.onAuthStateChanged((user) => {
   if (user) {
@@ -600,8 +602,10 @@ function createPuzzleElement(puzzle, puzzleId) {
       ${coverImage ? 
         `<img src="${coverImage.url}" alt="Puzzle Preview" class="puzzle-cover">` : 
         puzzle.pdf ? 
-          `<iframe src="${puzzle.pdf}#view=fitH" width="100%" height="150px" style="border: none; pointer-events: none;"></iframe>` : 
-          puzzle.type === "lock" ? puzzle.description : "Puzzle"
+          `<iframe src="${puzzle.pdf}#view=fitH" width="100%" height="100%" style="border: none; pointer-events: none;"></iframe>` : 
+          puzzle.type === "lock" ? 
+            `<div style="padding: 20px; text-align: center;">${puzzle.description || 'Lock Puzzle'}</div>` : 
+            '<div style="padding: 20px; text-align: center;">Puzzle</div>'
       }
     </div>
     <div class="puzzle-title">${puzzle.name}</div>
@@ -635,12 +639,14 @@ function createFloatingPuzzleElement(puzzle, puzzleId) {
   const coverImage = getCoverImage(puzzle);
 
   element.innerHTML = `
-    ${coverImage ? 
-      `<img src="${coverImage.url}" alt="Puzzle Preview" class="floating-puzzle-cover">` : 
-      puzzle.type === "lock" ? puzzle.description : ""
-    }
-    <div style="font-size: 12px; font-weight: bold;">${puzzle.name}</div>
-    <div style="font-size: 10px;">${puzzle.type.toUpperCase()}</div>
+    <div class="floating-puzzle-cover-container">
+      ${coverImage ? 
+        `<img src="${coverImage.url}" alt="Puzzle Preview" class="floating-puzzle-cover">` : 
+        puzzle.type === "lock" ? puzzle.description : ""
+      }
+    </div>
+    <div style="font-size: 12px; font-weight: bold; text-align: center;">${puzzle.name}</div>
+    <div style="font-size: 10px; text-align: center;">${puzzle.type.toUpperCase()}</div>
   `;
 
   return element;
@@ -667,9 +673,7 @@ function openPuzzleFullscreen(puzzleId) {
   const puzzle = puzzleData[puzzleId];
   
   // Close any existing viewer
-  if (currentPuzzleViewer) {
-    currentPuzzleViewer.remove();
-  }
+  closePuzzleViewer();
   
   // Create main viewer container
   currentPuzzleViewer = document.createElement('div');
@@ -689,22 +693,27 @@ function openPuzzleFullscreen(puzzleId) {
   const exitBtn = document.createElement('button');
   exitBtn.className = 'btn btn-secondary';
   exitBtn.textContent = 'Exit';
-  exitBtn.onclick = () => {
-    currentPuzzleViewer.remove();
-    currentPuzzleViewer = null;
-    document.getElementById('answer-box')?.remove();
-    document.getElementById('hint-box')?.remove();
-  };
+  exitBtn.onclick = closePuzzleViewer;
   
   actions.appendChild(exitBtn);
   
-  // Add PDF button if available
+  // Always add PDF button if PDF exists
   if (puzzle.pdf) {
     const pdfBtn = document.createElement('button');
     pdfBtn.className = 'btn btn-primary';
     pdfBtn.textContent = 'View PDF';
     pdfBtn.onclick = () => window.open(puzzle.pdf, '_blank');
     actions.appendChild(pdfBtn);
+  }
+  
+  // Add Google Sheets button if available
+  const sheetMedia = puzzle.media?.find(m => m.type === 'sheet');
+  if (sheetMedia) {
+    const sheetBtn = document.createElement('button');
+    sheetBtn.className = 'btn btn-primary';
+    sheetBtn.textContent = 'Google Sheet';
+    sheetBtn.onclick = () => window.open(sheetMedia.url, '_blank');
+    actions.appendChild(sheetBtn);
   }
   
   // Add answer button if puzzle has answers
@@ -764,13 +773,40 @@ function openPuzzleFullscreen(puzzleId) {
   // Initialize answer and hint boxes (hidden by default)
   initAnswerBox(puzzle);
   initHintBox(puzzle);
+  
+  // Add click outside handler
+  document.addEventListener('click', handleClickOutside);
 }
 
-function getContentImages(puzzle) {
-  if (!puzzle.media) return [];
-  return puzzle.media
-    .filter(m => m.type === 'jpg-content')
-    .sort((a, b) => (a.order || 0) - (b.order || 0));
+function closePuzzleViewer() {
+  if (currentPuzzleViewer) {
+    currentPuzzleViewer.remove();
+    currentPuzzleViewer = null;
+  }
+  document.getElementById('answer-box')?.remove();
+  document.getElementById('hint-box')?.remove();
+  document.removeEventListener('click', handleClickOutside);
+}
+
+function handleClickOutside(event) {
+  const answerBox = document.getElementById('answer-box');
+  const hintBox = document.getElementById('hint-box');
+  
+  // Check if click is outside answer box
+  if (answerBoxVisible && answerBox && !answerBox.contains(event.target)) {
+    const answerBtn = document.querySelector('.puzzle-viewer-actions button[onclick="toggleAnswerBox()"]');
+    if (answerBtn && !answerBtn.contains(event.target)) {
+      toggleAnswerBox();
+    }
+  }
+  
+  // Check if click is outside hint box
+  if (hintBoxVisible && hintBox && !hintBox.contains(event.target)) {
+    const hintBtn = document.querySelector('.puzzle-viewer-actions button[onclick="toggleHintBox()"]');
+    if (hintBtn && !hintBtn.contains(event.target)) {
+      toggleHintBox();
+    }
+  }
 }
 
 function initAnswerBox(puzzle) {
@@ -778,7 +814,7 @@ function initAnswerBox(puzzle) {
   document.getElementById('answer-box')?.remove();
   
   const box = document.createElement('div');
-  box.className = 'floating-action-box answer-box hidden';
+  box.className = 'answer-box';
   box.id = 'answer-box';
   
   if (puzzle.type === 'lock') {
@@ -820,7 +856,7 @@ function initHintBox(puzzle) {
   if (!puzzle.hints?.length) return;
   
   const box = document.createElement('div');
-  box.className = 'floating-action-box hint-box hidden';
+  box.className = 'hint-box';
   box.id = 'hint-box';
   box.innerHTML = `
     <h3>Hints</h3>
@@ -834,27 +870,45 @@ function initHintBox(puzzle) {
 
 function toggleAnswerBox() {
   const box = document.getElementById('answer-box');
-  if (box) box.classList.toggle('hidden');
+  if (box) {
+    answerBoxVisible = !answerBoxVisible;
+    box.style.display = answerBoxVisible ? 'block' : 'none';
+    
+    // Hide hint box when showing answer box
+    if (answerBoxVisible) {
+      const hintBox = document.getElementById('hint-box');
+      if (hintBox) {
+        hintBox.style.display = 'none';
+        hintBoxVisible = false;
+      }
+    }
+  }
 }
 
 function toggleHintBox() {
   const box = document.getElementById('hint-box');
-  if (box) box.classList.toggle('hidden');
-}
-
-function closePuzzleViewer() {
-  if (currentPuzzleViewer) {
-    currentPuzzleViewer.remove();
-    currentPuzzleViewer = null;
+  if (box) {
+    hintBoxVisible = !hintBoxVisible;
+    box.style.display = hintBoxVisible ? 'block' : 'none';
+    
+    // Hide answer box when showing hint box
+    if (hintBoxVisible) {
+      const answerBox = document.getElementById('answer-box');
+      if (answerBox) {
+        answerBox.style.display = 'none';
+        answerBoxVisible = false;
+      }
+    }
   }
-  // Remove any floating boxes
-  const answerBox = document.getElementById('answer-floating-box');
-  const hintBox = document.getElementById('hint-floating-box');
-  if (answerBox) answerBox.remove();
-  if (hintBox) hintBox.remove();
 }
 
 
+function getContentImages(puzzle) {
+  if (!puzzle.media) return [];
+  return puzzle.media
+    .filter(m => m.type === 'jpg-content')
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
+}
 
 function updateGuessCounter(puzzleId, isMulti) {
   const guessCounts = teamProgress.guessCount || {};

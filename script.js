@@ -621,8 +621,8 @@ function createPuzzleElement(puzzle, puzzleId) {
       ${
         coverImage
           ? `<img src="${coverImage.url}" alt="Puzzle Preview" class="puzzle-cover">`
-          : puzzle.media.pdf
-          ? `<iframe src="${puzzle.media.pdf}#view=fitH" width="100%" height="100%" style="border: none; pointer-events: none;"></iframe>`
+          : puzzle.media.find((m) => m.type === "pdf")
+          ? `<iframe src="${puzzle.media.find((m) => m.type === "pdf")}#view=fitH" width="100%" height="100%" style="border: none; pointer-events: none;"></iframe>`
           : puzzle.type === "lock"
           ? `<div style="padding: 20px; text-align: center;">${
               puzzle.description || "Lock Puzzle"
@@ -719,11 +719,11 @@ function openPuzzleFullscreen(puzzleId) {
 
   actions.appendChild(exitBtn);
 
-  if (puzzle.media.pdf) {
+  if (puzzle.media.find((m) => m.type === "pdf")) {
     const pdfBtn = document.createElement("button");
     pdfBtn.className = "btn btn-primary";
     pdfBtn.textContent = "View PDF";
-    pdfBtn.onclick = () => window.open(puzzle.media.pdf, "_blank");
+    pdfBtn.onclick = () => window.open(puzzle.media.find((m) => m.type === "pdf"), "_blank");
     actions.appendChild(pdfBtn);
   }
 
@@ -770,7 +770,7 @@ function openPuzzleFullscreen(puzzleId) {
       imgEl.alt = puzzle.name;
       content.appendChild(imgEl);
     });
-  } else if (puzzle.media.pdf) {
+  } else if (puzzle.media.find((m) => m.type === "pdf")) {
     const iframe = document.createElement("iframe");
     iframe.src = `${puzzle.mediapdf}#view=fitH`;
     iframe.className = "pdf-iframe";
@@ -1016,9 +1016,6 @@ async function revealHint(hintIndex) {
           hintItems[hintIndex].appendChild(textDiv);
         }
       }
-
-      document.getElementById("hint-counter").textContent =
-        teamProgress.viewedHints.length;
     }
   } catch (error) {
     console.error("Error revealing hint:", error);

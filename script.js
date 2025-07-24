@@ -5,7 +5,7 @@ const firebaseConfig = {
   storageBucket: "partial-insanity.appspot.com",
   messagingSenderId: "746340494144",
   appId: "1:746340494144:web:86b5be3e2f5dfd2e92a8a5",
-  measurementId: "G-3Q11XF589Q"
+  measurementId: "G-3Q11XF589Q",
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -37,7 +37,7 @@ auth.onAuthStateChanged((user) => {
 
 function hashAnswer(answer) {
   return CryptoJS.SHA256(
-    answer.toString().toUpperCase() + SECURITY_SALT,
+    answer.toString().toUpperCase() + SECURITY_SALT
   ).toString();
 }
 
@@ -51,14 +51,21 @@ async function loadTeamData() {
     const teamDoc = await db.collection("teams").doc(currentUser.uid).get();
     if (teamDoc.exists) {
       currentTeam = teamDoc.data();
-      document.getElementById("team-info").textContent = `Team: ${currentTeam.name}`;
+      document.getElementById(
+        "team-info"
+      ).textContent = `Team: ${currentTeam.name}`;
 
-      const progressDoc = await db.collection("progress").doc(currentUser.uid).get();
+      const progressDoc = await db
+        .collection("progress")
+        .doc(currentUser.uid)
+        .get();
       if (progressDoc.exists) {
         teamProgress = progressDoc.data();
 
         teamProgress.solvedPuzzles = teamProgress.solvedPuzzles || [];
-        teamProgress.unlockedRooms = teamProgress.unlockedRooms || ["starting_room"];
+        teamProgress.unlockedRooms = teamProgress.unlockedRooms || [
+          "starting_room",
+        ];
         teamProgress.guessCount = teamProgress.guessCount || {};
         teamProgress.clearedRooms = teamProgress.clearedRooms || [];
         teamProgress.viewedUnlocks = teamProgress.viewedUnlocks || [];
@@ -66,7 +73,9 @@ async function loadTeamData() {
         const unlockedRooms = teamProgress.unlockedRooms;
         const clearedRooms = teamProgress.clearedRooms;
 
-        let firstUncleared = unlockedRooms.find(roomId => !clearedRooms.includes(roomId));
+        let firstUncleared = unlockedRooms.find(
+          (roomId) => !clearedRooms.includes(roomId)
+        );
 
         if (!firstUncleared && unlockedRooms.length > 0) {
           firstUncleared = unlockedRooms[unlockedRooms.length - 1];
@@ -76,18 +85,19 @@ async function loadTeamData() {
 
         if (teamProgress.currentRoom !== currentRoom) {
           teamProgress.currentRoom = currentRoom;
-          await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+          await db
+            .collection("progress")
+            .doc(currentUser.uid)
+            .set(teamProgress);
         }
-
       } else {
-
         teamProgress = {
           solvedPuzzles: [],
           currentRoom: "starting_room",
           unlockedRooms: ["starting_room"],
           guessCount: {},
           viewedUnlocks: [],
-          clearedRooms: []
+          clearedRooms: [],
         };
         await db.collection("progress").doc(currentUser.uid).set(teamProgress);
       }
@@ -111,40 +121,46 @@ function isRoomCleared(roomId) {
   const roomPuzzles = room.puzzles || [];
   const clearCondition = room.clearCondition;
 
-  const conditionType = typeof clearCondition === 'string' 
-    ? clearCondition 
-    : clearCondition.type;
+  const conditionType =
+    typeof clearCondition === "string" ? clearCondition : clearCondition.type;
 
-  switch(conditionType) {
+  switch (conditionType) {
     case "fullsolve":
-      return roomPuzzles.every(puzzleId => solvedPuzzles.includes(puzzleId));
+      return roomPuzzles.every((puzzleId) => solvedPuzzles.includes(puzzleId));
 
     case "partialsolve": {
-      const requiredCount = typeof clearCondition === 'object' 
-        ? (clearCondition.count || 1)
-        : (room.clearCount || 1);
-      return roomPuzzles.filter(puzzleId => solvedPuzzles.includes(puzzleId)).length >= requiredCount;
+      const requiredCount =
+        typeof clearCondition === "object"
+          ? clearCondition.count || 1
+          : room.clearCount || 1;
+      return (
+        roomPuzzles.filter((puzzleId) => solvedPuzzles.includes(puzzleId))
+          .length >= requiredCount
+      );
     }
 
     case "meta": {
-      const metaPuzzles = roomPuzzles.filter(puzzleId => 
-        puzzleData[puzzleId]?.type === "meta"
+      const metaPuzzles = roomPuzzles.filter(
+        (puzzleId) => puzzleData[puzzleId]?.type === "meta"
       );
-      return metaPuzzles.every(puzzleId => solvedPuzzles.includes(puzzleId));
+      return metaPuzzles.every((puzzleId) => solvedPuzzles.includes(puzzleId));
     }
 
     case "lock": {
-      const lockPuzzles = roomPuzzles.filter(puzzleId => 
-        puzzleData[puzzleId]?.type === "lock"
+      const lockPuzzles = roomPuzzles.filter(
+        (puzzleId) => puzzleData[puzzleId]?.type === "lock"
       );
-      return lockPuzzles.every(puzzleId => solvedPuzzles.includes(puzzleId));
+      return lockPuzzles.every((puzzleId) => solvedPuzzles.includes(puzzleId));
     }
 
     case "mustsolve": {
-      const mustSolvePuzzles = typeof clearCondition === 'object'
-        ? (clearCondition.puzzles || [])
-        : (room.mustSolvePuzzles || []);
-      return mustSolvePuzzles.every(puzzleId => solvedPuzzles.includes(puzzleId));
+      const mustSolvePuzzles =
+        typeof clearCondition === "object"
+          ? clearCondition.puzzles || []
+          : room.mustSolvePuzzles || [];
+      return mustSolvePuzzles.every((puzzleId) =>
+        solvedPuzzles.includes(puzzleId)
+      );
     }
 
     default:
@@ -178,31 +194,35 @@ function checkForNewlyUnlockedContent() {
 
   const unlockedRooms = teamProgress.unlockedRooms || ["starting_room"];
 
-  Object.keys(puzzleData).forEach(puzzleId => {
+  Object.keys(puzzleData).forEach((puzzleId) => {
     const puzzle = puzzleData[puzzleId];
-    if (puzzle.unlocks && 
-        teamProgress.solvedPuzzles.includes(puzzleId) &&
-        !teamProgress.viewedUnlocks?.includes(puzzle.unlocks)) {
+    if (
+      puzzle.unlocks &&
+      teamProgress.solvedPuzzles.includes(puzzleId) &&
+      !teamProgress.viewedUnlocks?.includes(puzzle.unlocks)
+    ) {
       unlockedNewContent[puzzle.unlocks] = puzzleId;
     }
   });
 
-  teamProgress.clearedRooms.forEach(roomId => {
+  teamProgress.clearedRooms.forEach((roomId) => {
     const room = roomData[roomId];
     if (room.clearUnlock) {
-      const unlockType = room.clearUnlock?.type || '';
-      const unlockId = room.clearUnlock?.id || '';
-      if (unlockType === 'room' && 
-          !teamProgress.viewedUnlocks?.includes(unlockId) &&
-          !teamProgress.unlockedRooms.includes(unlockId)) {
+      const unlockType = room.clearUnlock?.type || "";
+      const unlockId = room.clearUnlock?.id || "";
+      if (
+        unlockType === "room" &&
+        !teamProgress.viewedUnlocks?.includes(unlockId) &&
+        !teamProgress.unlockedRooms.includes(unlockId)
+      ) {
         unlockedNewContent[unlockId] = roomId;
       }
     }
   });
 }
 
-function showNotification(message, type = 'info', duration = 3000) {
-  const notification = document.createElement('div');
+function showNotification(message, type = "info", duration = 3000) {
+  const notification = document.createElement("div");
   notification.className = `notification notification-${type}`;
   notification.innerHTML = `
     <div class="notification-content">
@@ -228,14 +248,14 @@ function showSolveMessage(puzzleId) {
 }
 
 function showSolveMessageModal(message) {
-  const modal = document.getElementById('solve-message-modal');
-  const messageContent = document.getElementById('solve-message-content');
+  const modal = document.getElementById("solve-message-modal");
+  const messageContent = document.getElementById("solve-message-content");
   messageContent.textContent = message;
-  modal.style.display = 'block';
+  modal.style.display = "block";
 }
 
 function closeSolveMessageModal() {
-  document.getElementById('solve-message-modal').style.display = 'none';
+  document.getElementById("solve-message-modal").style.display = "none";
 }
 
 function showAuthPage() {
@@ -291,7 +311,7 @@ async function registerTeam() {
   try {
     const userCredential = await auth.createUserWithEmailAndPassword(
       email,
-      password,
+      password
     );
     const user = userCredential.user;
 
@@ -305,13 +325,13 @@ async function registerTeam() {
       .collection("progress")
       .doc(user.uid)
       .set({
-        startTime: Date.now(), 
+        startTime: Date.now(),
         solvedPuzzles: [],
         currentRoom: "starting_room",
         unlockedRooms: ["starting_room"],
         guessCount: {},
         viewedUnlocks: [],
-        clearedRooms: []
+        clearedRooms: [],
       });
 
     await auth.signInWithEmailAndPassword(email, password);
@@ -406,32 +426,37 @@ function renderCurrentRoom() {
 
   const room = roomData[currentRoom];
   document.getElementById("current-room-title").textContent = room.name;
-  document.getElementById("room-description").textContent = room.description || "";
+  document.getElementById("room-description").textContent =
+    room.description || "";
 
   const navGroup = document.querySelector("#room-nav-buttons .room-nav-group");
   navGroup.innerHTML = "";
 
-    const rulesBtn = document.createElement("button");
-    rulesBtn.className = "nav-btn";
-    rulesBtn.textContent = "Rules";
-    rulesBtn.onclick = showRulesPage;
-    navGroup.appendChild(rulesBtn);
+  const rulesBtn = document.createElement("button");
+  rulesBtn.className = "nav-btn";
+  rulesBtn.textContent = "Rules";
+  rulesBtn.onclick = showRulesPage;
+  navGroup.appendChild(rulesBtn);
 
   const clearedRooms = teamProgress.clearedRooms || [];
   const unlockedRooms = teamProgress.unlockedRooms || ["starting_room"];
 
   unlockedRooms
-    .filter(roomId => !clearedRooms.includes(roomId))
-    .forEach(roomId => {
-        const btn = createRoomButton(roomId);
-        navGroup.appendChild(btn);
+    .filter((roomId) => !clearedRooms.includes(roomId))
+    .forEach((roomId) => {
+      const btn = createRoomButton(roomId);
+      navGroup.appendChild(btn);
     });
 
-  const dropdown = document.querySelector(".cleared-rooms-dropdown .dropdown-content");
+  const dropdown = document.querySelector(
+    ".cleared-rooms-dropdown .dropdown-content"
+  );
   dropdown.innerHTML = clearedRooms
-    .map(roomId => {
-        const room = roomData[roomId];
-        return `<button onclick="switchRoom('${roomId}')">${room?.name || roomId}</button>`;
+    .map((roomId) => {
+      const room = roomData[roomId];
+      return `<button onclick="switchRoom('${roomId}')">${
+        room?.name || roomId
+      }</button>`;
     })
     .join("");
 
@@ -443,25 +468,26 @@ function renderCurrentRoom() {
 }
 
 function normalizeAnswer(answer) {
-    if (typeof answer !== 'string') {
-        answer = String(answer);
-    }
-    return answer.toLowerCase()
-        .replace(/[^a-z0-9]/g, '') 
-        .trim();
+  if (typeof answer !== "string") {
+    answer = String(answer);
+  }
+  return answer
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .trim();
 }
 
 function createRoomButton(roomId) {
-    const btn = document.createElement("button");
-    btn.className = "nav-btn";
-    btn.textContent = roomData[roomId]?.name || roomId;
-    if (roomId === currentRoom) {
-        btn.disabled = true;
-        btn.style.opacity = "0.7";
-    } else {
-        btn.onclick = () => switchRoom(roomId);
-    }
-    return btn;
+  const btn = document.createElement("button");
+  btn.className = "nav-btn";
+  btn.textContent = roomData[roomId]?.name || roomId;
+  if (roomId === currentRoom) {
+    btn.disabled = true;
+    btn.style.opacity = "0.7";
+  } else {
+    btn.onclick = () => switchRoom(roomId);
+  }
+  return btn;
 }
 
 function renderNormalRoom(room) {
@@ -482,7 +508,11 @@ function renderNormalRoom(room) {
   });
 
   Object.entries(unlockedNewContent).forEach(([unlockId, puzzleId]) => {
-    if (!room.puzzles.includes(unlockId) && puzzleData[unlockId] && !roomData[unlockId]) {
+    if (
+      !room.puzzles.includes(unlockId) &&
+      puzzleData[unlockId] &&
+      !roomData[unlockId]
+    ) {
       const puzzle = puzzleData[unlockId];
       const puzzleElement = createPuzzleElement(puzzle, unlockId);
       container.appendChild(puzzleElement);
@@ -499,8 +529,11 @@ function addFollowupPuzzles(puzzleId, container) {
   if (puzzle && puzzle.followup && solvedPuzzles.includes(puzzleId)) {
     const followupPuzzle = puzzleData[puzzle.followup];
     if (followupPuzzle) {
-      const followupElement = createPuzzleElement(followupPuzzle, puzzle.followup);
-      followupElement.classList.add('followup-puzzle');
+      const followupElement = createPuzzleElement(
+        followupPuzzle,
+        puzzle.followup
+      );
+      followupElement.classList.add("followup-puzzle");
       container.appendChild(followupElement);
 
       addFollowupPuzzles(puzzle.followup, container);
@@ -527,7 +560,11 @@ function renderImageRoom(room) {
   });
 
   Object.entries(unlockedNewContent).forEach(([unlockId, puzzleId]) => {
-    if (!room.puzzles.includes(unlockId) && puzzleData[unlockId] && !roomData[unlockId]) {
+    if (
+      !room.puzzles.includes(unlockId) &&
+      puzzleData[unlockId] &&
+      !roomData[unlockId]
+    ) {
       const puzzle = puzzleData[unlockId];
       const puzzleElement = createFloatingPuzzleElement(puzzle, unlockId);
       container.appendChild(puzzleElement);
@@ -544,15 +581,20 @@ function addFloatingFollowupPuzzles(puzzleId, container) {
   if (puzzle && puzzle.followup && solvedPuzzles.includes(puzzleId)) {
     const followupPuzzle = puzzleData[puzzle.followup];
     if (followupPuzzle) {
-      const followupElement = createFloatingPuzzleElement(followupPuzzle, puzzle.followup);
-      followupElement.classList.add('followup-puzzle');
+      const followupElement = createFloatingPuzzleElement(
+        followupPuzzle,
+        puzzle.followup
+      );
+      followupElement.classList.add("followup-puzzle");
 
-      const parentElement = container.querySelector(`[onclick="openPuzzle('${puzzleId}')"]`);
+      const parentElement = container.querySelector(
+        `[onclick="openPuzzle('${puzzleId}')"]`
+      );
       if (parentElement) {
         const parentLeft = parseInt(parentElement.style.left) || 100;
         const parentTop = parseInt(parentElement.style.top) || 100;
-        followupElement.style.left = (parentLeft + 20) + "px";
-        followupElement.style.top = (parentTop + 20) + "px";
+        followupElement.style.left = parentLeft + 20 + "px";
+        followupElement.style.top = parentTop + 20 + "px";
       }
       container.appendChild(followupElement);
 
@@ -576,13 +618,16 @@ function createPuzzleElement(puzzle, puzzleId) {
 
   element.innerHTML = `
     <div class="puzzle-preview">
-      ${coverImage ? 
-        `<img src="${coverImage.url}" alt="Puzzle Preview" class="puzzle-cover">` : 
-        puzzle.media.pdf ? 
-          `<iframe src="${puzzle.media.pdf}#view=fitH" width="100%" height="100%" style="border: none; pointer-events: none;"></iframe>` : 
-          puzzle.type === "lock" ? 
-            `<div style="padding: 20px; text-align: center;">${puzzle.description || 'Lock Puzzle'}</div>` : 
-            '<div style="padding: 20px; text-align: center;">Puzzle</div>'
+      ${
+        coverImage
+          ? `<img src="${coverImage.url}" alt="Puzzle Preview" class="puzzle-cover">`
+          : puzzle.media.pdf
+          ? `<iframe src="${puzzle.media.pdf}#view=fitH" width="100%" height="100%" style="border: none; pointer-events: none;"></iframe>`
+          : puzzle.type === "lock"
+          ? `<div style="padding: 20px; text-align: center;">${
+              puzzle.description || "Lock Puzzle"
+            }</div>`
+          : '<div style="padding: 20px; text-align: center;">Puzzle</div>'
       }
     </div>
     <div class="puzzle-title">${puzzle.name}</div>
@@ -616,12 +661,17 @@ function createFloatingPuzzleElement(puzzle, puzzleId) {
 
   element.innerHTML = `
     <div class="floating-puzzle-cover-container">
-      ${coverImage ? 
-        `<img src="${coverImage.url}" alt="Puzzle Preview" class="floating-puzzle-cover">` : 
-        puzzle.type === "lock" ? puzzle.description : ""
+      ${
+        coverImage
+          ? `<img src="${coverImage.url}" alt="Puzzle Preview" class="floating-puzzle-cover">`
+          : puzzle.type === "lock"
+          ? puzzle.description
+          : ""
       }
     </div>
-    <div style="font-size: 12px; font-weight: bold; text-align: center;">${puzzle.name}</div>
+    <div style="font-size: 12px; font-weight: bold; text-align: center;">${
+      puzzle.name
+    }</div>
     <div style="font-size: 10px; text-align: center;">${puzzle.type.toUpperCase()}</div>
   `;
 
@@ -631,10 +681,10 @@ function createFloatingPuzzleElement(puzzle, puzzleId) {
 function getCoverImage(puzzle) {
   if (!puzzle.media) return null;
 
-  const coverImage = puzzle.media.find(m => m.type === 'jpg-cover');
+  const coverImage = puzzle.media.find((m) => m.type === "jpg-cover");
   if (coverImage) return coverImage;
 
-  const contentImages = puzzle.media.filter(m => m.type === 'jpg-content');
+  const contentImages = puzzle.media.filter((m) => m.type === "jpg-content");
   if (contentImages.length > 0) return contentImages[0];
 
   return null;
@@ -649,57 +699,56 @@ function openPuzzleFullscreen(puzzleId) {
 
   closePuzzleViewer();
 
-  currentPuzzleViewer = document.createElement('div');
-  currentPuzzleViewer.className = 'puzzle-viewer';
+  currentPuzzleViewer = document.createElement("div");
+  currentPuzzleViewer.className = "puzzle-viewer";
   document.body.appendChild(currentPuzzleViewer);
 
-  const header = document.createElement('div');
-  header.className = 'puzzle-viewer-header';
+  const header = document.createElement("div");
+  header.className = "puzzle-viewer-header";
 
-  const title = document.createElement('h2');
+  const title = document.createElement("h2");
   title.textContent = puzzle.name;
 
-  const actions = document.createElement('div');
-  actions.className = 'puzzle-viewer-actions';
+  const actions = document.createElement("div");
+  actions.className = "puzzle-viewer-actions";
 
-  const exitBtn = document.createElement('button');
-  exitBtn.className = 'btn btn-secondary';
-  exitBtn.textContent = 'Exit';
+  const exitBtn = document.createElement("button");
+  exitBtn.className = "btn btn-secondary";
+  exitBtn.textContent = "Exit";
   exitBtn.onclick = closePuzzleViewer;
 
   actions.appendChild(exitBtn);
 
   if (puzzle.media.pdf) {
-    const pdfBtn = document.createElement('button');
-    pdfBtn.className = 'btn btn-primary';
-    pdfBtn.textContent = 'View PDF';
-    pdfBtn.onclick = () => window.open(puzzle.media.pdf, '_blank');
+    const pdfBtn = document.createElement("button");
+    pdfBtn.className = "btn btn-primary";
+    pdfBtn.textContent = "View PDF";
+    pdfBtn.onclick = () => window.open(puzzle.media.pdf, "_blank");
     actions.appendChild(pdfBtn);
   }
 
-  const sheetMedia = puzzle.media?.find(m => m.type === 'sheet');
+  const sheetMedia = puzzle.media?.find((m) => m.type === "sheet");
   if (sheetMedia) {
-    const sheetBtn = document.createElement('button');
-    sheetBtn.className = 'btn btn-primary';
-    sheetBtn.textContent = 'Google Sheet';
-    sheetBtn.onclick = () => window.open(sheetMedia.url, '_blank');
+    const sheetBtn = document.createElement("button");
+    sheetBtn.className = "btn btn-primary";
+    sheetBtn.textContent = "Google Sheet";
+    sheetBtn.onclick = () => window.open(sheetMedia.url, "_blank");
     actions.appendChild(sheetBtn);
   }
 
   if (!isSolved) {
-
     if (puzzle.hasAnswer) {
-      const answerBtn = document.createElement('button');
-      answerBtn.className = 'btn btn-primary';
-      answerBtn.textContent = 'Check Answer';
+      const answerBtn = document.createElement("button");
+      answerBtn.className = "btn btn-primary";
+      answerBtn.textContent = "Check Answer";
       answerBtn.onclick = toggleAnswerBox;
       actions.appendChild(answerBtn);
     }
 
     if (puzzle.hints?.length > 0) {
-      const hintBtn = document.createElement('button');
-      hintBtn.className = 'btn btn-primary';
-      hintBtn.textContent = 'Hints';
+      const hintBtn = document.createElement("button");
+      hintBtn.className = "btn btn-primary";
+      hintBtn.textContent = "Hints";
       hintBtn.onclick = toggleHintBox;
       actions.appendChild(hintBtn);
     }
@@ -709,30 +758,27 @@ function openPuzzleFullscreen(puzzleId) {
   header.appendChild(actions);
   currentPuzzleViewer.appendChild(header);
 
-  const content = document.createElement('div');
-  content.className = 'puzzle-viewer-content';
+  const content = document.createElement("div");
+  content.className = "puzzle-viewer-content";
 
   const contentImages = getContentImages(puzzle);
   if (contentImages.length > 0) {
-
-    contentImages.forEach(img => {
-      const imgEl = document.createElement('img');
-      imgEl.className = 'puzzle-viewer-image';
+    contentImages.forEach((img) => {
+      const imgEl = document.createElement("img");
+      imgEl.className = "puzzle-viewer-image";
       imgEl.src = img.url;
       imgEl.alt = puzzle.name;
       content.appendChild(imgEl);
     });
   } else if (puzzle.media.pdf) {
-
-    const iframe = document.createElement('iframe');
+    const iframe = document.createElement("iframe");
     iframe.src = `${puzzle.mediapdf}#view=fitH`;
-    iframe.className = 'pdf-iframe';
+    iframe.className = "pdf-iframe";
     content.appendChild(iframe);
   } else {
-
-    const desc = document.createElement('div');
-    desc.className = 'puzzle-description';
-    desc.textContent = puzzle.description || 'Puzzle content';
+    const desc = document.createElement("div");
+    desc.className = "puzzle-description";
+    desc.textContent = puzzle.description || "Puzzle content";
     content.appendChild(desc);
   }
 
@@ -743,7 +789,7 @@ function openPuzzleFullscreen(puzzleId) {
     if (puzzle.hints?.length > 0) initHintBox(puzzle);
   }
 
-  document.addEventListener('click', handleClickOutside);
+  document.addEventListener("click", handleClickOutside);
 }
 
 function closePuzzleViewer() {
@@ -751,24 +797,28 @@ function closePuzzleViewer() {
     currentPuzzleViewer.remove();
     currentPuzzleViewer = null;
   }
-  document.getElementById('answer-box')?.remove();
-  document.getElementById('hint-box')?.remove();
-  document.removeEventListener('click', handleClickOutside);
+  document.getElementById("answer-box")?.remove();
+  document.getElementById("hint-box")?.remove();
+  document.removeEventListener("click", handleClickOutside);
 }
 
 function handleClickOutside(event) {
-  const answerBox = document.getElementById('answer-box');
-  const hintBox = document.getElementById('hint-box');
+  const answerBox = document.getElementById("answer-box");
+  const hintBox = document.getElementById("hint-box");
 
   if (answerBoxVisible && answerBox && !answerBox.contains(event.target)) {
-    const answerBtn = document.querySelector('.puzzle-viewer-actions button[onclick="toggleAnswerBox()"]');
+    const answerBtn = document.querySelector(
+      '.puzzle-viewer-actions button[onclick="toggleAnswerBox()"]'
+    );
     if (answerBtn && !answerBtn.contains(event.target)) {
       toggleAnswerBox();
     }
   }
 
   if (hintBoxVisible && hintBox && !hintBox.contains(event.target)) {
-    const hintBtn = document.querySelector('.puzzle-viewer-actions button[onclick="toggleHintBox()"]');
+    const hintBtn = document.querySelector(
+      '.puzzle-viewer-actions button[onclick="toggleHintBox()"]'
+    );
     if (hintBtn && !hintBtn.contains(event.target)) {
       toggleHintBox();
     }
@@ -776,34 +826,40 @@ function handleClickOutside(event) {
 }
 
 function initAnswerBox(puzzle) {
-  document.getElementById('answer-box')?.remove();
+  document.getElementById("answer-box")?.remove();
 
-  const box = document.createElement('div');
-  box.className = 'answer-box';
-  box.id = 'answer-box';
+  const box = document.createElement("div");
+  box.className = "answer-box";
+  box.id = "answer-box";
 
-  if (puzzle.type === 'lock') {
+  if (puzzle.type === "lock") {
     box.innerHTML = `
       <h3>Submit Answers</h3>
-      <div id="lock-description">${puzzle.description || 'Submit the required answers to unlock'}</div>
+      <button class="close-box" onclick="toggleAnswerBox()">✖</button>
+      <div id="lock-description">${
+        puzzle.description || "Submit the required answers to unlock"
+      }</div>
       <div id="answer-inputs"></div>
       <button class="submit-btn" onclick="submitMultipleAnswers()">Submit</button>
       <div class="guess-counter" id="multi-guess-counter"></div>
     `;
 
-    const inputsContainer = box.querySelector('#answer-inputs');
+    const inputsContainer = box.querySelector("#answer-inputs");
     puzzle.answers.forEach((_, index) => {
-      const div = document.createElement('div');
-      div.className = 'lock-answer-row';
+      const div = document.createElement("div");
+      div.className = "lock-answer-row";
       div.innerHTML = `
         <label class="lock-answer-label">Answer ${index + 1}:</label>
-        <input type="text" id="answer-${index}" class="lock-answer-input" placeholder="Enter answer ${index + 1}">
+        <input type="text" id="answer-${index}" class="lock-answer-input" placeholder="Enter answer ${
+        index + 1
+      }">
       `;
       inputsContainer.appendChild(div);
     });
   } else {
     box.innerHTML = `
       <h3>Submit Answer</h3>
+      <button class="close-box" onclick="toggleAnswerBox()">✖</button>
       <input type="text" id="puzzle-answer" class="answer-input" placeholder="Enter your answer">
       <button class="submit-btn" onclick="submitAnswer()">Submit</button>
       <div class="guess-counter" id="guess-counter"></div>
@@ -811,19 +867,20 @@ function initAnswerBox(puzzle) {
   }
 
   document.body.appendChild(box);
-  updateGuessCounter(currentPuzzle, puzzle.type === 'lock');
+  updateGuessCounter(currentPuzzle, puzzle.type === "lock");
 }
 
 function initHintBox(puzzle) {
-  document.getElementById('hint-box')?.remove();
+  document.getElementById("hint-box")?.remove();
 
   if (!puzzle.hints?.length) return;
 
-  const box = document.createElement('div');
-  box.className = 'hint-box';
-  box.id = 'hint-box';
+  const box = document.createElement("div");
+  box.className = "hint-box";
+  box.id = "hint-box";
   box.innerHTML = `
     <h3>Hints</h3>
+    <button class="close-box" onclick="toggleHintBox()">✖</button>
     <div id="hint-list"></div>
   `;
 
@@ -832,15 +889,15 @@ function initHintBox(puzzle) {
 }
 
 function toggleAnswerBox() {
-  const box = document.getElementById('answer-box');
+  const box = document.getElementById("answer-box");
   if (box) {
     answerBoxVisible = !answerBoxVisible;
-    box.style.display = answerBoxVisible ? 'block' : 'none';
+    box.style.display = answerBoxVisible ? "block" : "none";
 
     if (answerBoxVisible) {
-      const hintBox = document.getElementById('hint-box');
+      const hintBox = document.getElementById("hint-box");
       if (hintBox) {
-        hintBox.style.display = 'none';
+        hintBox.style.display = "none";
         hintBoxVisible = false;
       }
     }
@@ -848,15 +905,15 @@ function toggleAnswerBox() {
 }
 
 function toggleHintBox() {
-  const box = document.getElementById('hint-box');
+  const box = document.getElementById("hint-box");
   if (box) {
     hintBoxVisible = !hintBoxVisible;
-    box.style.display = hintBoxVisible ? 'block' : 'none';
+    box.style.display = hintBoxVisible ? "block" : "none";
 
     if (hintBoxVisible) {
-      const answerBox = document.getElementById('answer-box');
+      const answerBox = document.getElementById("answer-box");
       if (answerBox) {
-        answerBox.style.display = 'none';
+        answerBox.style.display = "none";
         answerBoxVisible = false;
       }
     }
@@ -866,49 +923,39 @@ function toggleHintBox() {
 function getContentImages(puzzle) {
   if (!puzzle.media) return [];
   return puzzle.media
-    .filter(m => m.type === 'jpg-content')
+    .filter((m) => m.type === "jpg-content")
     .sort((a, b) => (a.order || 0) - (b.order || 0));
 }
 
-function updateGuessCounter(puzzleId, isMulti) {
-  const guessCounts = teamProgress.guessCount || {};
-  const counterElement = isMulti
-    ? document.getElementById("multi-guess-counter")
-    : document.getElementById("guess-counter");
-
-  const remaining =
-    (puzzleData[puzzleId].maxGuesses || 0) - (guessCounts[puzzleId] || 0);
-
-  if (puzzleData[puzzleId].maxGuesses > 0) {
-    counterElement.textContent = `Guesses remaining: ${remaining}`;
-  } else {
-    counterElement.textContent = "";
-  }
-}
-
 function renderHints(puzzle) {
-  const hintList = document.getElementById('hint-list');
+  const hintList = document.getElementById("hint-list");
   if (!hintList) return;
 
-  hintList.innerHTML = '';
+  hintList.innerHTML = "";
 
   teamProgress.viewedHints = teamProgress.viewedHints || [];
 
   puzzle.hints.forEach((hint, index) => {
-    if (!hint || typeof hint !== 'object' || !hint.problem || !hint.text) {
-      console.warn('Invalid hint found at index', index, 'in puzzle', currentPuzzle);
+    if (!hint || typeof hint !== "object" || !hint.problem || !hint.text) {
+      console.warn(
+        "Invalid hint found at index",
+        index,
+        "in puzzle",
+        currentPuzzle
+      );
       return;
     }
 
-    const hintItem = document.createElement('div');
-    hintItem.className = 'hint-item';
+    const hintItem = document.createElement("div");
+    hintItem.className = "hint-item";
     hintItem.innerHTML = `
       <div class="hint-problem">${hint.problem}</div>
-      ${teamProgress.viewedHints.includes(hint.text) ? 
-        `<div class="hint-text visible">${hint.text}</div>` :
-        `<button class="hint-reveal-btn" 
+      ${
+        teamProgress.viewedHints.includes(hint.text)
+          ? `<div class="hint-text visible">${hint.text}</div>`
+          : `<button class="hint-reveal-btn" 
             onclick="revealHint(${index})"
-            ${teamProgress.viewedHints.length >= 10 ? 'disabled' : ''}>
+            ${teamProgress.viewedHints.length >= 10 ? "disabled" : ""}>
             Show Hint
         </button>`
       }
@@ -916,70 +963,89 @@ function renderHints(puzzle) {
     hintList.appendChild(hintItem);
   });
 
-  const counter = document.getElementById('hint-counter');
+  const counter = document.getElementById("hint-counter");
   if (counter) {
     counter.textContent = teamProgress.viewedHints.length;
   }
 }
 
 async function revealHint(hintIndex) {
-    try {
-        const puzzle = puzzleData[currentPuzzle];
+  try {
+    const puzzle = puzzleData[currentPuzzle];
 
-        if (!puzzle || !puzzle.hints || !Array.isArray(puzzle.hints)) {
-            showNotification('Puzzle data not found', 'error');
-            return;
-        }
-
-        if (hintIndex === undefined || hintIndex === null || hintIndex < 0 || hintIndex >= puzzle.hints.length) {
-            showNotification('Invalid hint reference', 'error');
-            return;
-        }
-
-        const hint = puzzle.hints[hintIndex];
-        if (!hint || !hint.text) {
-            showNotification('Hint content not found', 'error');
-            return;
-        }
-
-        teamProgress.viewedHints = teamProgress.viewedHints || [];
-
-        if (teamProgress.viewedHints.length >= 10) {
-            showNotification('You have reached the maximum of 10 hints!', 'error');
-            return;
-        }
-
-        if (!teamProgress.viewedHints.includes(hint.text)) {
-            teamProgress.viewedHints.push(hint.text);
-            await db.collection("progress").doc(currentUser.uid).set(teamProgress);
-
-            const hintItems = document.querySelectorAll('.hint-item');
-            if (hintItems[hintIndex]) {
-                const btn = hintItems[hintIndex].querySelector('button');
-                if (btn) {
-                    btn.remove();
-                    const textDiv = document.createElement('div');
-                    textDiv.className = 'hint-text visible';
-                    textDiv.textContent = hint.text;
-                    hintItems[hintIndex].appendChild(textDiv);
-                }
-            }
-
-            document.getElementById('hint-counter').textContent = teamProgress.viewedHints.length;
-        }
-    } catch (error) {
-        console.error('Error revealing hint:', error);
-        showNotification('Error revealing hint', 'error');
+    if (!puzzle || !puzzle.hints || !Array.isArray(puzzle.hints)) {
+      showNotification("Puzzle data not found", "error");
+      return;
     }
+
+    if (
+      hintIndex === undefined ||
+      hintIndex === null ||
+      hintIndex < 0 ||
+      hintIndex >= puzzle.hints.length
+    ) {
+      showNotification("Invalid hint reference", "error");
+      return;
+    }
+
+    const hint = puzzle.hints[hintIndex];
+    if (!hint || !hint.text) {
+      showNotification("Hint content not found", "error");
+      return;
+    }
+
+    teamProgress.viewedHints = teamProgress.viewedHints || [];
+
+    if (teamProgress.viewedHints.length >= 10) {
+      showNotification("You have reached the maximum of 10 hints!", "error");
+      return;
+    }
+
+    if (!teamProgress.viewedHints.includes(hint.text)) {
+      teamProgress.viewedHints.push(hint.text);
+      await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+
+      const hintItems = document.querySelectorAll(".hint-item");
+      if (hintItems[hintIndex]) {
+        const btn = hintItems[hintIndex].querySelector("button");
+        if (btn) {
+          btn.remove();
+          const textDiv = document.createElement("div");
+          textDiv.className = "hint-text visible";
+          textDiv.textContent = hint.text;
+          hintItems[hintIndex].appendChild(textDiv);
+        }
+      }
+
+      document.getElementById("hint-counter").textContent =
+        teamProgress.viewedHints.length;
+    }
+  } catch (error) {
+    console.error("Error revealing hint:", error);
+    showNotification("Error revealing hint", "error");
+  }
 }
 
 async function submitAnswer() {
   const puzzleId = currentPuzzle;
   const puzzle = puzzleData[puzzleId];
-  const answer = normalizeAnswer(document.getElementById("puzzle-answer").value);
+  const answer = normalizeAnswer(
+    document.getElementById("puzzle-answer").value
+  );
 
   if (!answer) {
     showNotification("Please enter an answer", "error");
+    return;
+  }
+
+  const currentGuesses = (teamProgress.guessCount || {})[puzzleId] || 0;
+  const maxGuesses = puzzle.maxGuesses || 0;
+
+  if (maxGuesses > 0 && currentGuesses >= maxGuesses) {
+    showNotification(
+      "You're out of guesses for today. Try again tomorrow.",
+      "error"
+    );
     return;
   }
 
@@ -988,14 +1054,6 @@ async function submitAnswer() {
       await handleCorrectAnswer(puzzleId);
       closePuzzleViewer();
     } else {
-      const currentGuesses = (teamProgress.guessCount || {})[puzzleId] || 0;
-      const maxGuesses = puzzle.maxGuesses || 0;
-
-      if (maxGuesses > 0 && currentGuesses >= maxGuesses) {
-        showNotification("You're out of guesses for this puzzle", "error");
-        return;
-      }
-
       await handleIncorrectAnswer(puzzleId);
       showNotification("Incorrect answer. Please try again.", "error");
       updateGuessCounter(puzzleId, false);
@@ -1011,6 +1069,13 @@ async function submitMultipleAnswers() {
   const puzzle = puzzleData[puzzleId];
   const inputsContainer = document.getElementById("answer-inputs");
   const inputs = inputsContainer.getElementsByTagName("input");
+
+  const currentGuesses = (teamProgress.guessCount || {})[puzzleId] || 0;
+  const maxGuesses = puzzle.maxGuesses || 0;
+  if (maxGuesses > 0 && currentGuesses >= maxGuesses) {
+    showNotification("You're out of guesses for this puzzle", "error");
+    return;
+  }
 
   const answers = [];
   for (let i = 0; i < inputs.length; i++) {
@@ -1035,16 +1100,11 @@ async function submitMultipleAnswers() {
       await handleCorrectAnswer(puzzleId);
       closePuzzleViewer();
     } else {
-      const currentGuesses = (teamProgress.guessCount || {})[puzzleId] || 0;
-      const maxGuesses = puzzle.maxGuesses || 0;
-
-      if (maxGuesses > 0 && currentGuesses >= maxGuesses) {
-        showNotification("You're out of guesses for this puzzle", "error");
-        return;
-      }
-
       await handleIncorrectAnswer(puzzleId);
-      showNotification(`You got ${correctCount} out of ${requiredCorrect} required answers correct. Please try again.`, "error");
+      showNotification(
+        `You got ${correctCount} out of ${requiredCorrect} required answers correct. Please try again.`,
+        "error"
+      );
       updateGuessCounter(puzzleId, true);
     }
   } catch (error) {
@@ -1071,19 +1131,20 @@ async function handleCorrectAnswer(puzzleId) {
 
     const room = roomData[roomId];
     if (room.clearUnlock) {
-
-      const unlockType = room.clearUnlock.type; 
+      const unlockType = room.clearUnlock.type;
       const unlockId = room.clearUnlock.id;
 
-      if (unlockType === 'room' && !teamProgress.unlockedRooms.includes(unlockId)) {
+      if (
+        unlockType === "room" &&
+        !teamProgress.unlockedRooms.includes(unlockId)
+      ) {
         teamProgress.unlockedRooms.push(unlockId);
         unlockedNewContent[unlockId] = roomId;
       }
-
     }
 
-    const nextRoom = teamProgress.unlockedRooms.find(r => 
-      !teamProgress.clearedRooms.includes(r)
+    const nextRoom = teamProgress.unlockedRooms.find(
+      (r) => !teamProgress.clearedRooms.includes(r)
     );
     if (nextRoom) {
       teamProgress.currentRoom = nextRoom;
@@ -1112,8 +1173,59 @@ async function handleIncorrectAnswer(puzzleId) {
   updateGuessCounter(puzzleId, puzzleData[puzzleId].type === "lock");
 
   if (teamProgress.guessCount[puzzleId] >= puzzleData[puzzleId].maxGuesses) {
-    showNotification("You have used all your guesses for this puzzle.", "error");
+    showNotification(
+      "You have used all your guesses for this puzzle.",
+      "error"
+    );
     closePuzzleViewer();
+  }
+}
+
+function updateGuessCounter(puzzleId, isMulti) {
+  const guessCounts = teamProgress.guessCount || {};
+  const counterElement = isMulti
+    ? document.getElementById("multi-guess-counter")
+    : document.getElementById("guess-counter");
+
+  const remaining =
+    (puzzleData[puzzleId].maxGuesses || 0) - (guessCounts[puzzleId] || 0);
+
+  if (puzzleData[puzzleId].maxGuesses > 0) {
+    if (remaining <= 0) {
+      if (isMulti) {
+        document.querySelectorAll(".lock-answer-input").forEach((input) => {
+          input.disabled = true;
+        });
+      } else {
+        document.getElementById("puzzle-answer").disabled = true;
+      }
+      const now = new Date();
+      const pstOffset = -7 * 60 * 60 * 1000;
+      const pdtOffset = -8 * 60 * 60 * 1000;
+      const isDST =
+        new Date().getTimezoneOffset() <
+        Math.abs(new Date(2023, 0).getTimezoneOffset());
+      const offset = isDST ? pdtOffset : pstOffset;
+
+      const resetTime = new Date(now.getTime() + offset);
+      resetTime.setHours(12, 0, 0, 0);
+
+      if (resetTime.getTime() < now.getTime()) {
+        resetTime.setDate(resetTime.getDate() + 1);
+      }
+
+      const timeUntilReset = resetTime.getTime() - now.getTime();
+      const hours = Math.floor(timeUntilReset / (1000 * 60 * 60));
+      const minutes = Math.floor(
+        (timeUntilReset % (1000 * 60 * 60)) / (1000 * 60)
+      );
+
+      counterElement.innerHTML = `Guesses refresh in: ${hours}h ${minutes}m`;
+    } else {
+      counterElement.textContent = `Guesses remaining: ${remaining}`;
+    }
+  } else {
+    counterElement.textContent = "";
   }
 }
 

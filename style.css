@@ -209,6 +209,7 @@ body {
   border: 1px solid #ddd;
   border-radius: 5px;
   margin-right: 10px;
+  margin-top: 10px;
 }
 
 .lock-answer-row {
@@ -1138,7 +1139,7 @@ body {
 /* Style the close button */
 .close-box {
   position: absolute;
-  top: 20x; /* Adjust as needed */
+  top: 20px; /* Adjust as needed */
   right: 20px; /* Adjust as needed */
   background: #f0f0f0;
   border: none;

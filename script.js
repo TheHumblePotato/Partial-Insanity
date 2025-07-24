@@ -1171,10 +1171,8 @@ async function handleIncorrectAnswer(puzzleId) {
 
   if (teamProgress.guessCount[puzzleId] >= puzzleData[puzzleId].maxGuesses) {
     showNotification(
-      "You have used all your guesses for this puzzle.",
-      "error"
+      "You have used all your guesses for this puzzle."
     );
-    closePuzzleViewer();
   }
 }
 

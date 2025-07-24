@@ -19,8 +19,6 @@ let currentEditingRoom = null;
 let selectedTeam = null;
 let teamDiagram = null;
 const SECURITY_SALT = "partial-insanity-2025-salt";
-const SECURITY_MESSAGE =
-  "[Sorry, answers cannot be loaded for security reasons]";
 const ADMIN_COLLECTION = "adminCredentials";
 let lastDataHash = null;
 let autoRefreshInterval = null;
@@ -1125,7 +1123,7 @@ function fillPuzzleEditor(puzzle) {
     puzzle.hasAnswer !== false;
 
   document.getElementById("puzzleAnswers").value = puzzle.answers
-    ? SECURITY_MESSAGE
+    ? puzzle.answers.map((a) => decryptAnswer(a)).join(", ")
     : "";
 
   document.getElementById("puzzleMaxGuesses").value = puzzle.maxGuesses || 3;
@@ -1313,14 +1311,11 @@ async function savePuzzle() {
 
   if (hasAnswer) {
     const answersText = document.getElementById("puzzleAnswers").value.trim();
-    if (answersText !== SECURITY_MESSAGE) {
+    if (hasAnswer) {
+      const answersText = document.getElementById("puzzleAnswers").value.trim();
       puzzle.answers = answersText
-        ? answersText
-            .split(",")
-            .map((a) => CryptoJS.SHA256(a.trim() + SECURITY_SALT).toString())
+        ? answersText.split(",").map((a) => encryptAnswer(a.trim()))
         : [];
-    } else if (currentPuzzle.answers) {
-      puzzle.answers = currentPuzzle.answers;
     }
 
     puzzle.maxGuesses =
@@ -1885,5 +1880,20 @@ function stopAutoRefresh() {
     clearInterval(autoRefreshInterval);
     autoRefreshInterval = null;
     console.log("Auto-refresh stopped");
+  }
+}
+
+function encryptAnswer(answer) {
+  return CryptoJS.AES.encrypt(answer, SECURITY_SALT).toString();
+}
+
+function decryptAnswer(encryptedAnswer) {
+  try {
+    return CryptoJS.AES.decrypt(encryptedAnswer, SECURITY_SALT).toString(
+      CryptoJS.enc.Utf8
+    );
+  } catch (e) {
+    console.error("Decryption error:", e);
+    return "";
   }
 }

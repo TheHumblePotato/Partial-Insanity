@@ -578,8 +578,8 @@ function createPuzzleElement(puzzle, puzzleId) {
     <div class="puzzle-preview">
       ${coverImage ? 
         `<img src="${coverImage.url}" alt="Puzzle Preview" class="puzzle-cover">` : 
-        puzzle.pdf ? 
-          `<iframe src="${puzzle.pdf}#view=fitH" width="100%" height="100%" style="border: none; pointer-events: none;"></iframe>` : 
+        puzzle.media.pdf ? 
+          `<iframe src="${puzzle.media.pdf}#view=fitH" width="100%" height="100%" style="border: none; pointer-events: none;"></iframe>` : 
           puzzle.type === "lock" ? 
             `<div style="padding: 20px; text-align: center;">${puzzle.description || 'Lock Puzzle'}</div>` : 
             '<div style="padding: 20px; text-align: center;">Puzzle</div>'
@@ -669,11 +669,11 @@ function openPuzzleFullscreen(puzzleId) {
 
   actions.appendChild(exitBtn);
 
-  if (puzzle.pdf) {
+  if (puzzle.media.pdf) {
     const pdfBtn = document.createElement('button');
     pdfBtn.className = 'btn btn-primary';
     pdfBtn.textContent = 'View PDF';
-    pdfBtn.onclick = () => window.open(puzzle.pdf, '_blank');
+    pdfBtn.onclick = () => window.open(puzzle.media.pdf, '_blank');
     actions.appendChild(pdfBtn);
   }
 
@@ -722,10 +722,10 @@ function openPuzzleFullscreen(puzzleId) {
       imgEl.alt = puzzle.name;
       content.appendChild(imgEl);
     });
-  } else if (puzzle.pdf) {
+  } else if (puzzle.media.pdf) {
 
     const iframe = document.createElement('iframe');
-    iframe.src = `${puzzle.pdf}#view=fitH`;
+    iframe.src = `${puzzle.mediapdf}#view=fitH`;
     iframe.className = 'pdf-iframe';
     content.appendChild(iframe);
   } else {

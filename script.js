@@ -723,7 +723,7 @@ function openPuzzleFullscreen(puzzleId) {
     const pdfBtn = document.createElement("button");
     pdfBtn.className = "btn btn-primary";
     pdfBtn.textContent = "View PDF";
-    pdfBtn.onclick = () => window.open(puzzle.media.find((m) => m.type === "pdf"), "_blank");
+    pdfBtn.onclick = () => window.open(puzzle.media.find((m) => m.type === "pdf").url, "_blank");
     actions.appendChild(pdfBtn);
   }
 

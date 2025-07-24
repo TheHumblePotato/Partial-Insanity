@@ -578,8 +578,8 @@ function createPuzzleElement(puzzle, puzzleId) {
     <div class="puzzle-preview">
       ${coverImage ? 
         `<img src="${coverImage.url}" alt="Puzzle Preview" class="puzzle-cover">` : 
-        puzzle.pdf ? 
-          `<iframe src="${puzzle.pdf}#view=fitH" width="100%" height="100%" style="border: none; pointer-events: none;"></iframe>` : 
+        puzzle.media.pdf ? 
+          `<iframe src="${puzzle.media.pdf}#view=fitH" width="100%" height="100%" style="border: none; pointer-events: none;"></iframe>` : 
           puzzle.type === "lock" ? 
             `<div style="padding: 20px; text-align: center;">${puzzle.description || 'Lock Puzzle'}</div>` : 
             '<div style="padding: 20px; text-align: center;">Puzzle</div>'
@@ -669,11 +669,11 @@ function openPuzzleFullscreen(puzzleId) {
 
   actions.appendChild(exitBtn);
 
-  if (puzzle.pdf) {
+  if (puzzle.media.pdf) {
     const pdfBtn = document.createElement('button');
     pdfBtn.className = 'btn btn-primary';
     pdfBtn.textContent = 'View PDF';
-    pdfBtn.onclick = () => window.open(puzzle.pdf, '_blank');
+    pdfBtn.onclick = () => window.open(puzzle.media.pdf, '_blank');
     actions.appendChild(pdfBtn);
   }
 
@@ -722,10 +722,10 @@ function openPuzzleFullscreen(puzzleId) {
       imgEl.alt = puzzle.name;
       content.appendChild(imgEl);
     });
-  } else if (puzzle.pdf) {
+  } else if (puzzle.media.pdf) {
 
     const iframe = document.createElement('iframe');
-    iframe.src = `${puzzle.pdf}#view=fitH`;
+    iframe.src = `${puzzle.media.pdf}#view=fitH`;
     iframe.className = 'pdf-iframe';
     content.appendChild(iframe);
   } else {
@@ -782,12 +782,20 @@ function initAnswerBox(puzzle) {
   box.className = 'answer-box';
   box.id = 'answer-box';
 
+  // Check if out of guesses
+  const currentGuesses = (teamProgress.guessCount || {})[currentPuzzle] || 0;
+  const maxGuesses = puzzle.maxGuesses || 0;
+  const outOfGuesses = maxGuesses > 0 && currentGuesses >= maxGuesses;
+
   if (puzzle.type === 'lock') {
     box.innerHTML = `
-      <h3>Submit Answers</h3>
+      <div class="answer-box-header">
+        <h3>Submit Answers</h3>
+        <button class="answer-box-close" onclick="toggleAnswerBox()">✖</button>
+      </div>
       <div id="lock-description">${puzzle.description || 'Submit the required answers to unlock'}</div>
       <div id="answer-inputs"></div>
-      <button class="submit-btn" onclick="submitMultipleAnswers()">Submit</button>
+      <button class="submit-btn" onclick="submitMultipleAnswers()" ${outOfGuesses ? 'disabled' : ''}>Submit</button>
       <div class="guess-counter" id="multi-guess-counter"></div>
     `;
 
@@ -797,15 +805,18 @@ function initAnswerBox(puzzle) {
       div.className = 'lock-answer-row';
       div.innerHTML = `
         <label class="lock-answer-label">Answer ${index + 1}:</label>
-        <input type="text" id="answer-${index}" class="lock-answer-input" placeholder="Enter answer ${index + 1}">
+        <input type="text" id="answer-${index}" class="lock-answer-input" placeholder="Enter answer ${index + 1}" ${outOfGuesses ? 'disabled' : ''}>
       `;
       inputsContainer.appendChild(div);
     });
   } else {
     box.innerHTML = `
-      <h3>Submit Answer</h3>
-      <input type="text" id="puzzle-answer" class="answer-input" placeholder="Enter your answer">
-      <button class="submit-btn" onclick="submitAnswer()">Submit</button>
+      <div class="answer-box-header">
+        <h3>Submit Answer</h3>
+        <button class="answer-box-close" onclick="toggleAnswerBox()">✖</button>
+      </div>
+      <input type="text" id="puzzle-answer" class="answer-input" placeholder="Enter your answer" ${outOfGuesses ? 'disabled' : ''}>
+      <button class="submit-btn" onclick="submitAnswer()" ${outOfGuesses ? 'disabled' : ''}>Submit</button>
       <div class="guess-counter" id="guess-counter"></div>
     `;
   }
@@ -824,6 +835,7 @@ function initHintBox(puzzle) {
   box.id = 'hint-box';
   box.innerHTML = `
     <h3>Hints</h3>
+    <button class="hint-box-close" onclick="toggleHintBox()">✖</button>
     <div id="hint-list"></div>
   `;
 
@@ -983,22 +995,32 @@ async function submitAnswer() {
     return;
   }
 
+  // Check if out of guesses FIRST
+  const currentGuesses = (teamProgress.guessCount || {})[puzzleId] || 0;
+  const maxGuesses = puzzle.maxGuesses || 0;
+
+  if (maxGuesses > 0 && currentGuesses >= maxGuesses) {
+    showNotification("You're out of guesses for this puzzle", "error");
+    return;
+  }
+
   try {
     if (checkAnswer(answer, puzzle.answers)) {
       await handleCorrectAnswer(puzzleId);
       closePuzzleViewer();
     } else {
-      const currentGuesses = (teamProgress.guessCount || {})[puzzleId] || 0;
-      const maxGuesses = puzzle.maxGuesses || 0;
-
-      if (maxGuesses > 0 && currentGuesses >= maxGuesses) {
-        showNotification("You're out of guesses for this puzzle", "error");
-        return;
-      }
-
       await handleIncorrectAnswer(puzzleId);
       showNotification("Incorrect answer. Please try again.", "error");
       updateGuessCounter(puzzleId, false);
+      
+      // Re-render answer box if now out of guesses
+      const newGuesses = (teamProgress.guessCount || {})[puzzleId] || 0;
+      if (maxGuesses > 0 && newGuesses >= maxGuesses) {
+        initAnswerBox(puzzle);
+        if (answerBoxVisible) {
+          document.getElementById('answer-box').style.display = 'block';
+        }
+      }
     }
   } catch (error) {
     console.error("Error submitting answer:", error);
@@ -1022,6 +1044,15 @@ async function submitMultipleAnswers() {
     return;
   }
 
+  // Check if out of guesses FIRST
+  const currentGuesses = (teamProgress.guessCount || {})[puzzleId] || 0;
+  const maxGuesses = puzzle.maxGuesses || 0;
+
+  if (maxGuesses > 0 && currentGuesses >= maxGuesses) {
+    showNotification("You're out of guesses for this puzzle", "error");
+    return;
+  }
+
   try {
     let correctCount = 0;
     for (let i = 0; i < answers.length; i++) {
@@ -1035,17 +1066,18 @@ async function submitMultipleAnswers() {
       await handleCorrectAnswer(puzzleId);
       closePuzzleViewer();
     } else {
-      const currentGuesses = (teamProgress.guessCount || {})[puzzleId] || 0;
-      const maxGuesses = puzzle.maxGuesses || 0;
-
-      if (maxGuesses > 0 && currentGuesses >= maxGuesses) {
-        showNotification("You're out of guesses for this puzzle", "error");
-        return;
-      }
-
       await handleIncorrectAnswer(puzzleId);
       showNotification(`You got ${correctCount} out of ${requiredCorrect} required answers correct. Please try again.`, "error");
       updateGuessCounter(puzzleId, true);
+      
+      // Re-render answer box if now out of guesses
+      const newGuesses = (teamProgress.guessCount || {})[puzzleId] || 0;
+      if (maxGuesses > 0 && newGuesses >= maxGuesses) {
+        initAnswerBox(puzzle);
+        if (answerBoxVisible) {
+          document.getElementById('answer-box').style.display = 'block';
+        }
+      }
     }
   } catch (error) {
     console.error("Error submitting answers:", error);
@@ -1111,9 +1143,11 @@ async function handleIncorrectAnswer(puzzleId) {
 
   updateGuessCounter(puzzleId, puzzleData[puzzleId].type === "lock");
 
-  if (teamProgress.guessCount[puzzleId] >= puzzleData[puzzleId].maxGuesses) {
+  // Only show the "used all guesses" message if they just ran out
+  const maxGuesses = puzzleData[puzzleId].maxGuesses || 0;
+  if (maxGuesses > 0 && teamProgress.guessCount[puzzleId] >= maxGuesses) {
     showNotification("You have used all your guesses for this puzzle.", "error");
-    closePuzzleViewer();
+    // Don't close the viewer, just disable the inputs
   }
 }
 

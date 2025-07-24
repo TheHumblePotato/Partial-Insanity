@@ -967,16 +967,31 @@ body {
 }
 
 
-.puzzle-viewer {
-  position: fixed;
-  top: 0;
-  left: 0;
+.puzzle-viewer-image {
+  max-width: 100%;
+  height: auto;
+  width: auto;
+  object-fit: contain;
+  margin: 20px auto;
+  display: block;
+}
+
+.pdf-iframe {
+  width: 100%;
+  height: calc(100vh - 120px); /* More space for PDF */
+  border: none;
+}
+
+.puzzle-cover {
   width: 100%;
   height: 100%;
-  background: white;
-  z-index: 1000;
-  overflow-y: auto;
-  padding-top: 60px; /* Space for fixed header */
+  object-fit: cover; /* Fill the container horizontally */
+}
+
+.floating-puzzle-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Fill the container horizontally */
 }
 
 .puzzle-viewer-header {
@@ -1064,26 +1079,7 @@ body {
   display: block;
 }
 
-.pdf-iframe {
-  width: 100%;
-  height: calc(100vh - 200px);
-  border: none;
-}
-
 /* Update cover image styles */
-.puzzle-cover {
-  width: 100%;
-  height: auto;
-  max-height: 100%;
-  object-fit: contain;
-}
-
-.floating-puzzle-cover {
-  width: 100%;
-  height: auto;
-  max-height: 100%;
-  object-fit: contain;
-}
 
 /* Make puzzle preview containers consistent */
 .puzzle-preview {
@@ -1135,4 +1131,50 @@ body {
   align-items: center;
   justify-content: space-between;
   overflow: hidden;
+}
+
+.answer-box-header,
+.hint-box-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.answer-box-close,
+.hint-box-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.answer-box-close:hover,
+.hint-box-close:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+input:disabled {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+button:disabled {
+  background-color: #6c757d !important;
+  cursor: not-allowed;
+  opacity: 0.6;
 }

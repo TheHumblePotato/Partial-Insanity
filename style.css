@@ -999,17 +999,6 @@ body {
   padding: 20px;
 }
 
-.puzzle-viewer-image {
-  max-width: calc(100% - 40px); /* Account for padding */
-  width: 100%;
-  height: auto;
-  max-height: 80vh;
-  object-fit: contain;
-  margin: 10px auto;
-  display: block;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
 /* Consistent puzzle preview sizes */
 .puzzle-preview {
   width: 100%;
@@ -1022,11 +1011,6 @@ body {
   margin-bottom: 10px;
 }
 
-.puzzle-cover {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
 
 .floating-puzzle-cover {
   width: 100%;
@@ -1037,31 +1021,93 @@ body {
 /* Updated Floating Action Boxes */
 .answer-box {
   position: fixed;
-  top: 70px;
-  right: 20px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   background: white;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
   z-index: 1002;
-  max-width: 400px;
-  display: none; /* Hidden by default */
+  width: 80%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  display: none;
 }
 
 .hint-box {
   position: fixed;
-  top: 70px;
-  left: 20px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   background: white;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
   z-index: 1002;
-  max-width: 400px;
-  max-height: calc(100vh - 90px);
+  width: 80%;
+  max-width: 600px;
+  max-height: 80vh;
   overflow-y: auto;
-  display: none; /* Hidden by default */
+  display: none;
 }
+
+/* Update puzzle viewer styles */
+.puzzle-viewer-image {
+  max-width: 100%;
+  max-height: calc(100vh - 200px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  margin: 20px auto;
+  display: block;
+}
+
+.pdf-iframe {
+  width: 100%;
+  height: calc(100vh - 200px);
+  border: none;
+}
+
+/* Update cover image styles */
+.puzzle-cover {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.floating-puzzle-cover {
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Make puzzle preview containers consistent */
+.puzzle-preview {
+  width: 100%;
+  height: 180px;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.floating-puzzle-cover-container {
+  width: 100%;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  margin-bottom: 5px;
+  overflow: hidden;
+}
+
 
 /* Click outside to close behavior */
 .overlay {
@@ -1089,21 +1135,4 @@ body {
   align-items: center;
   justify-content: space-between;
   overflow: hidden;
-}
-
-.floating-puzzle-cover-container {
-  width: 100%;
-  height: 70px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f0f0f0;
-  margin-bottom: 5px;
-  overflow: hidden;
-}
-
-.floating-puzzle-cover {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
 }

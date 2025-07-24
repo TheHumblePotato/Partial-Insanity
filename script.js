@@ -671,6 +671,7 @@ let currentPuzzleViewer = null;
 function openPuzzleFullscreen(puzzleId) {
   currentPuzzle = puzzleId;
   const puzzle = puzzleData[puzzleId];
+  const isSolved = (teamProgress.solvedPuzzles || []).includes(puzzleId);
   
   // Close any existing viewer
   closePuzzleViewer();
@@ -716,22 +717,25 @@ function openPuzzleFullscreen(puzzleId) {
     actions.appendChild(sheetBtn);
   }
   
-  // Add answer button if puzzle has answers
-  if (puzzle.hasAnswer) {
-    const answerBtn = document.createElement('button');
-    answerBtn.className = 'btn btn-primary';
-    answerBtn.textContent = 'Check Answer';
-    answerBtn.onclick = toggleAnswerBox;
-    actions.appendChild(answerBtn);
-  }
-  
-  // Add hint button if puzzle has hints
-  if (puzzle.hints?.length > 0) {
-    const hintBtn = document.createElement('button');
-    hintBtn.className = 'btn btn-primary';
-    hintBtn.textContent = 'Hints';
-    hintBtn.onclick = toggleHintBox;
-    actions.appendChild(hintBtn);
+  // Only add answer and hint buttons if puzzle isn't solved
+  if (!isSolved) {
+    // Add answer button if puzzle has answers
+    if (puzzle.hasAnswer) {
+      const answerBtn = document.createElement('button');
+      answerBtn.className = 'btn btn-primary';
+      answerBtn.textContent = 'Check Answer';
+      answerBtn.onclick = toggleAnswerBox;
+      actions.appendChild(answerBtn);
+    }
+    
+    // Add hint button if puzzle has hints
+    if (puzzle.hints?.length > 0) {
+      const hintBtn = document.createElement('button');
+      hintBtn.className = 'btn btn-primary';
+      hintBtn.textContent = 'Hints';
+      hintBtn.onclick = toggleHintBox;
+      actions.appendChild(hintBtn);
+    }
   }
   
   header.appendChild(title);
@@ -757,13 +761,12 @@ function openPuzzleFullscreen(puzzleId) {
     // Fallback to PDF if no content images
     const iframe = document.createElement('iframe');
     iframe.src = `${puzzle.pdf}#view=fitH`;
-    iframe.style.width = '100%';
-    iframe.style.height = '80vh';
-    iframe.style.border = 'none';
+    iframe.className = 'pdf-iframe';
     content.appendChild(iframe);
   } else {
     // Fallback to description
     const desc = document.createElement('div');
+    desc.className = 'puzzle-description';
     desc.textContent = puzzle.description || 'Puzzle content';
     content.appendChild(desc);
   }
@@ -771,8 +774,10 @@ function openPuzzleFullscreen(puzzleId) {
   currentPuzzleViewer.appendChild(content);
   
   // Initialize answer and hint boxes (hidden by default)
-  initAnswerBox(puzzle);
-  initHintBox(puzzle);
+  if (!isSolved) {
+    if (puzzle.hasAnswer) initAnswerBox(puzzle);
+    if (puzzle.hints?.length > 0) initHintBox(puzzle);
+  }
   
   // Add click outside handler
   document.addEventListener('click', handleClickOutside);
@@ -810,7 +815,6 @@ function handleClickOutside(event) {
 }
 
 function initAnswerBox(puzzle) {
-  // Remove existing box if any
   document.getElementById('answer-box')?.remove();
   
   const box = document.createElement('div');
@@ -822,7 +826,7 @@ function initAnswerBox(puzzle) {
       <h3>Submit Answers</h3>
       <div id="lock-description">${puzzle.description || 'Submit the required answers to unlock'}</div>
       <div id="answer-inputs"></div>
-      <button class="btn btn-primary" onclick="submitMultipleAnswers()">Submit</button>
+      <button class="submit-btn" onclick="submitMultipleAnswers()">Submit</button>
       <div class="guess-counter" id="multi-guess-counter"></div>
     `;
     
@@ -840,7 +844,7 @@ function initAnswerBox(puzzle) {
     box.innerHTML = `
       <h3>Submit Answer</h3>
       <input type="text" id="puzzle-answer" class="answer-input" placeholder="Enter your answer">
-      <button class="btn btn-primary" onclick="submitAnswer()">Submit</button>
+      <button class="submit-btn" onclick="submitAnswer()">Submit</button>
       <div class="guess-counter" id="guess-counter"></div>
     `;
   }
@@ -850,7 +854,6 @@ function initAnswerBox(puzzle) {
 }
 
 function initHintBox(puzzle) {
-  // Remove existing box if any
   document.getElementById('hint-box')?.remove();
   
   if (!puzzle.hints?.length) return;
@@ -860,7 +863,7 @@ function initHintBox(puzzle) {
   box.id = 'hint-box';
   box.innerHTML = `
     <h3>Hints</h3>
-    <div class="hint-counter">Hints Used: <span id="hint-counter">${teamProgress.viewedHints?.length || 0}</span></div>
+    <div class="hint-counter">Hints Used: <span id="hint-counter">${teamProgress.viewedHints?.filter(h => puzzle.hints.some(ph => ph.text === h)).length || 0}</span>/${puzzle.hints.length}</div>
     <div id="hint-list"></div>
   `;
   

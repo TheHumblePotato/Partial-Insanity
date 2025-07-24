@@ -35,15 +35,27 @@ auth.onAuthStateChanged((user) => {
   }
 });
 
-function hashAnswer(answer) {
-  return CryptoJS.SHA256(
-    answer.toString().toUpperCase() + SECURITY_SALT
-  ).toString();
-}
+function checkAnswer(answer, encryptedAnswers) {
+  try {
+    if (!Array.isArray(encryptedAnswers)) {
+      console.error("Invalid encryptedAnswers format");
+      return false;
+    }
 
-function checkAnswer(answer, hashedAnswers) {
-  const hashedInput = hashAnswer(answer);
-  return hashedAnswers.includes(hashedInput);
+    const normalizedAnswer = answer.toString().toUpperCase();
+    return encryptedAnswers.some((encrypted) => {
+      try {
+        const decrypted = decryptAnswer(encrypted);
+        return decrypted.toUpperCase() === normalizedAnswer;
+      } catch (e) {
+        console.error("Error decrypting answer:", e);
+        return false;
+      }
+    });
+  } catch (error) {
+    console.error("Error checking answer:", error);
+    return false;
+  }
 }
 
 async function loadTeamData() {
@@ -471,9 +483,10 @@ function normalizeAnswer(answer) {
   if (typeof answer !== "string") {
     answer = String(answer);
   }
+
   return answer
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
     .trim();
 }
 
@@ -622,7 +635,9 @@ function createPuzzleElement(puzzle, puzzleId) {
         coverImage
           ? `<img src="${coverImage.url}" alt="Puzzle Preview" class="puzzle-cover">`
           : puzzle.media.find((m) => m.type === "pdf")
-          ? `<iframe src="${puzzle.media.find((m) => m.type === "pdf").url}#view=fitH" width="100%" height="100%" style="border: none; pointer-events: none;"></iframe>`
+          ? `<iframe src="${
+              puzzle.media.find((m) => m.type === "pdf").url
+            }#view=fitH" width="100%" height="100%" style="border: none; pointer-events: none;"></iframe>`
           : puzzle.type === "lock"
           ? `<div style="padding: 20px; text-align: center;">${
               puzzle.description || "Lock Puzzle"
@@ -723,7 +738,8 @@ function openPuzzleFullscreen(puzzleId) {
     const pdfBtn = document.createElement("button");
     pdfBtn.className = "btn btn-primary";
     pdfBtn.textContent = "View PDF";
-    pdfBtn.onclick = () => window.open(puzzle.media.find((m) => m.type === "pdf").url, "_blank");
+    pdfBtn.onclick = () =>
+      window.open(puzzle.media.find((m) => m.type === "pdf").url, "_blank");
     actions.appendChild(pdfBtn);
   }
 
@@ -772,7 +788,7 @@ function openPuzzleFullscreen(puzzleId) {
     });
   } else if (puzzle.media.find((m) => m.type === "pdf")) {
     const iframe = document.createElement("iframe");
-    iframe.src = `${(puzzle.media.find((m) => m.type === "pdf")).url}#view=fitH`;
+    iframe.src = `${puzzle.media.find((m) => m.type === "pdf").url}#view=fitH`;
     iframe.className = "pdf-iframe";
     content.appendChild(iframe);
   } else {
@@ -1170,9 +1186,7 @@ async function handleIncorrectAnswer(puzzleId) {
   updateGuessCounter(puzzleId, puzzleData[puzzleId].type === "lock");
 
   if (teamProgress.guessCount[puzzleId] >= puzzleData[puzzleId].maxGuesses) {
-    showNotification(
-      "You have used all your guesses for this puzzle."
-    );
+    showNotification("You have used all your guesses for this puzzle.");
   }
 }
 
@@ -1308,6 +1322,21 @@ function init() {
       showAuthPage();
     }
   });
+}
+
+function encryptAnswer(answer) {
+  return CryptoJS.AES.encrypt(answer, SECURITY_SALT).toString();
+}
+
+function decryptAnswer(encryptedAnswer) {
+  try {
+    return CryptoJS.AES.decrypt(encryptedAnswer, SECURITY_SALT).toString(
+      CryptoJS.enc.Utf8
+    );
+  } catch (e) {
+    console.error("Decryption error:", e);
+    return "";
+  }
 }
 
 window.onload = init;

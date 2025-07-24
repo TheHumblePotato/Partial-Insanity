@@ -1121,17 +1121,17 @@ function fillPuzzleEditor(puzzle) {
   document.getElementById("puzzleType").value = puzzle.type || "puzzle";
   document.getElementById("puzzleHasAnswer").checked =
     puzzle.hasAnswer !== false;
-
+  
   document.getElementById("puzzleAnswers").value = puzzle.answers
     ? puzzle.answers.map((a) => decryptAnswer(a)).join(", ")
     : "";
 
-  document.getElementById("puzzleMaxGuesses").value = puzzle.maxGuesses || 3;
+  document.getElementById("puzzleMaxGuesses").value = puzzle.maxGuesses || 10;
   document.getElementById("puzzleRequiredCorrect").value =
     puzzle.requiredCorrect || 1;
   document.getElementById("puzzleDescription").value = puzzle.description || "";
   document.getElementById("mediaList").innerHTML = "";
-
+  toggleAnswerFields()
   if (puzzle.media) {
     puzzle.media.forEach((media) => {
       const mediaList = document.getElementById("mediaList");
@@ -1196,7 +1196,7 @@ function clearPuzzleEditor() {
   document.getElementById("puzzleType").value = "puzzle";
   document.getElementById("puzzleHasAnswer").checked = true;
   document.getElementById("puzzleAnswers").value = "";
-  document.getElementById("puzzleMaxGuesses").value = 3;
+  document.getElementById("puzzleMaxGuesses").value = 10;
   document.getElementById("puzzleRequiredCorrect").value = 1;
   document.getElementById("puzzleDescription").value = "";
   document.getElementById("mediaList").value = "";
@@ -1211,16 +1211,13 @@ function clearPuzzleEditor() {
 function updatePuzzleTypeFields() {
   const type = document.getElementById("puzzleType").value;
   const lockDesc = document.getElementById("lockDescriptionField");
-  const pdfField = document.getElementById("pdfField");
   const requiredField = document.getElementById("requiredCorrectField");
 
   if (type === "lock") {
     lockDesc.classList.remove("hidden");
-    pdfField.classList.add("hidden");
     requiredField.classList.remove("hidden");
   } else {
     lockDesc.classList.add("hidden");
-    pdfField.classList.remove("hidden");
     requiredField.classList.add("hidden");
   }
 }

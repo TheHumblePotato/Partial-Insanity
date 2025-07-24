@@ -1239,7 +1239,7 @@ function updateGuessCounter(puzzleId, isMulti) {
       const offset = isDST ? pdtOffset : pstOffset;
 
       const resetTime = new Date(now.getTime() + offset);
-      resetTime.setHours(12, 0, 0, 0);
+      resetTime.setHours(24, 0, 0, 0);
 
       if (resetTime.getTime() < now.getTime()) {
         resetTime.setDate(resetTime.getDate() + 1);
@@ -1270,7 +1270,7 @@ function scheduleDailyGuessReset() {
   const offset = isDST ? pdtOffset : pstOffset;
 
   const resetTime = new Date(now.getTime() + offset);
-  resetTime.setHours(12, 0, 0, 0);
+  resetTime.setHours(24, 0, 0, 0);
 
   if (resetTime.getTime() < now.getTime()) {
     resetTime.setDate(resetTime.getDate() + 1);

@@ -133,46 +133,39 @@ function isRoomCleared(roomId) {
   const roomPuzzles = room.puzzles || [];
   const clearCondition = room.clearCondition;
 
-  const conditionType =
-    typeof clearCondition === "string" ? clearCondition : clearCondition.type;
+  const conditionType = typeof clearCondition === 'string' ? clearCondition : clearCondition.type;
 
   switch (conditionType) {
-    case "fullsolve":
-      return roomPuzzles.every((puzzleId) => solvedPuzzles.includes(puzzleId));
+    case 'fullsolve':
+      return roomPuzzles.every(puzzleId => solvedPuzzles.includes(puzzleId));
 
-    case "partialsolve": {
-      const requiredCount =
-        typeof clearCondition === "object"
-          ? clearCondition.count || 1
-          : room.clearCount || 1;
-      return (
-        roomPuzzles.filter((puzzleId) => solvedPuzzles.includes(puzzleId))
-          .length >= requiredCount
-      );
+    case 'partialsolve': {
+      const requiredCount = typeof clearCondition === 'object' 
+        ? clearCondition.count || 1 
+        : room.clearCount || 1;
+      const solvedCount = roomPuzzles.filter(puzzleId => solvedPuzzles.includes(puzzleId)).length;
+      return solvedCount >= requiredCount;
     }
 
-    case "meta": {
-      const metaPuzzles = roomPuzzles.filter(
-        (puzzleId) => puzzleData[puzzleId]?.type === "meta"
+    case 'meta': {
+      const metaPuzzles = roomPuzzles.filter(puzzleId => 
+        puzzleData[puzzleId]?.type === 'meta'
       );
-      return metaPuzzles.every((puzzleId) => solvedPuzzles.includes(puzzleId));
+      return metaPuzzles.every(puzzleId => solvedPuzzles.includes(puzzleId));
     }
 
-    case "lock": {
-      const lockPuzzles = roomPuzzles.filter(
-        (puzzleId) => puzzleData[puzzleId]?.type === "lock"
+    case 'lock': {
+      const lockPuzzles = roomPuzzles.filter(puzzleId => 
+        puzzleData[puzzleId]?.type === 'lock'
       );
-      return lockPuzzles.every((puzzleId) => solvedPuzzles.includes(puzzleId));
+      return lockPuzzles.every(puzzleId => solvedPuzzles.includes(puzzleId));
     }
 
-    case "mustsolve": {
-      const mustSolvePuzzles =
-        typeof clearCondition === "object"
-          ? clearCondition.puzzles || []
-          : room.mustSolvePuzzles || [];
-      return mustSolvePuzzles.every((puzzleId) =>
-        solvedPuzzles.includes(puzzleId)
-      );
+    case 'mustsolve': {
+      const mustSolvePuzzles = typeof clearCondition === 'object' 
+        ? clearCondition.puzzles || [] 
+        : room.mustSolvePuzzles || [];
+      return mustSolvePuzzles.every(puzzleId => solvedPuzzles.includes(puzzleId));
     }
 
     default:
@@ -1064,12 +1057,10 @@ async function revealHint(hintIndex) {
 async function submitAnswer() {
   const puzzleId = currentPuzzle;
   const puzzle = puzzleData[puzzleId];
-  const answer = normalizeAnswer(
-    document.getElementById("puzzle-answer").value
-  );
+  const answer = normalizeAnswer(document.getElementById('puzzle-answer').value);
 
   if (!answer) {
-    showNotification("Please enter an answer", "error");
+    showNotification('Please enter an answer', 'error');
     return;
   }
 
@@ -1077,38 +1068,44 @@ async function submitAnswer() {
   const maxGuesses = puzzle.maxGuesses || 0;
 
   if (maxGuesses > 0 && currentGuesses >= maxGuesses) {
-    showNotification(
-      "You're out of guesses for today. Try again tomorrow.",
-      "error"
-    );
+    showNotification("You're out of guesses for today. Try again tomorrow.", 'error');
     return;
   }
 
   try {
     if (checkAnswer(answer, puzzle.answers)) {
+      // Check for answer-specific events before marking as solved
+      if (puzzle.events) {
+        for (const event of puzzle.events) {
+          if (event.trigger === 'answer' && checkAnswer(answer, [event.triggerValue])) {
+            await handlePuzzleEvent(event);
+          }
+        }
+      }
+      
       await handleCorrectAnswer(puzzleId);
       closePuzzleViewer();
     } else {
       await handleIncorrectAnswer(puzzleId);
-      showNotification("Incorrect answer. Please try again.", "error");
+      showNotification('Incorrect answer. Please try again.', 'error');
       updateGuessCounter(puzzleId, false);
     }
   } catch (error) {
-    console.error("Error submitting answer:", error);
-    showNotification("Error submitting answer: " + error.message, "error");
+    console.error('Error submitting answer:', error);
+    showNotification('Error submitting answer: ' + error.message, 'error');
   }
 }
 
 async function submitMultipleAnswers() {
   const puzzleId = currentPuzzle;
   const puzzle = puzzleData[puzzleId];
-  const inputsContainer = document.getElementById("answer-inputs");
-  const inputs = inputsContainer.getElementsByTagName("input");
+  const inputsContainer = document.getElementById('answer-inputs');
+  const inputs = inputsContainer.getElementsByTagName('input');
 
   const currentGuesses = (teamProgress.guessCount || {})[puzzleId] || 0;
   const maxGuesses = puzzle.maxGuesses || 0;
   if (maxGuesses > 0 && currentGuesses >= maxGuesses) {
-    showNotification("You're out of guesses for this puzzle", "error");
+    showNotification("You're out of guesses for this puzzle", 'error');
     return;
   }
 
@@ -1117,8 +1114,8 @@ async function submitMultipleAnswers() {
     answers.push(normalizeAnswer(inputs[i].value));
   }
 
-  if (answers.some((a) => !a)) {
-    showNotification("Please fill in all answers", "error");
+  if (answers.some(a => !a)) {
+    showNotification('Please fill in all answers', 'error');
     return;
   }
 
@@ -1132,64 +1129,121 @@ async function submitMultipleAnswers() {
 
     const requiredCorrect = puzzle.requiredCorrect || puzzle.answers.length;
     if (correctCount >= requiredCorrect) {
+      // Check for answer-specific events
+      if (puzzle.events) {
+        for (const event of puzzle.events) {
+          if (event.trigger === 'answer') {
+            for (const answer of answers) {
+              if (checkAnswer(answer, [event.triggerValue])) {
+                await handlePuzzleEvent(event);
+                break;
+              }
+            }
+          }
+        }
+      }
+      
       await handleCorrectAnswer(puzzleId);
       closePuzzleViewer();
     } else {
       await handleIncorrectAnswer(puzzleId);
       showNotification(
         `You got ${correctCount} out of ${requiredCorrect} required answers correct. Please try again.`,
-        "error"
+        'error'
       );
       updateGuessCounter(puzzleId, true);
     }
   } catch (error) {
-    console.error("Error submitting answers:", error);
-    showNotification("Error submitting answers: " + error.message, "error");
+    console.error('Error submitting answers:', error);
+    showNotification('Error submitting answers: ' + error.message, 'error');
   }
 }
+
 
 async function handleCorrectAnswer(puzzleId) {
   const puzzle = puzzleData[puzzleId];
 
+  // Mark puzzle as solved if not already
   if (!teamProgress.solvedPuzzles.includes(puzzleId)) {
     teamProgress.solvedPuzzles.push(puzzleId);
   }
 
+  // Handle answer bindings (solve other puzzles when this one is solved)
+  if (puzzle.answerBindings) {
+    for (const binding of puzzle.answerBindings) {
+      if (binding.isSolveBinding && !teamProgress.solvedPuzzles.includes(binding.targetPuzzle)) {
+        teamProgress.solvedPuzzles.push(binding.targetPuzzle);
+        showNotification(`Puzzle "${puzzleData[binding.targetPuzzle]?.name || binding.targetPuzzle}" automatically solved!`, 'success');
+      }
+    }
+  }
+
+  // Handle puzzle events
+  if (puzzle.events) {
+    for (const event of puzzle.events) {
+      if (event.trigger === 'solve') {
+        await handlePuzzleEvent(event);
+      }
+    }
+  }
+
+  // Handle unlocks
   if (puzzle.unlocks && !teamProgress.unlockedRooms.includes(puzzle.unlocks)) {
     teamProgress.unlockedRooms.push(puzzle.unlocks);
     unlockedNewContent[puzzle.unlocks] = puzzleId;
   }
 
+  // Check room clear conditions
   const roomId = currentRoom;
   if (isRoomCleared(roomId) && !teamProgress.clearedRooms.includes(roomId)) {
     teamProgress.clearedRooms.push(roomId);
 
+    // Handle room clear unlocks
     const room = roomData[roomId];
     if (room.clearUnlock) {
       const unlockType = room.clearUnlock.type;
       const unlockId = room.clearUnlock.id;
 
-      if (
-        unlockType === "room" &&
-        !teamProgress.unlockedRooms.includes(unlockId)
-      ) {
+      if (unlockType === 'room' && !teamProgress.unlockedRooms.includes(unlockId)) {
         teamProgress.unlockedRooms.push(unlockId);
         unlockedNewContent[unlockId] = roomId;
+      } else if (unlockType === 'puzzle' && !teamProgress.solvedPuzzles.includes(unlockId)) {
+        teamProgress.solvedPuzzles.push(unlockId);
+        showNotification(`Puzzle "${puzzleData[unlockId]?.name || unlockId}" automatically solved!`, 'success');
       }
     }
 
-    const nextRoom = teamProgress.unlockedRooms.find(
-      (r) => !teamProgress.clearedRooms.includes(r)
-    );
+    // Handle room events
+    if (room.events) {
+      for (const event of room.events) {
+        if (event.triggerType === 'solveCount') {
+          const requiredCount = parseInt(event.triggerValue) || 1;
+          const solvedCount = room.puzzles.filter(p => teamProgress.solvedPuzzles.includes(p)).length;
+          if (solvedCount >= requiredCount) {
+            await handleRoomEvent(event);
+          }
+        } else if (event.triggerType === 'specificPuzzles') {
+          const allSolved = event.puzzles.every(p => teamProgress.solvedPuzzles.includes(p));
+          if (allSolved) {
+            await handleRoomEvent(event);
+          }
+        }
+      }
+    }
+
+    // Find next uncleared room
+    const nextRoom = teamProgress.unlockedRooms.find(r => !teamProgress.clearedRooms.includes(r));
     if (nextRoom) {
       teamProgress.currentRoom = nextRoom;
       currentRoom = nextRoom;
     }
   }
 
-  await db.collection("progress").doc(currentUser.uid).set(teamProgress);
-  showNotification("Correct answer! Puzzle marked as solved.", "success");
+  // Save progress
+  await db.collection('progress').doc(currentUser.uid).set(teamProgress);
+  showNotification('Correct answer! Puzzle marked as solved.', 'success');
 
+  // Show solve message if exists
   if (puzzle.solveMessage) {
     setTimeout(() => showSolveMessage(puzzleId), 1000);
   }
@@ -1197,6 +1251,48 @@ async function handleCorrectAnswer(puzzleId) {
   closePuzzleViewer();
   renderCurrentRoom();
 }
+async function handlePuzzleEvent(event) {
+  switch (event.action) {
+    case 'unlock':
+      if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
+        teamProgress.unlockedRooms.push(event.actionValue);
+        showNotification(`New room unlocked: "${roomData[event.actionValue]?.name || event.actionValue}"`, 'success');
+      }
+      break;
+    case 'solve':
+      if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
+        teamProgress.solvedPuzzles.push(event.actionValue);
+        showNotification(`Puzzle "${puzzleData[event.actionValue]?.name || event.actionValue}" automatically solved!`, 'success');
+      }
+      break;
+    case 'notify':
+      showNotification(event.actionValue, 'info');
+      break;
+  }
+  await db.collection('progress').doc(currentUser.uid).set(teamProgress);
+}
+
+async function handleRoomEvent(event) {
+  switch (event.action) {
+    case 'unlock':
+      if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
+        teamProgress.unlockedRooms.push(event.actionValue);
+        showNotification(`New room unlocked: "${roomData[event.actionValue]?.name || event.actionValue}"`, 'success');
+      }
+      break;
+    case 'solve':
+      if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
+        teamProgress.solvedPuzzles.push(event.actionValue);
+        showNotification(`Puzzle "${puzzleData[event.actionValue]?.name || event.actionValue}" automatically solved!`, 'success');
+      }
+      break;
+    case 'notify':
+      showNotification(event.actionValue, 'info');
+      break;
+  }
+  await db.collection('progress').doc(currentUser.uid).set(teamProgress);
+}
+
 
 async function handleIncorrectAnswer(puzzleId) {
   if (!teamProgress.guessCount) teamProgress.guessCount = {};

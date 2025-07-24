@@ -1193,3 +1193,48 @@ body {
   font-weight: bold;
   text-align: center;
 }
+
+.puzzle-event-notification {
+  background: #e3f2fd;
+  color: #0d47a1;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 10px 0;
+  border-left: 4px solid #2196f3;
+}
+
+.auto-solved-notification {
+  background: #e8f5e9;
+  color: #1b5e20;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 10px 0;
+  border-left: 4px solid #4caf50;
+}
+
+.room-event-notification {
+  background: #fff3e0;
+  color: #e65100;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 10px 0;
+  border-left: 4px solid #ff9800;
+}
+
+.puzzle-viewer-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+  .puzzle-viewer-actions {
+    flex-direction: column;
+  }
+  
+  .puzzle-viewer-actions .btn {
+    width: 100%;
+    margin: 5px 0;
+  }
+}

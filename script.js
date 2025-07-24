@@ -1149,7 +1149,7 @@ async function handleCorrectAnswer(puzzleId) {
     setTimeout(() => showSolveMessage(puzzleId), 1000);
   }
 
-  closePuzzleModal();
+  closePuzzleViewer();
   renderCurrentRoom();
 }
 
@@ -1164,7 +1164,7 @@ async function handleIncorrectAnswer(puzzleId) {
 
   if (teamProgress.guessCount[puzzleId] >= puzzleData[puzzleId].maxGuesses) {
     showNotification("You have used all your guesses for this puzzle.", "error");
-    closePuzzleModal();
+    closePuzzleViewer();
   }
 }
 
@@ -1225,7 +1225,7 @@ function goToUnlockedRoom() {
   const puzzle = puzzleData[currentPuzzle];
   if (puzzle.unlocks) {
     switchRoom(puzzle.unlocks);
-    closePuzzleModal();
+    closePuzzleViewer();
   }
 }
 
@@ -1233,7 +1233,7 @@ function goToUnlockedNew() {
   const puzzle = puzzleData[currentPuzzle];
   if (puzzle.unlocks) {
     switchRoom(puzzle.unlocks);
-    closePuzzleModal();
+    closePuzzleViewer();
   } else if (puzzle.followup) {
     openPuzzle(puzzle.followup);
   }

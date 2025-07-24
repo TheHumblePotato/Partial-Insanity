@@ -622,7 +622,7 @@ function createPuzzleElement(puzzle, puzzleId) {
         coverImage
           ? `<img src="${coverImage.url}" alt="Puzzle Preview" class="puzzle-cover">`
           : puzzle.media.find((m) => m.type === "pdf")
-          ? `<iframe src="${puzzle.media.find((m) => m.type === "pdf")}#view=fitH" width="100%" height="100%" style="border: none; pointer-events: none;"></iframe>`
+          ? `<iframe src="${puzzle.media.find((m) => m.type === "pdf").url}#view=fitH" width="100%" height="100%" style="border: none; pointer-events: none;"></iframe>`
           : puzzle.type === "lock"
           ? `<div style="padding: 20px; text-align: center;">${
               puzzle.description || "Lock Puzzle"
@@ -772,7 +772,7 @@ function openPuzzleFullscreen(puzzleId) {
     });
   } else if (puzzle.media.find((m) => m.type === "pdf")) {
     const iframe = document.createElement("iframe");
-    iframe.src = `${puzzle.mediapdf}#view=fitH`;
+    iframe.src = `${(puzzle.media.find((m) => m.type === "pdf")).url}#view=fitH`;
     iframe.className = "pdf-iframe";
     content.appendChild(iframe);
   } else {

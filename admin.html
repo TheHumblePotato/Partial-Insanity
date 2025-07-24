@@ -146,10 +146,7 @@
                     min="0"
                   />
                 </div>
-                <div
-                  class="property-group"
-                  id="requiredCorrectField"
-                >
+                <div class="property-group" id="requiredCorrectField">
                   <label>Required Correct (for locks):</label>
                   <input
                     type="number"
@@ -162,19 +159,23 @@
             </div>
           </div>
           <div class="property-group" id="answerBindingsGroup">
-  <label>Answer Bindings:</label>
-  <div id="answerBindingsContainer">
-    <!-- Will be populated with answer binding rows -->
-  </div>
-  <button class="btn btn-sm" onclick="addAnswerBinding()">Add Binding</button>
-</div>
-<div class="property-group" id="puzzleEventsGroup">
-  <label>Puzzle Events:</label>
-  <div id="puzzleEventsContainer">
-    <!-- Will be populated with event rows -->
-  </div>
-  <button class="btn btn-sm" onclick="addPuzzleEvent()">Add Event</button>
-</div>
+            <label>Answer Bindings:</label>
+            <div id="answerBindingsContainer">
+              <!-- Will be populated with answer binding rows -->
+            </div>
+            <button class="btn btn-sm" onclick="addAnswerBinding()">
+              Add Binding
+            </button>
+          </div>
+          <div class="property-group" id="puzzleEventsGroup">
+            <label>Puzzle Events:</label>
+            <div id="puzzleEventsContainer">
+              <!-- Will be populated with event rows -->
+            </div>
+            <button class="btn btn-sm" onclick="addPuzzleEvent()">
+              Add Event
+            </button>
+          </div>
           <div class="property-group">
             <label>Room:</label>
             <select id="puzzleRoom">
@@ -367,12 +368,14 @@
             ></select>
           </div>
           <div class="property-group" id="roomEventsGroup">
-  <label>Room Events:</label>
-  <div id="roomEventsContainer">
-    <!-- Will be populated with event rows -->
-  </div>
-  <button class="btn btn-sm" onclick="addRoomEvent()">Add Event</button>
-</div>
+            <label>Room Events:</label>
+            <div id="roomEventsContainer">
+              <!-- Will be populated with event rows -->
+            </div>
+            <button class="btn btn-sm" onclick="addRoomEvent()">
+              Add Event
+            </button>
+          </div>
 
           <div class="property-group" id="clearUnlockGroup">
             <label>Unlocks on Clear:</label>

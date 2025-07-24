@@ -1119,33 +1119,38 @@ function showPuzzleEditor(puzzleId = null) {
 function fillPuzzleEditor(puzzle) {
   document.getElementById("puzzleName").value = puzzle.name || "";
   document.getElementById("puzzleType").value = puzzle.type || "puzzle";
-  document.getElementById("puzzleHasAnswer").checked = puzzle.answers && puzzle.answers.length > 0;
-  document.getElementById("puzzleAnswers").value = puzzle.answers 
-    ? puzzle.answers.map(a => decryptAnswer(a)).join(", ")
+  document.getElementById("puzzleHasAnswer").checked =
+    puzzle.answers && puzzle.answers.length > 0;
+  document.getElementById("puzzleAnswers").value = puzzle.answers
+    ? puzzle.answers.map((a) => decryptAnswer(a)).join(", ")
     : "";
   const bindingsContainer = document.getElementById("answerBindingsContainer");
   bindingsContainer.innerHTML = "";
   if (puzzle.answerBindings) {
-    puzzle.answerBindings.forEach(binding => {
+    puzzle.answerBindings.forEach((binding) => {
       addAnswerBinding(
-        binding.isSolveBinding ? '' : (binding.answer ? decryptAnswer(binding.answer) : ''),
+        binding.isSolveBinding
+          ? ""
+          : binding.answer
+          ? decryptAnswer(binding.answer)
+          : "",
         binding.targetPuzzle,
         binding.isSolveBinding
       );
     });
   }
-const eventsContainer = document.getElementById("puzzleEventsContainer");
-eventsContainer.innerHTML = "";
-if (puzzle.events) {
-  puzzle.events.forEach(event => {
-    addPuzzleEvent(
-      event.trigger,
-      event.action,
-      event.actionValue,
-      event.triggerValue
-    );
-  });
-}
+  const eventsContainer = document.getElementById("puzzleEventsContainer");
+  eventsContainer.innerHTML = "";
+  if (puzzle.events) {
+    puzzle.events.forEach((event) => {
+      addPuzzleEvent(
+        event.trigger,
+        event.action,
+        event.actionValue,
+        event.triggerValue
+      );
+    });
+  }
   document.getElementById("puzzleMaxGuesses").value = puzzle.maxGuesses || 10;
   document.getElementById("puzzleRequiredCorrect").value =
     puzzle.requiredCorrect || 1;
@@ -1327,59 +1332,73 @@ async function savePuzzle() {
   }
 
   if (hasAnswer) {
-  const answersText = document.getElementById("puzzleAnswers").value.trim();
-  if (answersText) {
-    puzzle.answers = answersText.split(",").map(a => encryptAnswer(a.trim()));
-  } else {
-    puzzle.answers = [];
-  }
+    const answersText = document.getElementById("puzzleAnswers").value.trim();
+    if (answersText) {
+      puzzle.answers = answersText
+        .split(",")
+        .map((a) => encryptAnswer(a.trim()));
+    } else {
+      puzzle.answers = [];
+    }
 
     puzzle.maxGuesses =
       parseInt(document.getElementById("puzzleMaxGuesses").value) || 0;
 
-      puzzle.requiredCorrect =
-        parseInt(document.getElementById("puzzleRequiredCorrect").value) || 1;
+    puzzle.requiredCorrect =
+      parseInt(document.getElementById("puzzleRequiredCorrect").value) || 1;
   }
 
   const bindings = [];
-  document.querySelectorAll("#answerBindingsContainer .form-row").forEach(row => {
-    const isSolveBinding = row.querySelector(".binding-solve").checked;
-    const answer = isSolveBinding ? '' : row.querySelector(".binding-answer").value.trim();
-    const target = row.querySelector(".binding-target").value;
-    if (target) {
-      bindings.push({
-        answer: isSolveBinding ? 'SOLVE_BINDING' : (answer ? encryptAnswer(answer) : ''),
-        targetPuzzle: target,
-        isSolveBinding
-      });
-    }
-  });
+  document
+    .querySelectorAll("#answerBindingsContainer .form-row")
+    .forEach((row) => {
+      const isSolveBinding = row.querySelector(".binding-solve").checked;
+      const answer = isSolveBinding
+        ? ""
+        : row.querySelector(".binding-answer").value.trim();
+      const target = row.querySelector(".binding-target").value;
+      if (target) {
+        bindings.push({
+          answer: isSolveBinding
+            ? "SOLVE_BINDING"
+            : answer
+            ? encryptAnswer(answer)
+            : "",
+          targetPuzzle: target,
+          isSolveBinding,
+        });
+      }
+    });
   if (bindings.length > 0) {
     puzzle.answerBindings = bindings;
   }
-const events = [];
-document.querySelectorAll("#puzzleEventsContainer .form-row").forEach(row => {
-  const trigger = row.querySelector(".event-trigger").value;
-  const triggerValue = trigger === 'answer' 
-    ? row.querySelector(".event-trigger-value").value.trim()
-    : '';
-  const action = row.querySelector(".event-action").value;
-  let actionValue = action === 'notify'
-    ? row.querySelector(".event-notify-value").value.trim()
-    : row.querySelector(".event-action-value").value;
-  
-  if (actionValue) {
-    events.push({
-      trigger,
-      triggerValue: triggerValue ? encryptAnswer(triggerValue) : '',
-      action,
-      actionValue
+  const events = [];
+  document
+    .querySelectorAll("#puzzleEventsContainer .form-row")
+    .forEach((row) => {
+      const trigger = row.querySelector(".event-trigger").value;
+      const triggerValue =
+        trigger === "answer"
+          ? row.querySelector(".event-trigger-value").value.trim()
+          : "";
+      const action = row.querySelector(".event-action").value;
+      let actionValue =
+        action === "notify"
+          ? row.querySelector(".event-notify-value").value.trim()
+          : row.querySelector(".event-action-value").value;
+
+      if (actionValue) {
+        events.push({
+          trigger,
+          triggerValue: triggerValue ? encryptAnswer(triggerValue) : "",
+          action,
+          actionValue,
+        });
+      }
     });
+  if (events.length > 0) {
+    puzzle.events = events;
   }
-});
-if (events.length > 0) {
-  puzzle.events = events;
-}
 
   if (currentPuzzle.position) {
     puzzle.position = {
@@ -1515,7 +1534,7 @@ function fillRoomEditor(room) {
   const eventsContainer = document.getElementById("roomEventsContainer");
   eventsContainer.innerHTML = "";
   if (room.events) {
-    room.events.forEach(event => {
+    room.events.forEach((event) => {
       addRoomEvent(
         event.triggerType,
         event.triggerValue,
@@ -1652,29 +1671,35 @@ async function saveRoom() {
     room.clearUnlock = { type, id };
   }
   const events = [];
-  document.querySelectorAll("#roomEventsContainer .form-row").forEach(row => {
+  document.querySelectorAll("#roomEventsContainer .form-row").forEach((row) => {
     const triggerType = row.querySelector(".event-trigger-type").value;
-    let triggerValue, puzzles = [];
-    if (triggerType === 'solveCount') {
+    let triggerValue,
+      puzzles = [];
+    if (triggerType === "solveCount") {
       triggerValue = row.querySelector(".event-trigger-value").value.trim();
-    } else { // specificPuzzles
-      puzzles = Array.from(row.querySelector(".event-trigger-puzzles").selectedOptions)
-        .map(opt => opt.value);
+    } else {
+      // specificPuzzles
+      puzzles = Array.from(
+        row.querySelector(".event-trigger-puzzles").selectedOptions
+      ).map((opt) => opt.value);
     }
-    
+
     const action = row.querySelector(".event-action").value;
-    let actionValue = action === 'notify'
-      ? row.querySelector(".event-notify-value").value.trim()
-      : row.querySelector(".event-action-value").value;
-    
-    if ((triggerType === 'solveCount' && triggerValue) || 
-        (triggerType === 'specificPuzzles' && puzzles.length > 0)) {
+    let actionValue =
+      action === "notify"
+        ? row.querySelector(".event-notify-value").value.trim()
+        : row.querySelector(".event-action-value").value;
+
+    if (
+      (triggerType === "solveCount" && triggerValue) ||
+      (triggerType === "specificPuzzles" && puzzles.length > 0)
+    ) {
       events.push({
         triggerType,
-        triggerValue: triggerType === 'solveCount' ? triggerValue : '',
-        puzzles: triggerType === 'specificPuzzles' ? puzzles : [],
+        triggerValue: triggerType === "solveCount" ? triggerValue : "",
+        puzzles: triggerType === "specificPuzzles" ? puzzles : [],
         action,
-        actionValue
+        actionValue,
       });
     }
   });
@@ -1994,40 +2019,49 @@ function decryptAnswer(encryptedAnswer) {
   }
 }
 
-function addAnswerBinding(answer = '', targetPuzzle = '', isSolveBinding = false) {
+function addAnswerBinding(
+  answer = "",
+  targetPuzzle = "",
+  isSolveBinding = false
+) {
   const container = document.getElementById("answerBindingsContainer");
   const div = document.createElement("div");
   div.className = "form-row";
   div.innerHTML = `
     <input type="text" placeholder="Answer (leave empty for any)" 
            value="${answer}" class="binding-answer"
-           ${isSolveBinding ? 'disabled' : ''}>
+           ${isSolveBinding ? "disabled" : ""}>
     <select class="binding-target">
       <option value="">-- Select Target Puzzle --</option>
-      ${Object.keys(puzzleData).map(pId => 
-        `<option value="${pId}" ${targetPuzzle === pId ? 'selected' : ''}>
+      ${Object.keys(puzzleData)
+        .map(
+          (pId) =>
+            `<option value="${pId}" ${targetPuzzle === pId ? "selected" : ""}>
           ${puzzleData[pId].name || pId}
         </option>`
-      ).join('')}
+        )
+        .join("")}
     </select>
     <label class="binding-checkbox">
-      <input type="checkbox" class="binding-solve" ${isSolveBinding ? 'checked' : ''}>
+      <input type="checkbox" class="binding-solve" ${
+        isSolveBinding ? "checked" : ""
+      }>
       On Solve
     </label>
     <button class="btn btn-sm btn-danger" onclick="removeAnswerBinding(this)">×</button>
   `;
-  
+
   // Add event listener for the checkbox
-  div.querySelector('.binding-solve').addEventListener('change', function() {
-    const answerInput = div.querySelector('.binding-answer');
+  div.querySelector(".binding-solve").addEventListener("change", function () {
+    const answerInput = div.querySelector(".binding-answer");
     if (this.checked) {
       answerInput.disabled = true;
-      answerInput.value = '';
+      answerInput.value = "";
     } else {
       answerInput.disabled = false;
     }
   });
-  
+
   container.appendChild(div);
 }
 
@@ -2035,49 +2069,75 @@ function removeAnswerBinding(btn) {
   btn.closest(".form-row").remove();
 }
 
-function addPuzzleEvent(trigger = '', action = '', actionValue = '', triggerValue = '') {
+function addPuzzleEvent(
+  trigger = "",
+  action = "",
+  actionValue = "",
+  triggerValue = ""
+) {
   const container = document.getElementById("puzzleEventsContainer");
   const div = document.createElement("div");
   div.className = "form-row";
   div.innerHTML = `
     <select class="event-trigger">
-      <option value="answer" ${trigger === 'answer' ? 'selected' : ''}>On specific answer</option>
-      <option value="solve" ${trigger === 'solve' ? 'selected' : ''}>On solve</option>
+      <option value="answer" ${
+        trigger === "answer" ? "selected" : ""
+      }>On specific answer</option>
+      <option value="solve" ${
+        trigger === "solve" ? "selected" : ""
+      }>On solve</option>
     </select>
     <input type="text" class="event-trigger-value" placeholder="Answer (if applicable)" 
-           value="${trigger === 'answer' ? decryptAnswer(triggerValue) : ''}"
-           style="${trigger === 'answer' ? '' : 'display:none'}">
+           value="${trigger === "answer" ? decryptAnswer(triggerValue) : ""}"
+           style="${trigger === "answer" ? "" : "display:none"}">
     <select class="event-action">
-      <option value="unlock" ${action === 'unlock' ? 'selected' : ''}>Unlock puzzle</option>
-      <option value="notify" ${action === 'notify' ? 'selected' : ''}>Show notification</option>
-      <option value="solve" ${action === 'solve' ? 'selected' : ''}>Solve puzzle</option>
+      <option value="unlock" ${
+        action === "unlock" ? "selected" : ""
+      }>Unlock puzzle</option>
+      <option value="notify" ${
+        action === "notify" ? "selected" : ""
+      }>Show notification</option>
+      <option value="solve" ${
+        action === "solve" ? "selected" : ""
+      }>Solve puzzle</option>
     </select>
-    <select class="event-action-value" style="${action === 'notify' ? 'display:none' : ''}">
+    <select class="event-action-value" style="${
+      action === "notify" ? "display:none" : ""
+    }">
       <option value="">-- Select target --</option>
-      ${Object.keys(puzzleData).map(pId => 
-        `<option value="${pId}" ${actionValue === pId && action !== 'notify' ? 'selected' : ''}>
+      ${Object.keys(puzzleData)
+        .map(
+          (pId) =>
+            `<option value="${pId}" ${
+              actionValue === pId && action !== "notify" ? "selected" : ""
+            }>
           ${puzzleData[pId].name || pId}
         </option>`
-      ).join('')}
+        )
+        .join("")}
     </select>
     <input type="text" class="event-notify-value" placeholder="Notification text" 
-           value="${action === 'notify' ? actionValue : ''}" 
-           style="${action === 'notify' ? '' : 'display:none'}">
+           value="${action === "notify" ? actionValue : ""}" 
+           style="${action === "notify" ? "" : "display:none"}">
     <button class="btn btn-sm btn-danger" onclick="removePuzzleEvent(this)">×</button>
   `;
-  
+
   // Add event listeners
-  div.querySelector('.event-action').addEventListener('change', function() {
-    const isNotify = this.value === 'notify';
-    div.querySelector('.event-action-value').style.display = isNotify ? 'none' : 'inline-block';
-    div.querySelector('.event-notify-value').style.display = isNotify ? 'inline-block' : 'none';
+  div.querySelector(".event-action").addEventListener("change", function () {
+    const isNotify = this.value === "notify";
+    div.querySelector(".event-action-value").style.display = isNotify
+      ? "none"
+      : "inline-block";
+    div.querySelector(".event-notify-value").style.display = isNotify
+      ? "inline-block"
+      : "none";
   });
-  
-  div.querySelector('.event-trigger').addEventListener('change', function() {
-    div.querySelector('.event-trigger-value').style.display = 
-      this.value === 'answer' ? 'inline-block' : 'none';
+
+  div.querySelector(".event-trigger").addEventListener("change", function () {
+    div.querySelector(".event-trigger-value").style.display =
+      this.value === "answer" ? "inline-block" : "none";
   });
-  
+
   container.appendChild(div);
 }
 
@@ -2085,61 +2145,96 @@ function removePuzzleEvent(btn) {
   btn.closest(".form-row").remove();
 }
 
-function addRoomEvent(triggerType = 'solveCount', triggerValue = '1', puzzles = [], action = 'unlock', actionValue = '') {
+function addRoomEvent(
+  triggerType = "solveCount",
+  triggerValue = "1",
+  puzzles = [],
+  action = "unlock",
+  actionValue = ""
+) {
   const container = document.getElementById("roomEventsContainer");
   const div = document.createElement("div");
   div.className = "form-row";
   div.innerHTML = `
     <select class="event-trigger-type">
-      <option value="solveCount" ${triggerType === 'solveCount' ? 'selected' : ''}>When # puzzles solved >=</option>
-      <option value="specificPuzzles" ${triggerType === 'specificPuzzles' ? 'selected' : ''}>When specific puzzles solved</option>
+      <option value="solveCount" ${
+        triggerType === "solveCount" ? "selected" : ""
+      }>When # puzzles solved >=</option>
+      <option value="specificPuzzles" ${
+        triggerType === "specificPuzzles" ? "selected" : ""
+      }>When specific puzzles solved</option>
     </select>
     <input type="number" class="event-trigger-value" 
-           value="${triggerType === 'solveCount' ? triggerValue : '1'}" 
+           value="${triggerType === "solveCount" ? triggerValue : "1"}" 
            min="1"
            placeholder="Count"
-           style="${triggerType === 'specificPuzzles' ? 'display:none' : ''}">
+           style="${triggerType === "specificPuzzles" ? "display:none" : ""}">
     <select class="event-trigger-puzzles" multiple
-            style="${triggerType === 'solveCount' ? 'display:none' : ''}; height: ${triggerType === 'specificPuzzles' ? '100px' : 'auto'}">
-      ${Object.keys(puzzleData).map(pId => 
-        `<option value="${pId}" ${puzzles.includes(pId) ? 'selected' : ''}>
+            style="${
+              triggerType === "solveCount" ? "display:none" : ""
+            }; height: ${triggerType === "specificPuzzles" ? "100px" : "auto"}">
+      ${Object.keys(puzzleData)
+        .map(
+          (pId) =>
+            `<option value="${pId}" ${puzzles.includes(pId) ? "selected" : ""}>
           ${puzzleData[pId].name || pId}
         </option>`
-      ).join('')}
+        )
+        .join("")}
     </select>
     <select class="event-action">
-      <option value="unlock" ${action === 'unlock' ? 'selected' : ''}>Unlock puzzle</option>
-      <option value="notify" ${action === 'notify' ? 'selected' : ''}>Show notification</option>
-      <option value="solve" ${action === 'solve' ? 'selected' : ''}>Solve puzzle</option>
+      <option value="unlock" ${
+        action === "unlock" ? "selected" : ""
+      }>Unlock puzzle</option>
+      <option value="notify" ${
+        action === "notify" ? "selected" : ""
+      }>Show notification</option>
+      <option value="solve" ${
+        action === "solve" ? "selected" : ""
+      }>Solve puzzle</option>
     </select>
     <select class="event-action-value">
       <option value="">-- Select target --</option>
-      ${Object.keys(puzzleData).map(pId => 
-        `<option value="${pId}" ${actionValue === pId && action !== 'notify' ? 'selected' : ''}>
+      ${Object.keys(puzzleData)
+        .map(
+          (pId) =>
+            `<option value="${pId}" ${
+              actionValue === pId && action !== "notify" ? "selected" : ""
+            }>
           ${puzzleData[pId].name || pId}
         </option>`
-      ).join('')}
+        )
+        .join("")}
     </select>
     <input type="text" class="event-notify-value" placeholder="Notification text" 
-           value="${action === 'notify' ? actionValue : ''}" 
-           style="${action === 'notify' ? '' : 'display:none'}">
+           value="${action === "notify" ? actionValue : ""}" 
+           style="${action === "notify" ? "" : "display:none"}">
     <button class="btn btn-sm btn-danger" onclick="removeRoomEvent(this)">×</button>
   `;
-  
+
   // Add event listeners for dynamic fields
-  div.querySelector('.event-action').addEventListener('change', function() {
-    const isNotify = this.value === 'notify';
-    div.querySelector('.event-action-value').style.display = isNotify ? 'none' : 'inline-block';
-    div.querySelector('.event-notify-value').style.display = isNotify ? 'inline-block' : 'none';
+  div.querySelector(".event-action").addEventListener("change", function () {
+    const isNotify = this.value === "notify";
+    div.querySelector(".event-action-value").style.display = isNotify
+      ? "none"
+      : "inline-block";
+    div.querySelector(".event-notify-value").style.display = isNotify
+      ? "inline-block"
+      : "none";
   });
-  
-  div.querySelector('.event-trigger-type').addEventListener('change', function() {
-    const isSpecificPuzzles = this.value === 'specificPuzzles';
-    div.querySelector('.event-trigger-value').style.display = isSpecificPuzzles ? 'none' : 'inline-block';
-    div.querySelector('.event-trigger-puzzles').style.display = isSpecificPuzzles ? 'inline-block' : 'none';
-    div.querySelector('.event-trigger-puzzles').style.height = isSpecificPuzzles ? '100px' : 'auto';
-  });
-  
+
+  div
+    .querySelector(".event-trigger-type")
+    .addEventListener("change", function () {
+      const isSpecificPuzzles = this.value === "specificPuzzles";
+      div.querySelector(".event-trigger-value").style.display =
+        isSpecificPuzzles ? "none" : "inline-block";
+      div.querySelector(".event-trigger-puzzles").style.display =
+        isSpecificPuzzles ? "inline-block" : "none";
+      div.querySelector(".event-trigger-puzzles").style.height =
+        isSpecificPuzzles ? "100px" : "auto";
+    });
+
   container.appendChild(div);
 }
 

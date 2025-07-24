@@ -1233,7 +1233,7 @@ body {
   .puzzle-viewer-actions {
     flex-direction: column;
   }
-  
+
   .puzzle-viewer-actions .btn {
     width: 100%;
     margin: 5px 0;

@@ -661,7 +661,6 @@ function createPuzzleElement(puzzle, puzzleId) {
       }
     </div>
     <div class="puzzle-title">${puzzle.name}</div>
-    ${answer ? `<div class="puzzle-answer">Answer: ${answer}</div>` : ""}
     <div class="puzzle-type">${puzzle.type.toUpperCase()}</div>
   `;
 
@@ -740,7 +739,6 @@ function openPuzzleFullscreen(puzzleId) {
   const title = document.createElement("h2");
   title.textContent = puzzle.name;
 
-  // Add answer display if solved
   if (isSolved && puzzle.answers && puzzle.answers.length > 0) {
     const answer = document.createElement("div");
     answer.className = "puzzle-viewer-answer";

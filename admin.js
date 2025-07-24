@@ -1121,7 +1121,7 @@ function fillPuzzleEditor(puzzle) {
   document.getElementById("puzzleType").value = puzzle.type || "puzzle";
   document.getElementById("puzzleHasAnswer").checked =
     puzzle.hasAnswer !== false;
-  
+
   document.getElementById("puzzleAnswers").value = puzzle.answers
     ? puzzle.answers.map((a) => decryptAnswer(a)).join(", ")
     : "";
@@ -1131,7 +1131,7 @@ function fillPuzzleEditor(puzzle) {
     puzzle.requiredCorrect || 1;
   document.getElementById("puzzleDescription").value = puzzle.description || "";
   document.getElementById("mediaList").innerHTML = "";
-  toggleAnswerFields()
+  toggleAnswerFields();
   if (puzzle.media) {
     puzzle.media.forEach((media) => {
       const mediaList = document.getElementById("mediaList");
@@ -1631,7 +1631,6 @@ function addMedia() {
     return;
   }
 
-  // Validate URL format
   try {
     new URL(url);
   } catch (e) {

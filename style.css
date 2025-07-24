@@ -954,7 +954,7 @@ body {
   background: white;
   z-index: 1000;
   overflow-y: auto;
-  padding-top: 60px; /* Space for fixed header */
+  padding-top: 60px;
 }
 
 .puzzle-viewer-header {
@@ -977,10 +977,9 @@ body {
   padding: 20px;
 }
 
-/* Consistent puzzle preview sizes */
 .puzzle-preview {
   width: 100%;
-  height: 180px; /* Fixed height */
+  height: 180px;
   background: #f0f0f0;
   display: flex;
   align-items: center;
@@ -995,7 +994,6 @@ body {
   object-fit: contain;
 }
 
-/* Updated Floating Action Boxes */
 .answer-box {
   top: 50%;
   left: 50%;
@@ -1032,7 +1030,6 @@ body {
   display: none;
 }
 
-/* Update puzzle viewer styles */
 .puzzle-viewer-image {
   max-width: 90%;
   width: auto;
@@ -1056,7 +1053,6 @@ body {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Update cover image styles */
 .puzzle-cover {
   width: 100%;
   height: auto;
@@ -1071,7 +1067,6 @@ body {
   object-fit: contain;
 }
 
-/* Make puzzle preview containers consistent */
 .puzzle-preview {
   width: 100%;
   height: 180px;
@@ -1094,7 +1089,6 @@ body {
   overflow: hidden;
 }
 
-/* Click outside to close behavior */
 .overlay {
   position: fixed;
   top: 0;
@@ -1108,7 +1102,7 @@ body {
 .floating-puzzle {
   position: absolute;
   width: 150px;
-  height: 120px; /* Fixed height */
+  height: 120px;
   background: white;
   border-radius: 8px;
   padding: 10px;
@@ -1124,16 +1118,15 @@ body {
 .box-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start; /* Align items to top */
+  align-items: flex-start;
   margin-bottom: 15px;
-  position: relative; /* For absolute positioning of close button */
+  position: relative;
 }
 
-/* Style the close button */
 .close-box {
   position: absolute;
-  top: 20px; /* Adjust as needed */
-  right: 20px; /* Adjust as needed */
+  top: 20px;
+  right: 20px;
   background: #f0f0f0;
   border: none;
   width: 30px;
@@ -1158,13 +1151,10 @@ body {
   color: #333;
 }
 
-/* Adjust the answer and hint boxes to accommodate the close button */
-
-/* Ensure the headers don't get cut off */
 .answer-box h3,
 .hint-box h3 {
-  margin-right: 20px; /* Space for close button */
-  padding-top: 5px; /* Align with close button */
+  margin-right: 20px;
+  padding-top: 5px;
 }
 
 .puzzle-preview-container {

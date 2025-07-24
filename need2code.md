@@ -8,14 +8,11 @@
 1. scroll bars around pdf
 2. locks don't looks good
 3. need better background
-4. missing fullscreen button
 
 ## Suggestions
 1. make hints more customized
 2. be able to create 1+ answer boxes in a puzzle
 3. create multipuzzles (puzzles with many answers)
-4. make solved puzzles show answers (on the room page and when you click on a solved puzzle) [THIS IS IMPOSSIBLE...]
-5. use jpgs instead of pdfs
 
 ## Puzzle Stuff
 1. tarting room meta - it says love mr. bob so we think the last name is bob, right? but bob goes in the first answer box where the first name should go...

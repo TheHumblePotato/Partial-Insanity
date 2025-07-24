@@ -628,24 +628,40 @@ function createPuzzleElement(puzzle, puzzleId) {
   element.onclick = () => openPuzzleFullscreen(puzzleId);
 
   const coverImage = getCoverImage(puzzle);
+  const answer =
+    solved && puzzle.answers && puzzle.answers.length > 0
+      ? decryptAnswer(puzzle.answers[0])
+      : null;
 
   element.innerHTML = `
     <div class="puzzle-preview">
       ${
         coverImage
-          ? `<img src="${coverImage.url}" alt="Puzzle Preview" class="puzzle-cover">`
+          ? `
+        <div class="puzzle-preview-container">
+          <img src="${
+            coverImage.url
+          }" alt="Puzzle Preview" class="puzzle-cover">
+          ${answer ? `<div class="puzzle-answer-overlay">${answer}</div>` : ""}
+        </div>
+      `
           : puzzle.media.find((m) => m.type === "pdf")
-          ? `<iframe src="${
-              puzzle.media.find((m) => m.type === "pdf").url
-            }#view=fitH" width="100%" height="100%" style="border: none; pointer-events: none;"></iframe>`
+          ? `
+        <iframe src="${
+          puzzle.media.find((m) => m.type === "pdf").url
+        }#view=fitH" width="100%" height="100%" style="border: none; pointer-events: none;"></iframe>
+      `
           : puzzle.type === "lock"
-          ? `<div style="padding: 20px; text-align: center;">${
-              puzzle.description || "Lock Puzzle"
-            }</div>`
+          ? `
+        <div style="padding: 20px; text-align: center;">${
+          puzzle.description || "Lock Puzzle"
+        }</div>
+      `
           : '<div style="padding: 20px; text-align: center;">Puzzle</div>'
       }
     </div>
     <div class="puzzle-title">${puzzle.name}</div>
+    ${answer ? `<div class="puzzle-answer">Answer: ${answer}</div>` : ""}
     <div class="puzzle-type">${puzzle.type.toUpperCase()}</div>
   `;
 
@@ -723,6 +739,14 @@ function openPuzzleFullscreen(puzzleId) {
 
   const title = document.createElement("h2");
   title.textContent = puzzle.name;
+
+  // Add answer display if solved
+  if (isSolved && puzzle.answers && puzzle.answers.length > 0) {
+    const answer = document.createElement("div");
+    answer.className = "puzzle-viewer-answer";
+    answer.textContent = `Answer: ${decryptAnswer(puzzle.answers[0])}`;
+    header.appendChild(answer);
+  }
 
   const actions = document.createElement("div");
   actions.className = "puzzle-viewer-actions";

@@ -772,7 +772,11 @@ function openPuzzleFullscreen(puzzleId) {
       const answerBtn = document.createElement("button");
       answerBtn.className = "btn btn-primary";
       answerBtn.textContent = "Check Answer";
-      answerBtn.onclick = toggleAnswerBox;
+      answerBtn.onclick = function() {
+        // Always use multiple answer input for all puzzle types
+        initAnswerBox(puzzle);
+        toggleAnswerBox();
+      };
       actions.appendChild(answerBtn);
     }
 
@@ -863,42 +867,33 @@ function initAnswerBox(puzzle) {
   box.className = "answer-box";
   box.id = "answer-box";
 
-  if (puzzle.type === "lock") {
-    box.innerHTML = `
-      <h3>Submit Answers</h3>
-      <button class="close-box" onclick="toggleAnswerBox()">✖</button>
-      <div id="lock-description">${
-        puzzle.description || "Submit the required answers to unlock"
-      }</div>
-      <div id="answer-inputs"></div>
-      <button class="submit-btn" onclick="submitMultipleAnswers()">Submit</button>
-      <div class="guess-counter" id="multi-guess-counter"></div>
-    `;
+  const answers = puzzle.answers || [];
+  const requiredCorrect = puzzle.requiredCorrect || answers.length;
 
-    const inputsContainer = box.querySelector("#answer-inputs");
-    puzzle.answers.forEach((_, index) => {
-      const div = document.createElement("div");
-      div.className = "lock-answer-row";
-      div.innerHTML = `
-        <label class="lock-answer-label">Answer ${index + 1}:</label>
-        <input type="text" id="answer-${index}" class="lock-answer-input" placeholder="Enter answer ${
-        index + 1
-      }">
-      `;
-      inputsContainer.appendChild(div);
-    });
-  } else {
-    box.innerHTML = `
-      <h3>Submit Answer</h3>
-      <button class="close-box" onclick="toggleAnswerBox()">✖</button>
-      <input type="text" id="puzzle-answer" class="answer-input" placeholder="Enter your answer">
-      <button class="submit-btn" onclick="submitAnswer()">Submit</button>
-      <div class="guess-counter" id="guess-counter"></div>
+  box.innerHTML = `
+    <h3>Submit Answers</h3>
+    <button class="close-box" onclick="toggleAnswerBox()">✖</button>
+    <div id="answer-inputs"></div>
+    <div class="required-correct">Require ${requiredCorrect} correct answer(s) to solve</div>
+    <button class="submit-btn" onclick="submitMultipleAnswers()">Submit</button>
+    <div class="guess-counter" id="multi-guess-counter"></div>
+  `;
+
+  const inputsContainer = box.querySelector("#answer-inputs");
+  answers.forEach((_, index) => {
+    const div = document.createElement("div");
+    div.className = "lock-answer-row";
+    div.innerHTML = `
+      <label class="lock-answer-label">Answer ${index + 1}:</label>
+      <input type="text" id="answer-${index}" class="lock-answer-input" placeholder="Enter answer ${
+      index + 1
+    }">
     `;
-  }
+    inputsContainer.appendChild(div);
+  });
 
   document.body.appendChild(box);
-  updateGuessCounter(currentPuzzle, puzzle.type === "lock");
+  updateGuessCounter(currentPuzzle, true);
 }
 
 function initHintBox(puzzle) {
@@ -1127,7 +1122,7 @@ async function submitMultipleAnswers() {
       }
     }
 
-    const requiredCorrect = puzzle.requiredCorrect || puzzle.answers.length;
+    const requiredCorrect = puzzle.requiredCorrect || 1;
     if (correctCount >= requiredCorrect) {
       // Check for answer-specific events
       if (puzzle.events) {

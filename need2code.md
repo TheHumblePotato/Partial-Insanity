@@ -1,9 +1,8 @@
 ## BUGS
-1. Certain room clears don't get detected (partial solve)
-2. in image rooms, the image doesnt take the full page
-3. in image rooms, puzzles can clip out of view
-4. solving locks linked to a meta doesnt make the meta solved
-5. you need to reload the page to refresh your guesses
+1. in image rooms, the image doesnt take the full page
+2. in image rooms, puzzles can clip out of view
+3. solving locks linked to a meta doesnt make the meta solved
+4. you need to reload the page to refresh your guesses
 
 ## Visual
 1. locks don't looks good
@@ -11,8 +10,6 @@
 
 ## Suggestions
 1. make hints more customized
-2. be able to create 1+ answer boxes in a puzzle
-3. create multipuzzles (puzzles with many answers)
 4. settings page for team
 
 ## Puzzle Stuff

@@ -172,6 +172,10 @@
   margin-bottom: 10px;
 }
 
+.hint-text {
+  margin-top: 0px;
+}
+
 .hint-entry textarea {
   flex: 1;
   min-height: 60px;

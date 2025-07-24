@@ -1003,12 +1003,12 @@ body {
 
 /* Updated Floating Action Boxes */
 .answer-box {
-  position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   background: white;
   padding: 25px;
+  padding-top: 20px !important;
   border-radius: 15px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   z-index: 1002;
@@ -1017,15 +1017,17 @@ body {
   max-height: 80vh;
   overflow-y: auto;
   display: none;
+  position: relative;
 }
 
 .hint-box {
-  position: fixed;
+  position: relative;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   background: white;
   padding: 25px;
+  padding-top: 20px !important;
   border-radius: 15px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   z-index: 1002;
@@ -1136,8 +1138,8 @@ body {
 /* Style the close button */
 .close-box {
   position: absolute;
-  top: -10px; /* Adjust as needed */
-  right: -10px; /* Adjust as needed */
+  top: 20x; /* Adjust as needed */
+  right: 20px; /* Adjust as needed */
   background: #f0f0f0;
   border: none;
   width: 30px;
@@ -1163,10 +1165,7 @@ body {
 }
 
 /* Adjust the answer and hint boxes to accommodate the close button */
-.answer-box, .hint-box {
-  padding-top: 30px; /* Make room for close button */
-  position: relative; /* For absolute positioning */
-}
+
 
 /* Ensure the headers don't get cut off */
 .answer-box h3, .hint-box h3 {

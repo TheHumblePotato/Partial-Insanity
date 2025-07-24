@@ -1238,7 +1238,7 @@ function updatePuzzleTypeFields() {
     requiredField.classList.remove("hidden");
   } else {
     lockDesc.classList.add("hidden");
-    requiredField.classList.add("hidden");
+    requiredField.classList.remove("hidden");
   }
 }
 

@@ -876,7 +876,7 @@ function initAnswerBox(puzzle) {
     <div id="answer-inputs"></div>
     <div class="required-correct">Require ${requiredCorrect} correct answer(s) to solve</div>
     <button class="submit-btn" onclick="submitMultipleAnswers()">Submit</button>
-    <div class="guess-counter" id="multi-guess-counter"></div>
+    <div class="guess-counter" id="guess-counter"></div>
   `;
 
   const inputsContainer = box.querySelector("#answer-inputs");
@@ -1305,9 +1305,7 @@ async function handleIncorrectAnswer(puzzleId) {
 
 function updateGuessCounter(puzzleId, isMulti) {
   const guessCounts = teamProgress.guessCount || {};
-  const counterElement = isMulti
-    ? document.getElementById("multi-guess-counter")
-    : document.getElementById("guess-counter");
+  const counterElement = document.getElementById("guess-counter");
 
   const remaining =
     (puzzleData[puzzleId].maxGuesses || 0) - (guessCounts[puzzleId] || 0);

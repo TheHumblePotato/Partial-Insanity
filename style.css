@@ -216,6 +216,7 @@ body {
   display: flex;
   align-items: center;
   margin-bottom: 10px;
+  margin-top: 10px;
 }
 
 .lock-answer-label {
@@ -997,7 +998,7 @@ body {
 .answer-box {
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -225%);
+  transform: translate(-50%, -100%);
   background: white;
   padding: 25px;
   padding-top: 20px !important;
@@ -1016,7 +1017,7 @@ body {
   position: relative;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -225%);
+  transform: translate(-50%, -100%);
   background: white;
   padding: 25px;
   padding-top: 20px !important;

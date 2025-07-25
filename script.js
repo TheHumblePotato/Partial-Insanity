@@ -25,6 +25,7 @@ let unlockedNewContent = {};
 let answerBoxVisible = false;
 let hintBoxVisible = false;
 
+
 auth.onAuthStateChanged((user) => {
   if (user) {
     currentUser = user;
@@ -723,6 +724,8 @@ function getCoverImage(puzzle) {
 let currentPuzzleViewer = null;
 
 function openPuzzleFullscreen(puzzleId) {
+  answerBoxVisible = false;
+  hintBoxVisible = false;
   currentPuzzle = puzzleId;
   const puzzle = puzzleData[puzzleId];
   const isSolved = (teamProgress.solvedPuzzles || []).includes(puzzleId);
@@ -839,6 +842,8 @@ function closePuzzleViewer() {
     currentPuzzleViewer.remove();
     currentPuzzleViewer = null;
   }
+  answerBoxVisible = false;
+  hintBoxVisible = false;
   document.getElementById("answer-box")?.remove();
   document.getElementById("hint-box")?.remove();
   document.removeEventListener("click", handleClickOutside);

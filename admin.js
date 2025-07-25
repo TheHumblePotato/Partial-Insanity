@@ -1124,6 +1124,7 @@ function fillPuzzleEditor(puzzle) {
   document.getElementById("puzzleAnswers").value = puzzle.answers
     ? puzzle.answers.map((a) => decryptAnswer(a)).join(", ")
     : "";
+  toggleAnswerFields();
   const bindingsContainer = document.getElementById("answerBindingsContainer");
   bindingsContainer.innerHTML = "";
   if (puzzle.answerBindings) {
@@ -1224,13 +1225,16 @@ function clearPuzzleEditor() {
   document.getElementById("puzzleMaxGuesses").value = 10;
   document.getElementById("puzzleRequiredCorrect").value = 1;
   document.getElementById("puzzleDescription").value = "";
-  document.getElementById("mediaList").value = "";
   document.getElementById("puzzleFollowup").value = "";
   document.getElementById("puzzleUnlocks").value = "";
   document.getElementById("puzzleSolveMessage").value = "";
   document.getElementById("puzzlePositionX").value = 100;
   document.getElementById("puzzlePositionY").value = 100;
   document.getElementById("puzzleRotation").value = 0;
+  document.getElementById("answerBindingsContainer").innerHTML = ``;
+  document.getElementById("puzzleEventsContainer").innerHTML = ``;
+  document.getElementById("mediaList").innerHTML = ``;
+  document.getElementById("hintsContainer").innerHTML = ``;
 }
 
 function updatePuzzleTypeFields() {
@@ -1557,6 +1561,8 @@ function clearRoomEditor() {
   document.getElementById("roomClearCondition").value = "fullsolve";
   document.getElementById("roomClearCount").value = 1;
   document.getElementById("roomPuzzles").value = "";
+  document.getElementById("roomDescription").value = "";
+  document.getElementById("roomEventsContainer").innerHTML = ``;
 }
 
 function updateClearConditionFields() {

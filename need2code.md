@@ -9,7 +9,7 @@
 
 ## Suggestions
 1. make hints more customized
-4. settings page for team
+2. settings page for team
 
 ## Puzzle Stuff
 1. starting room meta - it says love mr. bob so we think the last name is bob, right? but bob goes in the first answer box where the first name should go...

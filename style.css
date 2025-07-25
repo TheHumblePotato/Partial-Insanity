@@ -996,9 +996,10 @@ body {
 }
 
 .answer-box {
-  top: 50%;
+  position: fixed;
+  top: 33.33vh;
   left: 50%;
-  transform: translate(-50%, -100%);
+  transform: translateX(-50%);
   background: white;
   padding: 25px;
   padding-top: 20px !important;
@@ -1007,17 +1008,16 @@ body {
   z-index: 1002;
   width: 80%;
   max-width: 600px;
-  max-height: 80vh;
+  max-height: 60vh;
   overflow-y: auto;
   display: none;
-  position: relative;
 }
 
 .hint-box {
-  position: relative;
-  top: 50%;
+  position: fixed;
+  top: 33.33vh;
   left: 50%;
-  transform: translate(-50%, -100%);
+  transform: translateX(-50%);
   background: white;
   padding: 25px;
   padding-top: 20px !important;
@@ -1026,7 +1026,7 @@ body {
   z-index: 1002;
   width: 80%;
   max-width: 600px;
-  max-height: 80vh;
+  max-height: 60vh;
   overflow-y: auto;
   display: none;
 }
@@ -1211,6 +1211,28 @@ body {
   border-radius: 8px;
   margin: 10px 0;
   border-left: 4px solid #4caf50;
+}
+
+.notification-event {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  right: auto;
+  min-width: 400px;
+  z-index: 1300;
+}
+
+.notification-content.notification-event {
+  padding: 25px;
+  font-size: 18px;
+  text-align: center;
+  border-radius: 10px;
+}
+
+.notification-content.notification-event .notification-message {
+  font-weight: bold;
+  line-height: 1.4;
 }
 
 .room-event-notification {

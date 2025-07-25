@@ -237,8 +237,13 @@ function checkForNewlyUnlockedContent() {
 function showNotification(message, type = "info", duration = 3000) {
   const notification = document.createElement("div");
   notification.className = `notification notification-${type}`;
+  
+  // Check if it's an event notification and make it bigger
+  const isEventNotification = message.includes("unlocked") || message.includes("automatically solved");
+  const notificationClass = isEventNotification ? "notification-event" : "";
+  
   notification.innerHTML = `
-    <div class="notification-content">
+    <div class="notification-content ${notificationClass}">
       <span class="notification-message">${message}</span>
       <button class="notification-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
     </div>
@@ -1290,22 +1295,19 @@ async function handleRoomEvent(event) {
   switch (event.action) {
     case "unlock":
       if (puzzleData[event.actionValue]) {
-        // If unlocking a puzzle, add it to current room if not already present
-        const currentRoomData = roomData[currentRoom];
-        if (currentRoomData && !currentRoomData.puzzles.includes(event.actionValue)) {
-          currentRoomData.puzzles = currentRoomData.puzzles || [];
-          currentRoomData.puzzles.push(event.actionValue);
-          await db.collection("rooms").doc("config").set(roomData);
+        // Add puzzle as a followup to current room puzzles
+        if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
+          teamProgress.solvedPuzzles.push(event.actionValue);
           
-          if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
-            teamProgress.solvedPuzzles.push(event.actionValue);
-            showNotification(
-              `Puzzle "${
-                puzzleData[event.actionValue]?.name || event.actionValue
-              }" automatically solved and added to current room!`,
-              "success"
-            );
-          }
+          // Mark it as unlocked new content so it shows up
+          unlockedNewContent[event.actionValue] = currentRoom;
+          
+          showNotification(
+            `Puzzle "${
+              puzzleData[event.actionValue]?.name || event.actionValue
+            }" automatically solved and unlocked!`,
+            "success"
+          );
         }
       } else if (roomData[event.actionValue]) {
         // If unlocking a room, handle normally

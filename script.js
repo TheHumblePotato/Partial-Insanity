@@ -1289,14 +1289,35 @@ async function handlePuzzleEvent(event) {
 async function handleRoomEvent(event) {
   switch (event.action) {
     case "unlock":
-      if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
-        teamProgress.unlockedRooms.push(event.actionValue);
-        showNotification(
-          `New room unlocked: "${
-            roomData[event.actionValue]?.name || event.actionValue
-          }"`,
-          "success"
-        );
+      if (puzzleData[event.actionValue]) {
+        // If unlocking a puzzle, add it to current room if not already present
+        const currentRoomData = roomData[currentRoom];
+        if (currentRoomData && !currentRoomData.puzzles.includes(event.actionValue)) {
+          currentRoomData.puzzles = currentRoomData.puzzles || [];
+          currentRoomData.puzzles.push(event.actionValue);
+          await db.collection("rooms").doc("config").set(roomData);
+          
+          if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
+            teamProgress.solvedPuzzles.push(event.actionValue);
+            showNotification(
+              `Puzzle "${
+                puzzleData[event.actionValue]?.name || event.actionValue
+              }" automatically solved and added to current room!`,
+              "success"
+            );
+          }
+        }
+      } else if (roomData[event.actionValue]) {
+        // If unlocking a room, handle normally
+        if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
+          teamProgress.unlockedRooms.push(event.actionValue);
+          showNotification(
+            `New room unlocked: "${
+              roomData[event.actionValue]?.name || event.actionValue
+            }"`,
+            "success"
+          );
+        }
       }
       break;
     case "solve":
@@ -1315,6 +1336,9 @@ async function handleRoomEvent(event) {
       break;
   }
   await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+  
+  // Refresh the room view to show any new puzzles
+  renderCurrentRoom();
 }
 
 async function handleIncorrectAnswer(puzzleId) {
@@ -1399,6 +1423,16 @@ function scheduleDailyGuessReset() {
     if (currentUser) {
       teamProgress.guessCount = {};
       await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+      
+      // Update UI immediately without refresh
+      if (currentPuzzle && document.getElementById("guess-counter")) {
+        updateGuessCounter(currentPuzzle, true);
+      }
+      if (document.querySelectorAll(".lock-answer-input")) {
+        document.querySelectorAll(".lock-answer-input").forEach(input => {
+          input.disabled = false;
+        });
+      }
 
       scheduleDailyGuessReset();
     }

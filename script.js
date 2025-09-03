@@ -74,6 +74,7 @@ async function loadTeamData() {
         .get();
       if (progressDoc.exists) {
         teamProgress = progressDoc.data();
+        teamProgress.triggeredEvents = teamProgress.triggeredEvents || {};
 
         teamProgress.solvedPuzzles = teamProgress.solvedPuzzles || [];
         teamProgress.unlockedRooms = teamProgress.unlockedRooms || [
@@ -111,6 +112,7 @@ async function loadTeamData() {
           guessCount: {},
           viewedUnlocks: [],
           clearedRooms: [],
+          triggeredEvents: {}
         };
         await db.collection("progress").doc(currentUser.uid).set(teamProgress);
       }
@@ -234,11 +236,122 @@ function checkForNewlyUnlockedContent() {
   });
 }
 
-function showNotification(message, type = "info", duration = 3000) {
+async function loadRoomEvents(roomId) {
+  try {
+    const eventsRef = db.collection("rooms").doc("config").collection(roomId).doc("events");
+    const eventsDoc = await eventsRef.get();
+    
+    if (eventsDoc.exists) {
+      return eventsDoc.data();
+    }
+    return {};
+  } catch (error) {
+    console.error("Error loading room events:", error);
+    return {};
+  }
+}
+
+async function checkAndTriggerRoomEvents(roomId) {
+  try {
+    const events = await loadRoomEvents(roomId);
+    const solvedPuzzles = teamProgress.solvedPuzzles || [];
+    const roomPuzzles = roomData[roomId]?.puzzles || [];
+    
+    // Count solved puzzles in this room
+    const solvedInRoom = roomPuzzles.filter(puzzleId => 
+      solvedPuzzles.includes(puzzleId)
+    ).length;
+    
+    // Check each event
+    for (const [eventKey, event] of Object.entries(events)) {
+      if (!event.triggerType || !event.action) continue;
+      
+      // Check if event has already been triggered
+      teamProgress.triggeredEvents = teamProgress.triggeredEvents || {};
+      if (teamProgress.triggeredEvents[`${roomId}_${eventKey}`]) continue;
+      
+      let shouldTrigger = false;
+      
+      // Check trigger condition
+      switch (event.triggerType) {
+        case "solveCount":
+          const requiredCount = parseInt(event.triggerValue) || 0;
+          shouldTrigger = solvedInRoom >= requiredCount;
+          break;
+          
+        // Add other trigger types here as needed
+      }
+      
+      // Trigger event if condition is met
+      if (shouldTrigger) {
+        await handleEventAction(event, roomId, eventKey);
+        
+        // Mark event as triggered
+        teamProgress.triggeredEvents[`${roomId}_${eventKey}`] = true;
+        await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+      }
+    }
+  } catch (error) {
+    console.error("Error checking room events:", error);
+  }
+}
+
+async function handleEventAction(event, roomId, eventKey) {
+  switch (event.action) {
+    case "notify":
+      // Show centered notification
+      showNotification(event.actionValue, "info", 5000, true);
+      break;
+      
+    case "unlock":
+      // Check if it's a puzzle or room to unlock
+      if (puzzleData[event.actionValue]) {
+        // Add puzzle to current room as unlocked content
+        if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
+          unlockedNewContent[event.actionValue] = roomId;
+          showNotification(
+            `New puzzle unlocked: "${puzzleData[event.actionValue]?.name || event.actionValue}"`,
+            "success",
+            5000
+          );
+        }
+      } else if (roomData[event.actionValue]) {
+        // Unlock room
+        if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
+          teamProgress.unlockedRooms.push(event.actionValue);
+          showNotification(
+            `New room unlocked: "${roomData[event.actionValue]?.name || event.actionValue}"`,
+            "success",
+            5000
+          );
+        }
+      }
+      break;
+      
+    case "solve":
+      if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
+        teamProgress.solvedPuzzles.push(event.actionValue);
+        showNotification(
+          `Puzzle "${puzzleData[event.actionValue]?.name || event.actionValue}" automatically solved!`,
+          "success",
+          5000
+        );
+      }
+      break;
+  }
+  
+  // Save progress
+  await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+  
+  // Refresh the room view to show any new content
+  renderCurrentRoom();
+}
+
+function showNotification(message, type = "info", duration = 3000, isCentered = false) {
   const notification = document.createElement("div");
   
   // Check if it's an event notification and make it centered
-  const isEventNotification = message.includes("unlocked") || message.includes("automatically solved");
+  const isEventNotification = isCentered || message.includes("unlocked") || message.includes("automatically solved");
   
   if (isEventNotification) {
     notification.className = `notification notification-${type} notification-event`;
@@ -487,6 +600,7 @@ function renderCurrentRoom() {
   } else if (room.type === "image") {
     renderImageRoom(room);
   }
+  checkAndTriggerRoomEvents(currentRoom);
 }
 
 function normalizeAnswer(answer) {
@@ -1170,13 +1284,7 @@ async function handleCorrectAnswer(puzzleId) {
   }
 
   // Handle puzzle events
-  if (puzzle.events) {
-    for (const event of puzzle.events) {
-      if (event.trigger === "solve") {
-        await handlePuzzleEvent(event);
-      }
-    }
-  }
+    checkAndTriggerRoomEvents(roomId)
 
   // Handle unlocks
   if (puzzle.unlocks && !teamProgress.unlockedRooms.includes(puzzle.unlocks)) {
@@ -1244,41 +1352,6 @@ if (room.events) {
 
   closePuzzleViewer();
   renderCurrentRoom();
-}
-async function handlePuzzleEvent(event) {
-  // Decrypt triggerValue if it exists
-  const triggerValue = event.triggerValue
-    ? decryptAnswer(event.triggerValue)
-    : "";
-
-  switch (event.action) {
-    case "unlock":
-      if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
-        teamProgress.unlockedRooms.push(event.actionValue);
-        showNotification(
-          `New room unlocked: "${
-            roomData[event.actionValue]?.name || event.actionValue
-          }"`,
-          "success"
-        );
-      }
-      break;
-    case "solve":
-      if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
-        teamProgress.solvedPuzzles.push(event.actionValue);
-        showNotification(
-          `Puzzle "${
-            puzzleData[event.actionValue]?.name || event.actionValue
-          }" automatically solved!`,
-          "success"
-        );
-      }
-      break;
-    case "notify":
-      showNotification(event.actionValue, "info");
-      break;
-  }
-  await db.collection("progress").doc(currentUser.uid).set(teamProgress);
 }
 
 async function handleRoomEvent(event, roomId) {

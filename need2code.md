@@ -2,7 +2,6 @@
 1. in image rooms, the image doesnt take the full page
 2. in image rooms, puzzles can clip out of view
 3. you need to reload the page to refresh your guesses
-4. events don't work
 
 ## Visual
 1. locks don't looks good

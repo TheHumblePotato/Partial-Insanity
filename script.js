@@ -654,7 +654,7 @@ function generateRandomPassword() {
   return result;
 }
 
-function renderCurrentRoom() {
+async function renderCurrentRoom() {
   if (!roomData[currentRoom]) return;
 
   const room = roomData[currentRoom];
@@ -698,7 +698,7 @@ function renderCurrentRoom() {
   } else if (room.type === "image") {
     renderImageRoom(room);
   }
-  checkAndTriggerRoomEvents(currentRoom);
+  await checkRoomPersistentUnlocks(currentRoom);
 }
 
 function normalizeAnswer(answer) {
@@ -1352,6 +1352,67 @@ async function submitMultipleAnswers() {
   } catch (error) {
     console.error("Error submitting answers:", error);
     showNotification("Error submitting answers: " + error.message, "error");
+  }
+}
+
+async function checkRoomPersistentUnlocks(roomId) {
+  try {
+    const events = await loadRoomEvents(roomId);
+    const solvedPuzzles = teamProgress.solvedPuzzles || [];
+    const roomPuzzles = roomData[roomId]?.puzzles || [];
+    let updated = false;
+    
+    for (const event of events) {
+      if (event.action !== "unlock") continue; // Only process unlocks
+
+      // Check trigger condition
+      let shouldTrigger = false;
+      switch (event.triggerType) {
+        case "solveCount":
+          {
+            const requiredCount = parseInt(event.triggerValue) || 0;
+            const solvedInRoom = roomPuzzles.filter(puzzleId =>
+              solvedPuzzles.includes(puzzleId)
+            ).length;
+            shouldTrigger = solvedInRoom >= requiredCount;
+          }
+          break;
+        case "specificPuzzles":
+          {
+            const requiredPuzzles = event.puzzles || [];
+            shouldTrigger = requiredPuzzles.every(puzzleId =>
+              solvedPuzzles.includes(puzzleId)
+            );
+          }
+          break;
+        default:
+          continue;
+      }
+
+      // Only persistently unlock if condition met and not yet unlocked
+      if (shouldTrigger) {
+        // If it's a puzzle unlock
+        if (puzzleData[event.actionValue]) {
+          if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
+            teamProgress.solvedPuzzles.push(event.actionValue);
+            updated = true;
+          }
+        }
+        // If it's a room unlock
+        else if (roomData[event.actionValue]) {
+          if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
+            teamProgress.unlockedRooms.push(event.actionValue);
+            updated = true;
+          }
+        }
+      }
+    }
+
+    if (updated) {
+      await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+    }
+  } catch (error) {
+    console.error("Error checking persistent room unlocks:", error);
   }
 }
 

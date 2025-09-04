@@ -273,7 +273,6 @@ async function checkAndTriggerRoomEvents(roomId) {
       solvedPuzzles.includes(puzzleId)
     ).length;
     
-    
     // Check each event in the array
     for (const [index, event] of events.entries()) {
       
@@ -283,9 +282,7 @@ async function checkAndTriggerRoomEvents(roomId) {
       
       // Check if event has already been triggered
       teamProgress.triggeredEvents = teamProgress.triggeredEvents || {};
-      const eventKey = `${roomId}_${index}`;
-      
-      if (teamProgress.triggeredEvents[eventKey]) {
+      if (teamProgress.triggeredEvents[`${roomId}_${index}`]) {
         continue;
       }
       
@@ -311,12 +308,11 @@ async function checkAndTriggerRoomEvents(roomId) {
       
       // Trigger event if condition is met
       if (shouldTrigger) {
-        
-        // Mark event as triggered BEFORE handling the action
-        teamProgress.triggeredEvents[eventKey] = true;
-        await db.collection("progress").doc(currentUser.uid).set(teamProgress);
-        
         await handleEventAction(event, roomId, index);
+        
+        // Mark event as triggered
+        teamProgress.triggeredEvents[`${roomId}_${index}`] = true;
+        await db.collection("progress").doc(currentUser.uid).set(teamProgress);
       }
     }
   } catch (error) {
@@ -332,16 +328,6 @@ async function handleEventAction(event, roomId, eventIndex) {
       break;
       
     case "unlock":
-      // Special case: don't show notification for "y=x+10" unlocks
-      // This prevents the default "New content unlocked: y=x+10" notification
-      if (event.actionValue === "y=x+10") {
-        // Just add to unlocked content without showing notification
-        if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
-          unlockedNewContent[event.actionValue] = roomId;
-        }
-        break;
-      }
-      
       // Check if it's a puzzle or room to unlock
       if (puzzleData[event.actionValue]) {
         // Add puzzle to current room as unlocked content (only for this user)
@@ -367,16 +353,14 @@ async function handleEventAction(event, roomId, eventIndex) {
         }
       } else {
         // If it's not a known puzzle or room, treat it as a new puzzle ID
-        // This handles cases like "y=x+10" which might not be in puzzleData yet
         if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
           unlockedNewContent[event.actionValue] = roomId;
-          // Don't show notification for unknown content (like "y=x+10")
-          // showNotification(
-          //   `New content unlocked: ${event.actionValue}`,
-          //   "success",
-          //   5000,
-          //   true // Mark as event notification
-          // );
+          showNotification(
+            `New content unlocked: ${event.actionValue}`,
+            "success",
+            5000,
+            true // Mark as event notification
+          );
         }
       }
       break;
@@ -400,6 +384,7 @@ async function handleEventAction(event, roomId, eventIndex) {
   // Refresh the room view to show any new content
   renderCurrentRoom();
 }
+
 function showNotification(message, type = "info", duration = 3000, isEvent = false) {
   // Create a container for event notifications if it doesn't exist
   if (isEvent && !document.getElementById('notification-container')) {

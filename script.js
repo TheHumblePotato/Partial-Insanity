@@ -1338,6 +1338,7 @@ async function handleCorrectAnswer(puzzleId) {
     }
   }
 
+  
   // Handle puzzle events
   if (puzzle.events) {
     for (const event of puzzle.events) {
@@ -1414,6 +1415,42 @@ async function handleCorrectAnswer(puzzleId) {
 
   closePuzzleViewer();
   renderCurrentRoom();
+}
+
+async function handlePuzzleEvent(event) {
+  // Decrypt triggerValue if it exists
+  const triggerValue = event.triggerValue
+    ? decryptAnswer(event.triggerValue)
+    : "";
+
+  switch (event.action) {
+    case "unlock":
+      if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
+        teamProgress.unlockedRooms.push(event.actionValue);
+        showNotification(
+          `New room unlocked: "${
+            roomData[event.actionValue]?.name || event.actionValue
+          }"`,
+          "success"
+        );
+      }
+      break;
+    case "solve":
+      if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
+        teamProgress.solvedPuzzles.push(event.actionValue);
+        showNotification(
+          `Puzzle "${
+            puzzleData[event.actionValue]?.name || event.actionValue
+          }" automatically solved!`,
+          "success"
+        );
+      }
+      break;
+    case "notify":
+      showNotification(event.actionValue, "info");
+      break;
+  }
+  await db.collection("progress").doc(currentUser.uid).set(teamProgress);
 }
 
 async function handleRoomEvent(event, roomId) {

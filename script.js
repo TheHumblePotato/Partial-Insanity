@@ -26,7 +26,6 @@ let unlockedPuzzlesInRoom = {};
 let answerBoxVisible = false;
 let hintBoxVisible = false;
 
-
 auth.onAuthStateChanged((user) => {
   if (user) {
     currentUser = user;
@@ -198,7 +197,7 @@ async function loadPuzzleData() {
 
     roomData = roomDoc.data();
     puzzleData = puzzleDoc.data();
-    
+
     checkForNewlyUnlockedContent();
 
     renderCurrentRoom();
@@ -241,23 +240,21 @@ function checkForNewlyUnlockedContent() {
 
 async function loadRoomEvents(roomId) {
   try {
-    
-    // Check if room exists in roomData
+
     if (roomData[roomId] && Array.isArray(roomData[roomId].events)) {
       return roomData[roomId].events;
     }
-    
-    // If not in roomData, try to load from Firebase
+
     const roomDoc = await db.collection("rooms").doc("config").collection(roomId).doc("config").get();
-    
+
     if (roomDoc.exists) {
       const roomDataFromFirebase = roomDoc.data();
-      
+
       if (Array.isArray(roomDataFromFirebase.events)) {
         return roomDataFromFirebase.events;
       }
     }
-    
+
     return [];
   } catch (error) {
     console.error("Error loading room events:", error);
@@ -267,58 +264,51 @@ async function loadRoomEvents(roomId) {
 async function checkAndTriggerRoomEvents(roomId) {
   try {
     const events = await loadRoomEvents(roomId);
-    
+
     const solvedPuzzles = teamProgress.solvedPuzzles || [];
     const roomPuzzles = roomData[roomId]?.puzzles || [];
-    
-    // Count solved puzzles in this room
+
     const solvedInRoom = roomPuzzles.filter(puzzleId => 
       solvedPuzzles.includes(puzzleId)
     ).length;
-    
-    
-    // Check each event in the array
+
     for (const [index, event] of events.entries()) {
-      
+
       if (!event.triggerType || !event.action) {
         continue;
       }
-      
-      // Check if event has already been triggered
+
       teamProgress.triggeredEvents = teamProgress.triggeredEvents || {};
       const eventKey = `${roomId}_${index}`;
-      
+
       if (teamProgress.triggeredEvents[eventKey]) {
         continue;
       }
-      
+
       let shouldTrigger = false;
-      
-      // Check trigger condition
+
       switch (event.triggerType) {
         case "solveCount":
           const requiredCount = parseInt(event.triggerValue) || 0;
           shouldTrigger = solvedInRoom >= requiredCount;
           break;
-          
+
         case "specificPuzzles":
           const requiredPuzzles = event.puzzles || [];
           shouldTrigger = requiredPuzzles.every(puzzleId => 
             solvedPuzzles.includes(puzzleId)
           );
           break;
-          
+
         default:
           continue;
       }
-      
-      // Trigger event if condition is met
+
       if (shouldTrigger) {
-        
-        // Mark event as triggered BEFORE handling the action
+
         teamProgress.triggeredEvents[eventKey] = true;
         await db.collection("progress").doc(currentUser.uid).set(teamProgress);
-        
+
         await handleEventAction(event, roomId, index);
       }
     }
@@ -326,39 +316,37 @@ async function checkAndTriggerRoomEvents(roomId) {
     console.error("Error checking room events:", error);
   }
 }
-
 async function handleEventAction(event, roomId, eventIndex) {
   switch (event.action) {
     case "notify":
-      // Show centered red alert for event notifications
       showNotification(event.actionValue, "error", 5000, true);
       break;
-      
+
     case "unlock":
-      
-      // Check if it's a puzzle or room to unlock
-  if (puzzleData[event.actionValue]) {
-    // --- PATCH: Add puzzle to unlockedPuzzlesInRoom for this player ---
-    if (!unlockedPuzzlesInRoom[roomId]) unlockedPuzzlesInRoom[roomId] = [];
-    if (!unlockedPuzzlesInRoom[roomId].includes(event.actionValue)) {
-      unlockedPuzzlesInRoom[roomId].push(event.actionValue);
-      // Persist to player progress
-      teamProgress.unlockedPuzzlesInRoom = unlockedPuzzlesInRoom;
-      await db.collection("progress").doc(currentUser.uid).set(teamProgress);
-    }
-  } else if (roomData[event.actionValue]) {
-        // Unlock room
+      if (puzzleData[event.actionValue]) {
+        if (!unlockedPuzzlesInRoom[roomId]) unlockedPuzzlesInRoom[roomId] = [];
+        if (!unlockedPuzzlesInRoom[roomId].includes(event.actionValue)) {
+          unlockedPuzzlesInRoom[roomId].push(event.actionValue);
+          teamProgress.unlockedPuzzlesInRoom = unlockedPuzzlesInRoom;
+          await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+          showNotification(
+            `New puzzle unlocked: "${puzzleData[event.actionValue]?.name || event.actionValue}"`,
+            "success",
+            5000,
+            true
+          );
+        }
+      } else if (roomData[event.actionValue]) {
         if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
           teamProgress.unlockedRooms.push(event.actionValue);
         }
       } else {
-
         if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
           unlockedNewContent[event.actionValue] = roomId;
         }
       }
       break;
-      
+
     case "solve":
       if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
         teamProgress.solvedPuzzles.push(event.actionValue);
@@ -371,26 +359,23 @@ async function handleEventAction(event, roomId, eventIndex) {
       }
       break;
   }
-  
-  // Save progress
+
   await db.collection("progress").doc(currentUser.uid).set(teamProgress);
-  
-  // Refresh the room view to show any new content
   renderCurrentRoom();
 }
 function showNotification(message, type = "info", duration = 3000, isEvent = false) {
-  // Create a container for event notifications if it doesn't exist
+
   if (isEvent && !document.getElementById('notification-container')) {
     const container = document.createElement('div');
     container.id = 'notification-container';
     container.className = 'notification-container';
     document.body.appendChild(container);
   }
-  
+
   const notification = document.createElement("div");
-  
+
   if (isEvent) {
-    // Event notifications - red alerts at top center
+
     notification.className = `notification-event-alert`;
     notification.innerHTML = `
       <div class="notification-content">
@@ -398,26 +383,24 @@ function showNotification(message, type = "info", duration = 3000, isEvent = fal
         <button class="notification-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
       </div>
     `;
-    
-    // Add to the event notification container
+
     const container = document.getElementById('notification-container');
     container.appendChild(notification);
-    
-    // Adjust position of all notifications in the container
+
     const notifications = container.querySelectorAll('.notification-event-alert');
     notifications.forEach((notif, index) => {
-      notif.style.top = `${index * 70}px`; // Stack them with 70px spacing
+      notif.style.top = `${index * 70}px`; 
     });
   } else {
-    // Regular notifications - keep existing behavior
+
     const isEventNotification = message.includes("unlocked") || message.includes("automatically solved");
-    
+
     if (isEventNotification) {
       notification.className = `notification notification-${type} notification-event`;
     } else {
       notification.className = `notification notification-${type}`;
     }
-    
+
     notification.innerHTML = `
       <div class="notification-content ${isEventNotification ? 'notification-event' : ''}">
         <span class="notification-message">${message}</span>
@@ -431,8 +414,7 @@ function showNotification(message, type = "info", duration = 3000, isEvent = fal
   setTimeout(() => {
     if (notification.parentNode) {
       notification.remove();
-      
-      // If this was an event notification, reposition the remaining ones
+
       if (isEvent) {
         const container = document.getElementById('notification-container');
         if (container) {
@@ -440,8 +422,7 @@ function showNotification(message, type = "info", duration = 3000, isEvent = fal
           notifications.forEach((notif, index) => {
             notif.style.top = `${index * 70}px`;
           });
-          
-          // Remove container if empty
+
           if (notifications.length === 0) {
             container.remove();
           }
@@ -637,7 +618,6 @@ async function renderCurrentRoom() {
 
   const room = roomData[currentRoom];
 
-  // Ensure persistent unlocks before rendering
   await checkRoomPersistentUnlocks(currentRoom);
 
   document.getElementById("current-room-title").textContent = room.name;
@@ -712,7 +692,6 @@ function renderNormalRoom(room) {
   const container = document.getElementById("normal-room");
   container.innerHTML = "";
 
-  // Always show original puzzles
   room.puzzles.forEach((puzzleId) => {
     const puzzle = puzzleData[puzzleId];
     if (!puzzle) return;
@@ -721,7 +700,6 @@ function renderNormalRoom(room) {
     addFollowupPuzzles(puzzleId, container);
   });
 
-  // --- PATCH: Show unlocked puzzles for this room ---
   const unlockedForThisRoom = unlockedPuzzlesInRoom[room.id || currentRoom] || [];
   unlockedForThisRoom.forEach((puzzleId) => {
     if (!room.puzzles.includes(puzzleId) && puzzleData[puzzleId] && !roomData[puzzleId]) {
@@ -748,7 +726,6 @@ function renderImageRoom(room) {
     addFloatingFollowupPuzzles(puzzleId, container);
   });
 
-  // --- PATCH: Show unlocked puzzles for this room ---
   const unlockedForThisRoom = unlockedPuzzlesInRoom[room.id || currentRoom] || [];
   unlockedForThisRoom.forEach((puzzleId) => {
     if (!room.puzzles.includes(puzzleId) && puzzleData[puzzleId] && !roomData[puzzleId]) {
@@ -778,7 +755,6 @@ function addFollowupPuzzles(puzzleId, container) {
     }
   }
 }
-
 
 function addFloatingFollowupPuzzles(puzzleId, container) {
   const solvedPuzzles = teamProgress.solvedPuzzles || [];
@@ -975,7 +951,7 @@ function openPuzzleFullscreen(puzzleId) {
       answerBtn.className = "btn btn-primary";
       answerBtn.textContent = "Check Answer";
       answerBtn.onclick = function () {
-        // Always use multiple answer input for all puzzle types
+
         initAnswerBox(puzzle);
         toggleAnswerBox();
       };
@@ -1277,14 +1253,14 @@ async function submitMultipleAnswers() {
   }
 
   try {
-    // Check for answer-specific events first
+
     if (puzzle.events) {
       for (const event of puzzle.events) {
         if (event.trigger === "answer") {
           for (const answer of answers) {
             if (checkAnswer(answer, [event.triggerValue])) {
               await handlePuzzleEvent(event);
-              // Don't count as a guess if an event was triggered
+
               return;
             }
           }
@@ -1301,7 +1277,7 @@ async function submitMultipleAnswers() {
 
     const requiredCorrect = puzzle.requiredCorrect || 1;
     if (correctCount >= requiredCorrect) {
-      // Check for solve events
+
       if (puzzle.events) {
         for (const event of puzzle.events) {
           if (event.trigger === "solve") {
@@ -1332,47 +1308,31 @@ async function checkRoomPersistentUnlocks(roomId) {
     const solvedPuzzles = teamProgress.solvedPuzzles || [];
     const roomPuzzles = roomData[roomId]?.puzzles || [];
     let updated = false;
-    
+
     for (const event of events) {
-      if (event.action !== "unlock") continue; // Only process unlocks
+      if (event.action === "unlock") {
 
-      // Check trigger condition
-      let shouldTrigger = false;
-      switch (event.triggerType) {
-        case "solveCount":
-          {
-            const requiredCount = parseInt(event.triggerValue) || 0;
-            const solvedInRoom = roomPuzzles.filter(puzzleId =>
-              solvedPuzzles.includes(puzzleId)
-            ).length;
-            shouldTrigger = solvedInRoom >= requiredCount;
-          }
-          break;
-        case "specificPuzzles":
-          {
-            const requiredPuzzles = event.puzzles || [];
-            shouldTrigger = requiredPuzzles.every(puzzleId =>
-              solvedPuzzles.includes(puzzleId)
-            );
-          }
-          break;
-        default:
-          continue;
-      }
-
-      // Only persistently unlock if condition met and not yet unlocked
-      if (shouldTrigger) {
-        // If it's a puzzle unlock
         if (puzzleData[event.actionValue]) {
-          if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
-            teamProgress.solvedPuzzles.push(event.actionValue);
+
+          if (!unlockedPuzzlesInRoom[roomId]) unlockedPuzzlesInRoom[roomId] = [];
+          if (!unlockedPuzzlesInRoom[roomId].includes(event.actionValue)) {
+            unlockedPuzzlesInRoom[roomId].push(event.actionValue);
+            teamProgress.unlockedPuzzlesInRoom = unlockedPuzzlesInRoom;
+            updated = true;
+          }
+        } else if (roomData[event.actionValue]) {
+
+          if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
+            teamProgress.unlockedRooms.push(event.actionValue);
             updated = true;
           }
         }
-        // If it's a room unlock (this is what you want to persist forever)
-        else if (roomData[event.actionValue]) {
-          if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
-            teamProgress.unlockedRooms.push(event.actionValue);
+      }
+
+      else if (event.action === "solve") {
+        if (puzzleData[event.actionValue]) {
+          if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
+            teamProgress.solvedPuzzles.push(event.actionValue);
             updated = true;
           }
         }
@@ -1389,14 +1349,12 @@ async function checkRoomPersistentUnlocks(roomId) {
 
 async function handleCorrectAnswer(puzzleId) {
   const puzzle = puzzleData[puzzleId];
-  const roomId = currentRoom; // Initialize roomId here
+  const roomId = currentRoom; 
 
-  // Mark puzzle as solved if not already
   if (!teamProgress.solvedPuzzles.includes(puzzleId)) {
     teamProgress.solvedPuzzles.push(puzzleId);
   }
 
-  // Handle answer bindings (solve other puzzles when this one is solved)
   if (puzzle.answerBindings) {
     for (const binding of puzzle.answerBindings) {
       if (
@@ -1414,8 +1372,6 @@ async function handleCorrectAnswer(puzzleId) {
     }
   }
 
-  
-  // Handle puzzle events
   if (puzzle.events) {
     for (const event of puzzle.events) {
       if (event.trigger === "solve") {
@@ -1424,17 +1380,14 @@ async function handleCorrectAnswer(puzzleId) {
     }
   }
 
-  // Handle unlocks
   if (puzzle.unlocks && !teamProgress.unlockedRooms.includes(puzzle.unlocks)) {
     teamProgress.unlockedRooms.push(puzzle.unlocks);
     unlockedNewContent[puzzle.unlocks] = puzzleId;
   }
 
-  // Check room clear conditions
   if (isRoomCleared(roomId) && !teamProgress.clearedRooms.includes(roomId)) {
     teamProgress.clearedRooms.push(roomId);
 
-    // Handle room clear unlocks
     const room = roomData[roomId];
     if (room.clearUnlock) {
       const unlockType = room.clearUnlock.type;
@@ -1460,14 +1413,12 @@ async function handleCorrectAnswer(puzzleId) {
       }
     }
 
-    // Handle room events
     if (room.events) {
       for (const event of room.events) {
         await handleRoomEvent(event, roomId);
       }
     }
 
-    // Find next uncleared room
     const nextRoom = teamProgress.unlockedRooms.find(
       (r) => !teamProgress.clearedRooms.includes(r)
     );
@@ -1477,14 +1428,11 @@ async function handleCorrectAnswer(puzzleId) {
     }
   }
 
-  // Check for room events after solving a puzzle
   checkAndTriggerRoomEvents(roomId);
 
-  // Save progress
   await db.collection("progress").doc(currentUser.uid).set(teamProgress);
   showNotification("Correct answer! Puzzle marked as solved.", "success");
 
-  // Show solve message if exists
   if (puzzle.solveMessage) {
     setTimeout(() => showSolveMessage(puzzleId), 1000);
   }
@@ -1494,7 +1442,7 @@ async function handleCorrectAnswer(puzzleId) {
 }
 
 async function handlePuzzleEvent(event) {
-  // Decrypt triggerValue if it exists
+
   const triggerValue = event.triggerValue
     ? decryptAnswer(event.triggerValue)
     : "";
@@ -1533,10 +1481,9 @@ async function handleRoomEvent(event, roomId) {
   const room = roomData[roomId];
   const solvedPuzzles = teamProgress.solvedPuzzles || [];
   const roomPuzzles = room.puzzles || [];
-  
-  // Check if trigger condition is met
+
   let triggerMet = false;
-  
+
   switch (event.triggerType) {
     case "solveCount":
       const requiredCount = parseInt(event.triggerValue) || 1;
@@ -1545,30 +1492,29 @@ async function handleRoomEvent(event, roomId) {
       ).length;
       triggerMet = solvedCount >= requiredCount;
       break;
-      
+
     case "specificPuzzles":
       const requiredPuzzles = event.puzzles || [];
       triggerMet = requiredPuzzles.every(puzzleId => 
         solvedPuzzles.includes(puzzleId)
       );
       break;
-      
+
     default:
       return;
   }
-  
+
   if (!triggerMet) return;
-  
-  // Execute the action
+
   switch (event.action) {
     case "notify":
       showNotification(event.actionValue, "error", 5000, true);
       break;
-      
+
     case "unlock":
-      // Check if it's a puzzle or room to unlock
+
       if (puzzleData[event.actionValue]) {
-        // Add puzzle to current room as unlocked content
+
         if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
           unlockedNewContent[event.actionValue] = roomId;
           showNotification(
@@ -1579,7 +1525,7 @@ async function handleRoomEvent(event, roomId) {
           );
         }
       } else if (roomData[event.actionValue]) {
-        // Unlock room
+
         if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
           teamProgress.unlockedRooms.push(event.actionValue);
           showNotification(
@@ -1591,7 +1537,7 @@ async function handleRoomEvent(event, roomId) {
         }
       }
       break;
-      
+
     case "solve":
       if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
         teamProgress.solvedPuzzles.push(event.actionValue);
@@ -1604,11 +1550,9 @@ async function handleRoomEvent(event, roomId) {
       }
       break;
   }
-  
-  // Save progress
+
   await db.collection("progress").doc(currentUser.uid).set(teamProgress);
-  
-  // Refresh the room view to show any new content
+
   renderCurrentRoom();
 }
 
@@ -1694,8 +1638,7 @@ function scheduleDailyGuessReset() {
     if (currentUser) {
       teamProgress.guessCount = {};
       await db.collection("progress").doc(currentUser.uid).set(teamProgress);
-      
-      // Update UI immediately without refresh
+
       if (currentPuzzle && document.getElementById("guess-counter")) {
         updateGuessCounter(currentPuzzle, true);
       }

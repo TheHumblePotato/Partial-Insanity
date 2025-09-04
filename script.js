@@ -22,6 +22,7 @@ let puzzleData = {};
 let roomData = {};
 let teamProgress = {};
 let unlockedNewContent = {};
+let unlockedPuzzlesInRoom = {};
 let answerBoxVisible = false;
 let hintBoxVisible = false;
 
@@ -83,6 +84,8 @@ async function loadTeamData() {
         teamProgress.guessCount = teamProgress.guessCount || {};
         teamProgress.clearedRooms = teamProgress.clearedRooms || [];
         teamProgress.viewedUnlocks = teamProgress.viewedUnlocks || [];
+        if (!teamProgress.unlockedPuzzlesInRoom) teamProgress.unlockedPuzzlesInRoom = {};
+        unlockedPuzzlesInRoom = teamProgress.unlockedPuzzlesInRoom;
 
         const unlockedRooms = teamProgress.unlockedRooms;
         const clearedRooms = teamProgress.clearedRooms;
@@ -332,51 +335,32 @@ async function handleEventAction(event, roomId, eventIndex) {
       break;
       
     case "unlock":
-      // Special case: don't show notification for "y=x+10" unlocks
-      // This prevents the default "New content unlocked: y=x+10" notification
-      if (event.actionValue === "y=x+10") {
-        // Just add to unlocked content without showing notification
-        if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
-          unlockedNewContent[event.actionValue] = roomId;
-        }
-        break;
-      }
       
       // Check if it's a puzzle or room to unlock
-      if (puzzleData[event.actionValue]) {
-        // Add puzzle to current room as unlocked content (only for this user)
-        if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
-          unlockedNewContent[event.actionValue] = roomId;
-          showNotification(
-            `New puzzle unlocked: "${puzzleData[event.actionValue]?.name || event.actionValue}"`,
-            "success",
-            5000,
-            true // Mark as event notification
-          );
-        }
-      } else if (roomData[event.actionValue]) {
+  if (puzzleData[event.actionValue]) {
+    // --- PATCH: Add puzzle to unlockedPuzzlesInRoom for this player ---
+    if (!unlockedPuzzlesInRoom[roomId]) unlockedPuzzlesInRoom[roomId] = [];
+    if (!unlockedPuzzlesInRoom[roomId].includes(event.actionValue)) {
+      unlockedPuzzlesInRoom[roomId].push(event.actionValue);
+      // Persist to player progress
+      teamProgress.unlockedPuzzlesInRoom = unlockedPuzzlesInRoom;
+      await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+      showNotification(
+        `New puzzle unlocked: "${puzzleData[event.actionValue]?.name || event.actionValue}"`,
+        "success",
+        5000,
+        true // Mark as event notification
+      );
+    }
+  } else if (roomData[event.actionValue]) {
         // Unlock room
         if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
           teamProgress.unlockedRooms.push(event.actionValue);
-          showNotification(
-            `New room unlocked: "${roomData[event.actionValue]?.name || event.actionValue}"`,
-            "success",
-            5000,
-            true // Mark as event notification
-          );
         }
       } else {
-        // If it's not a known puzzle or room, treat it as a new puzzle ID
-        // This handles cases like "y=x+10" which might not be in puzzleData yet
+
         if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
           unlockedNewContent[event.actionValue] = roomId;
-          // Don't show notification for unknown content (like "y=x+10")
-          // showNotification(
-          //   `New content unlocked: ${event.actionValue}`,
-          //   "success",
-          //   5000,
-          //   true // Mark as event notification
-          // );
         }
       }
       break;
@@ -388,7 +372,7 @@ async function handleEventAction(event, roomId, eventIndex) {
           `Puzzle "${puzzleData[event.actionValue]?.name || event.actionValue}" automatically solved!`,
           "success",
           5000,
-          true // Mark as event notification
+          true 
         );
       }
       break;
@@ -731,31 +715,53 @@ function createRoomButton(roomId) {
 function renderNormalRoom(room) {
   document.getElementById("normal-room").style.display = "grid";
   document.getElementById("image-room").style.display = "none";
-
   const container = document.getElementById("normal-room");
   container.innerHTML = "";
+
+  // Always show original puzzles
+  room.puzzles.forEach((puzzleId) => {
+    const puzzle = puzzleData[puzzleId];
+    if (!puzzle) return;
+    const puzzleElement = createPuzzleElement(puzzle, puzzleId);
+    container.appendChild(puzzleElement);
+    addFollowupPuzzles(puzzleId, container);
+  });
+
+  // --- PATCH: Show unlocked puzzles for this room ---
+  const unlockedForThisRoom = unlockedPuzzlesInRoom[room.id || currentRoom] || [];
+  unlockedForThisRoom.forEach((puzzleId) => {
+    if (!room.puzzles.includes(puzzleId) && puzzleData[puzzleId] && !roomData[puzzleId]) {
+      const puzzle = puzzleData[puzzleId];
+      const puzzleElement = createPuzzleElement(puzzle, puzzleId);
+      container.appendChild(puzzleElement);
+      addFollowupPuzzles(puzzleId, container);
+    }
+  });
+}
+
+function renderImageRoom(room) {
+  document.getElementById("normal-room").style.display = "none";
+  document.getElementById("image-room").style.display = "block";
+  const container = document.getElementById("image-room");
+  container.innerHTML = "";
+  container.style.backgroundImage = `url(${room.background})`;
 
   room.puzzles.forEach((puzzleId) => {
     const puzzle = puzzleData[puzzleId];
     if (!puzzle) return;
-
-    const puzzleElement = createPuzzleElement(puzzle, puzzleId);
+    const puzzleElement = createFloatingPuzzleElement(puzzle, puzzleId);
     container.appendChild(puzzleElement);
-
-    addFollowupPuzzles(puzzleId, container);
+    addFloatingFollowupPuzzles(puzzleId, container);
   });
 
-  Object.entries(unlockedNewContent).forEach(([unlockId, puzzleId]) => {
-    if (
-      !room.puzzles.includes(unlockId) &&
-      puzzleData[unlockId] &&
-      !roomData[unlockId]
-    ) {
-      const puzzle = puzzleData[unlockId];
-      const puzzleElement = createPuzzleElement(puzzle, unlockId);
+  // --- PATCH: Show unlocked puzzles for this room ---
+  const unlockedForThisRoom = unlockedPuzzlesInRoom[room.id || currentRoom] || [];
+  unlockedForThisRoom.forEach((puzzleId) => {
+    if (!room.puzzles.includes(puzzleId) && puzzleData[puzzleId] && !roomData[puzzleId]) {
+      const puzzle = puzzleData[puzzleId];
+      const puzzleElement = createFloatingPuzzleElement(puzzle, puzzleId);
       container.appendChild(puzzleElement);
-
-      addFollowupPuzzles(unlockId, container);
+      addFloatingFollowupPuzzles(puzzleId, container);
     }
   });
 }
@@ -779,38 +785,6 @@ function addFollowupPuzzles(puzzleId, container) {
   }
 }
 
-function renderImageRoom(room) {
-  document.getElementById("normal-room").style.display = "none";
-  document.getElementById("image-room").style.display = "block";
-
-  const container = document.getElementById("image-room");
-  container.innerHTML = "";
-  container.style.backgroundImage = `url(${room.background})`;
-
-  room.puzzles.forEach((puzzleId) => {
-    const puzzle = puzzleData[puzzleId];
-    if (!puzzle) return;
-
-    const puzzleElement = createFloatingPuzzleElement(puzzle, puzzleId);
-    container.appendChild(puzzleElement);
-
-    addFloatingFollowupPuzzles(puzzleId, container);
-  });
-
-  Object.entries(unlockedNewContent).forEach(([unlockId, puzzleId]) => {
-    if (
-      !room.puzzles.includes(unlockId) &&
-      puzzleData[unlockId] &&
-      !roomData[unlockId]
-    ) {
-      const puzzle = puzzleData[unlockId];
-      const puzzleElement = createFloatingPuzzleElement(puzzle, unlockId);
-      container.appendChild(puzzleElement);
-
-      addFloatingFollowupPuzzles(unlockId, container);
-    }
-  });
-}
 
 function addFloatingFollowupPuzzles(puzzleId, container) {
   const solvedPuzzles = teamProgress.solvedPuzzles || [];

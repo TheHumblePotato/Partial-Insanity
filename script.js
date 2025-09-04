@@ -316,31 +316,32 @@ async function checkAndTriggerRoomEvents(roomId) {
     console.error("Error checking room events:", error);
   }
 }
+
 async function handleEventAction(event, roomId, eventIndex) {
   switch (event.action) {
     case "notify":
+
       showNotification(event.actionValue, "error", 5000, true);
       break;
 
     case "unlock":
-      if (puzzleData[event.actionValue]) {
-        if (!unlockedPuzzlesInRoom[roomId]) unlockedPuzzlesInRoom[roomId] = [];
-        if (!unlockedPuzzlesInRoom[roomId].includes(event.actionValue)) {
-          unlockedPuzzlesInRoom[roomId].push(event.actionValue);
-          teamProgress.unlockedPuzzlesInRoom = unlockedPuzzlesInRoom;
-          await db.collection("progress").doc(currentUser.uid).set(teamProgress);
-          showNotification(
-            `New puzzle unlocked: "${puzzleData[event.actionValue]?.name || event.actionValue}"`,
-            "success",
-            5000,
-            true
-          );
-        }
-      } else if (roomData[event.actionValue]) {
+
+  if (puzzleData[event.actionValue]) {
+
+    if (!unlockedPuzzlesInRoom[roomId]) unlockedPuzzlesInRoom[roomId] = [];
+    if (!unlockedPuzzlesInRoom[roomId].includes(event.actionValue)) {
+      unlockedPuzzlesInRoom[roomId].push(event.actionValue);
+
+      teamProgress.unlockedPuzzlesInRoom = unlockedPuzzlesInRoom;
+      await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+    }
+  } else if (roomData[event.actionValue]) {
+
         if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
           teamProgress.unlockedRooms.push(event.actionValue);
         }
       } else {
+
         if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
           unlockedNewContent[event.actionValue] = roomId;
         }
@@ -361,6 +362,7 @@ async function handleEventAction(event, roomId, eventIndex) {
   }
 
   await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+
   renderCurrentRoom();
 }
 function showNotification(message, type = "info", duration = 3000, isEvent = false) {
@@ -692,7 +694,6 @@ function renderNormalRoom(room) {
   const container = document.getElementById("normal-room");
   container.innerHTML = "";
 
-  // Always show original puzzles
   room.puzzles.forEach((puzzleId) => {
     const puzzle = puzzleData[puzzleId];
     if (!puzzle) return;
@@ -701,15 +702,9 @@ function renderNormalRoom(room) {
     addFollowupPuzzles(puzzleId, container);
   });
 
-  // PATCH: Only show puzzles that have been unlocked by triggered events
   const unlockedForThisRoom = unlockedPuzzlesInRoom[room.id || currentRoom] || [];
   unlockedForThisRoom.forEach((puzzleId) => {
-    // Only show if not a native puzzle of the room, and only once the event has triggered
-    if (
-      !room.puzzles.includes(puzzleId) && // not a default puzzle
-      puzzleData[puzzleId] &&             // exists
-      !roomData[puzzleId]                 // not a room
-    ) {
+    if (!room.puzzles.includes(puzzleId) && puzzleData[puzzleId] && !roomData[puzzleId]) {
       const puzzle = puzzleData[puzzleId];
       const puzzleElement = createPuzzleElement(puzzle, puzzleId);
       container.appendChild(puzzleElement);
@@ -733,14 +728,9 @@ function renderImageRoom(room) {
     addFloatingFollowupPuzzles(puzzleId, container);
   });
 
-  // PATCH: Only show puzzles that have been unlocked by triggered events
   const unlockedForThisRoom = unlockedPuzzlesInRoom[room.id || currentRoom] || [];
   unlockedForThisRoom.forEach((puzzleId) => {
-    if (
-      !room.puzzles.includes(puzzleId) &&
-      puzzleData[puzzleId] &&
-      !roomData[puzzleId]
-    ) {
+    if (!room.puzzles.includes(puzzleId) && puzzleData[puzzleId] && !roomData[puzzleId]) {
       const puzzle = puzzleData[puzzleId];
       const puzzleElement = createFloatingPuzzleElement(puzzle, puzzleId);
       container.appendChild(puzzleElement);
@@ -1322,29 +1312,43 @@ async function checkRoomPersistentUnlocks(roomId) {
     let updated = false;
 
     for (const event of events) {
-      if (event.action === "unlock") {
+      if (event.action !== "unlock") continue; 
 
-        if (puzzleData[event.actionValue]) {
-
-          if (!unlockedPuzzlesInRoom[roomId]) unlockedPuzzlesInRoom[roomId] = [];
-          if (!unlockedPuzzlesInRoom[roomId].includes(event.actionValue)) {
-            unlockedPuzzlesInRoom[roomId].push(event.actionValue);
-            teamProgress.unlockedPuzzlesInRoom = unlockedPuzzlesInRoom;
-            updated = true;
+      let shouldTrigger = false;
+      switch (event.triggerType) {
+        case "solveCount":
+          {
+            const requiredCount = parseInt(event.triggerValue) || 0;
+            const solvedInRoom = roomPuzzles.filter(puzzleId =>
+              solvedPuzzles.includes(puzzleId)
+            ).length;
+            shouldTrigger = solvedInRoom >= requiredCount;
           }
-        } else if (roomData[event.actionValue]) {
-
-          if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
-            teamProgress.unlockedRooms.push(event.actionValue);
-            updated = true;
+          break;
+        case "specificPuzzles":
+          {
+            const requiredPuzzles = event.puzzles || [];
+            shouldTrigger = requiredPuzzles.every(puzzleId =>
+              solvedPuzzles.includes(puzzleId)
+            );
           }
-        }
+          break;
+        default:
+          continue;
       }
 
-      else if (event.action === "solve") {
+      if (shouldTrigger) {
+
         if (puzzleData[event.actionValue]) {
           if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
             teamProgress.solvedPuzzles.push(event.actionValue);
+            updated = true;
+          }
+        }
+
+        else if (roomData[event.actionValue]) {
+          if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
+            teamProgress.unlockedRooms.push(event.actionValue);
             updated = true;
           }
         }

@@ -658,6 +658,10 @@ async function renderCurrentRoom() {
   if (!roomData[currentRoom]) return;
 
   const room = roomData[currentRoom];
+
+  // Ensure persistent unlocks before rendering
+  await checkRoomPersistentUnlocks(currentRoom);
+
   document.getElementById("current-room-title").textContent = room.name;
   document.getElementById("room-description").textContent =
     room.description || "";
@@ -698,7 +702,6 @@ async function renderCurrentRoom() {
   } else if (room.type === "image") {
     renderImageRoom(room);
   }
-  await checkRoomPersistentUnlocks(currentRoom);
 }
 
 function normalizeAnswer(answer) {
@@ -1398,7 +1401,7 @@ async function checkRoomPersistentUnlocks(roomId) {
             updated = true;
           }
         }
-        // If it's a room unlock
+        // If it's a room unlock (this is what you want to persist forever)
         else if (roomData[event.actionValue]) {
           if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
             teamProgress.unlockedRooms.push(event.actionValue);

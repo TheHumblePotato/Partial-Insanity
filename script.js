@@ -342,8 +342,8 @@ async function checkAndTriggerRoomEvents(roomId) {
 async function handleEventAction(event, roomId, eventIndex) {
   switch (event.action) {
     case "notify":
-      // Show centered notification
-      showNotification(event.actionValue, "info", 5000, true);
+      // Show centered red alert for event notifications
+      showNotification(event.actionValue, "error", 5000, true);
       break;
       
     case "unlock":
@@ -355,7 +355,8 @@ async function handleEventAction(event, roomId, eventIndex) {
           showNotification(
             `New puzzle unlocked: "${puzzleData[event.actionValue]?.name || event.actionValue}"`,
             "success",
-            5000
+            5000,
+            true // Mark as event notification
           );
         }
       } else if (roomData[event.actionValue]) {
@@ -365,18 +366,19 @@ async function handleEventAction(event, roomId, eventIndex) {
           showNotification(
             `New room unlocked: "${roomData[event.actionValue]?.name || event.actionValue}"`,
             "success",
-            5000
+            5000,
+            true // Mark as event notification
           );
         }
       } else {
         // If it's not a known puzzle or room, treat it as a new puzzle ID
-        // This handles cases like "y=x+10" which might not be in puzzleData yet
         if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
           unlockedNewContent[event.actionValue] = roomId;
           showNotification(
             `New content unlocked: ${event.actionValue}`,
             "success",
-            5000
+            5000,
+            true // Mark as event notification
           );
         }
       }
@@ -388,7 +390,8 @@ async function handleEventAction(event, roomId, eventIndex) {
         showNotification(
           `Puzzle "${puzzleData[event.actionValue]?.name || event.actionValue}" automatically solved!`,
           "success",
-          5000
+          5000,
+          true // Mark as event notification
         );
       }
       break;
@@ -401,30 +404,75 @@ async function handleEventAction(event, roomId, eventIndex) {
   renderCurrentRoom();
 }
 
-function showNotification(message, type = "info", duration = 3000, isCentered = false) {
-  const notification = document.createElement("div");
-  
-  // Check if it's an event notification and make it centered
-  const isEventNotification = isCentered || message.includes("unlocked") || message.includes("automatically solved");
-  
-  if (isEventNotification) {
-    notification.className = `notification notification-${type} notification-event`;
-  } else {
-    notification.className = `notification notification-${type}`;
+function showNotification(message, type = "info", duration = 3000, isEvent = false) {
+  // Create a container for event notifications if it doesn't exist
+  if (isEvent && !document.getElementById('notification-container')) {
+    const container = document.createElement('div');
+    container.id = 'notification-container';
+    container.className = 'notification-container';
+    document.body.appendChild(container);
   }
   
-  notification.innerHTML = `
-    <div class="notification-content ${isEventNotification ? 'notification-event' : ''}">
-      <span class="notification-message">${message}</span>
-      <button class="notification-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
-    </div>
-  `;
+  const notification = document.createElement("div");
+  
+  if (isEvent) {
+    // Event notifications - red alerts at top center
+    notification.className = `notification-event-alert`;
+    notification.innerHTML = `
+      <div class="notification-content">
+        <span class="notification-message">${message}</span>
+        <button class="notification-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
+      </div>
+    `;
+    
+    // Add to the event notification container
+    const container = document.getElementById('notification-container');
+    container.appendChild(notification);
+    
+    // Adjust position of all notifications in the container
+    const notifications = container.querySelectorAll('.notification-event-alert');
+    notifications.forEach((notif, index) => {
+      notif.style.top = `${index * 70}px`; // Stack them with 70px spacing
+    });
+  } else {
+    // Regular notifications - keep existing behavior
+    const isEventNotification = message.includes("unlocked") || message.includes("automatically solved");
+    
+    if (isEventNotification) {
+      notification.className = `notification notification-${type} notification-event`;
+    } else {
+      notification.className = `notification notification-${type}`;
+    }
+    
+    notification.innerHTML = `
+      <div class="notification-content ${isEventNotification ? 'notification-event' : ''}">
+        <span class="notification-message">${message}</span>
+        <button class="notification-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
+      </div>
+    `;
 
-  document.body.appendChild(notification);
+    document.body.appendChild(notification);
+  }
 
   setTimeout(() => {
     if (notification.parentNode) {
       notification.remove();
+      
+      // If this was an event notification, reposition the remaining ones
+      if (isEvent) {
+        const container = document.getElementById('notification-container');
+        if (container) {
+          const notifications = container.querySelectorAll('.notification-event-alert');
+          notifications.forEach((notif, index) => {
+            notif.style.top = `${index * 70}px`;
+          });
+          
+          // Remove container if empty
+          if (notifications.length === 0) {
+            container.remove();
+          }
+        }
+      }
     }
   }, duration);
 }
@@ -1486,7 +1534,7 @@ async function handleRoomEvent(event, roomId) {
   // Execute the action
   switch (event.action) {
     case "notify":
-      showNotification(event.actionValue, "info", 5000, true);
+      showNotification(event.actionValue, "error", 5000, true);
       break;
       
     case "unlock":
@@ -1498,7 +1546,8 @@ async function handleRoomEvent(event, roomId) {
           showNotification(
             `New puzzle unlocked: "${puzzleData[event.actionValue]?.name || event.actionValue}"`,
             "success",
-            5000
+            5000,
+            true
           );
         }
       } else if (roomData[event.actionValue]) {
@@ -1508,7 +1557,8 @@ async function handleRoomEvent(event, roomId) {
           showNotification(
             `New room unlocked: "${roomData[event.actionValue]?.name || event.actionValue}"`,
             "success",
-            5000
+            5000,
+            true
           );
         }
       }
@@ -1520,7 +1570,8 @@ async function handleRoomEvent(event, roomId) {
         showNotification(
           `Puzzle "${puzzleData[event.actionValue]?.name || event.actionValue}" automatically solved!`,
           "success",
-          5000
+          5000,
+          true
         );
       }
       break;

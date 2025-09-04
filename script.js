@@ -238,23 +238,16 @@ function checkForNewlyUnlockedContent() {
 
 async function loadRoomEvents(roomId) {
   try {
-    const eventsRef = db.collection("rooms").doc("config").collection(roomId).doc("events");
-    const eventsDoc = await eventsRef.get();
+    const eventsRef = db.collection("rooms").doc("config").collection(roomId).collection("events");
+    const eventsSnapshot = await eventsRef.get();
     
-    if (eventsDoc.exists) {
-      const eventsData = eventsDoc.data();
-      const events = {};
-      
-      // Extract events from the document data
-      Object.keys(eventsData).forEach(key => {
-        if (key.startsWith("event")) {
-          events[key] = eventsData[key];
-        }
-      });
-      
-      return events;
-    }
-    return {};
+    const events = {};
+    
+    eventsSnapshot.forEach(doc => {
+      events[doc.id] = doc.data();
+    });
+    
+    return events;
   } catch (error) {
     console.error("Error loading room events:", error);
     return {};

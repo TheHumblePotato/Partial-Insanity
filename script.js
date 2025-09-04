@@ -196,6 +196,8 @@ async function loadPuzzleData() {
     roomData = roomDoc.data();
     puzzleData = puzzleDoc.data();
 
+    console.log("Room data loaded:", roomData);
+    
     checkForNewlyUnlockedContent();
 
     renderCurrentRoom();
@@ -238,13 +240,28 @@ function checkForNewlyUnlockedContent() {
 
 async function loadRoomEvents(roomId) {
   try {
-    const eventsDoc = await db.collection("rooms").doc("config").collection(roomId).doc("events").get();
+    console.log("Loading events for room:", roomId);
     
-    if (eventsDoc.exists) {
-      const eventsData = eventsDoc.data();
-      // events is stored as an array in the document
-      return eventsData.events || [];
+    // Check if room exists in roomData
+    if (roomData[roomId] && Array.isArray(roomData[roomId].events)) {
+      console.log("Events found in roomData:", roomData[roomId].events);
+      return roomData[roomId].events;
     }
+    
+    // If not in roomData, try to load from Firebase
+    const roomDoc = await db.collection("rooms").doc("config").collection(roomId).doc("config").get();
+    
+    if (roomDoc.exists) {
+      const roomDataFromFirebase = roomDoc.data();
+      console.log("Room data from Firebase:", roomDataFromFirebase);
+      
+      if (Array.isArray(roomDataFromFirebase.events)) {
+        console.log("Events found in Firebase:", roomDataFromFirebase.events);
+        return roomDataFromFirebase.events;
+      }
+    }
+    
+    console.log("No events found for room", roomId);
     return [];
   } catch (error) {
     console.error("Error loading room events:", error);
@@ -270,7 +287,10 @@ async function checkAndTriggerRoomEvents(roomId) {
     for (const [index, event] of events.entries()) {
       console.log("Checking event", index, ":", event);
       
-      if (!event.triggerType || !event.action) continue;
+      if (!event.triggerType || !event.action) {
+        console.log("Event missing required fields, skipping");
+        continue;
+      }
       
       // Check if event has already been triggered
       teamProgress.triggeredEvents = teamProgress.triggeredEvents || {};
@@ -297,7 +317,9 @@ async function checkAndTriggerRoomEvents(roomId) {
           console.log("SpecificPuzzles check:", requiredPuzzles, "solved =", shouldTrigger);
           break;
           
-        // Add other trigger types here as needed
+        default:
+          console.log("Unknown trigger type:", event.triggerType);
+          continue;
       }
       
       // Trigger event if condition is met

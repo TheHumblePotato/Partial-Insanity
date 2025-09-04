@@ -238,25 +238,24 @@ function checkForNewlyUnlockedContent() {
 
 async function loadRoomEvents(roomId) {
   try {
-    const eventsRef = db.collection("rooms").doc("config").collection(roomId).collection("events");
-    const eventsSnapshot = await eventsRef.get();
+    const eventsDoc = await db.collection("rooms").doc("config").collection(roomId).doc("events").get();
     
-    const events = {};
-    
-    eventsSnapshot.forEach(doc => {
-      events[doc.id] = doc.data();
-    });
-    
-    return events;
+    if (eventsDoc.exists) {
+      const eventsData = eventsDoc.data();
+      // events is stored as an array in the document
+      return eventsData.events || [];
+    }
+    return [];
   } catch (error) {
     console.error("Error loading room events:", error);
-    return {};
+    return [];
   }
 }
-
 async function checkAndTriggerRoomEvents(roomId) {
   try {
     const events = await loadRoomEvents(roomId);
+    console.log("Loaded events for room", roomId, ":", events);
+    
     const solvedPuzzles = teamProgress.solvedPuzzles || [];
     const roomPuzzles = roomData[roomId]?.puzzles || [];
     
@@ -265,13 +264,20 @@ async function checkAndTriggerRoomEvents(roomId) {
       solvedPuzzles.includes(puzzleId)
     ).length;
     
-    // Check each event
-    for (const [eventKey, event] of Object.entries(events)) {
+    console.log("Solved puzzles in room", roomId, ":", solvedInRoom, "of", roomPuzzles.length);
+    
+    // Check each event in the array
+    for (const [index, event] of events.entries()) {
+      console.log("Checking event", index, ":", event);
+      
       if (!event.triggerType || !event.action) continue;
       
       // Check if event has already been triggered
       teamProgress.triggeredEvents = teamProgress.triggeredEvents || {};
-      if (teamProgress.triggeredEvents[`${roomId}_${eventKey}`]) continue;
+      if (teamProgress.triggeredEvents[`${roomId}_${index}`]) {
+        console.log("Event already triggered, skipping");
+        continue;
+      }
       
       let shouldTrigger = false;
       
@@ -280,6 +286,7 @@ async function checkAndTriggerRoomEvents(roomId) {
         case "solveCount":
           const requiredCount = parseInt(event.triggerValue) || 0;
           shouldTrigger = solvedInRoom >= requiredCount;
+          console.log("SolveCount check:", solvedInRoom, ">=", requiredCount, "=", shouldTrigger);
           break;
           
         case "specificPuzzles":
@@ -287,6 +294,7 @@ async function checkAndTriggerRoomEvents(roomId) {
           shouldTrigger = requiredPuzzles.every(puzzleId => 
             solvedPuzzles.includes(puzzleId)
           );
+          console.log("SpecificPuzzles check:", requiredPuzzles, "solved =", shouldTrigger);
           break;
           
         // Add other trigger types here as needed
@@ -294,11 +302,14 @@ async function checkAndTriggerRoomEvents(roomId) {
       
       // Trigger event if condition is met
       if (shouldTrigger) {
-        await handleEventAction(event, roomId, eventKey);
+        console.log("Triggering event", index);
+        await handleEventAction(event, roomId, index);
         
         // Mark event as triggered
-        teamProgress.triggeredEvents[`${roomId}_${eventKey}`] = true;
+        teamProgress.triggeredEvents[`${roomId}_${index}`] = true;
         await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+      } else {
+        console.log("Event condition not met, not triggering");
       }
     }
   } catch (error) {
@@ -306,7 +317,7 @@ async function checkAndTriggerRoomEvents(roomId) {
   }
 }
 
-async function handleEventAction(event, roomId, eventKey) {
+async function handleEventAction(event, roomId, eventIndex) {
   switch (event.action) {
     case "notify":
       // Show centered notification

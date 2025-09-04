@@ -692,6 +692,7 @@ function renderNormalRoom(room) {
   const container = document.getElementById("normal-room");
   container.innerHTML = "";
 
+  // Always show original puzzles
   room.puzzles.forEach((puzzleId) => {
     const puzzle = puzzleData[puzzleId];
     if (!puzzle) return;
@@ -700,9 +701,15 @@ function renderNormalRoom(room) {
     addFollowupPuzzles(puzzleId, container);
   });
 
+  // PATCH: Only show puzzles that have been unlocked by triggered events
   const unlockedForThisRoom = unlockedPuzzlesInRoom[room.id || currentRoom] || [];
   unlockedForThisRoom.forEach((puzzleId) => {
-    if (!room.puzzles.includes(puzzleId) && puzzleData[puzzleId] && !roomData[puzzleId]) {
+    // Only show if not a native puzzle of the room, and only once the event has triggered
+    if (
+      !room.puzzles.includes(puzzleId) && // not a default puzzle
+      puzzleData[puzzleId] &&             // exists
+      !roomData[puzzleId]                 // not a room
+    ) {
       const puzzle = puzzleData[puzzleId];
       const puzzleElement = createPuzzleElement(puzzle, puzzleId);
       container.appendChild(puzzleElement);
@@ -726,9 +733,14 @@ function renderImageRoom(room) {
     addFloatingFollowupPuzzles(puzzleId, container);
   });
 
+  // PATCH: Only show puzzles that have been unlocked by triggered events
   const unlockedForThisRoom = unlockedPuzzlesInRoom[room.id || currentRoom] || [];
   unlockedForThisRoom.forEach((puzzleId) => {
-    if (!room.puzzles.includes(puzzleId) && puzzleData[puzzleId] && !roomData[puzzleId]) {
+    if (
+      !room.puzzles.includes(puzzleId) &&
+      puzzleData[puzzleId] &&
+      !roomData[puzzleId]
+    ) {
       const puzzle = puzzleData[puzzleId];
       const puzzleElement = createFloatingPuzzleElement(puzzle, puzzleId);
       container.appendChild(puzzleElement);

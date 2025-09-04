@@ -345,12 +345,6 @@ async function handleEventAction(event, roomId, eventIndex) {
       // Persist to player progress
       teamProgress.unlockedPuzzlesInRoom = unlockedPuzzlesInRoom;
       await db.collection("progress").doc(currentUser.uid).set(teamProgress);
-      showNotification(
-        `New puzzle unlocked: "${puzzleData[event.actionValue]?.name || event.actionValue}"`,
-        "success",
-        5000,
-        true // Mark as event notification
-      );
     }
   } else if (roomData[event.actionValue]) {
         // Unlock room

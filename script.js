@@ -64,9 +64,8 @@ async function loadTeamData() {
     const teamDoc = await db.collection("teams").doc(currentUser.uid).get();
     if (teamDoc.exists) {
       currentTeam = teamDoc.data();
-      document.getElementById(
-        "team-info"
-      ).textContent = `Team: ${currentTeam.name}`;
+      document.getElementById("team-info").textContent =
+        `Team: ${currentTeam.name}`;
 
       const progressDoc = await db
         .collection("progress")
@@ -83,14 +82,15 @@ async function loadTeamData() {
         teamProgress.guessCount = teamProgress.guessCount || {};
         teamProgress.clearedRooms = teamProgress.clearedRooms || [];
         teamProgress.viewedUnlocks = teamProgress.viewedUnlocks || [];
-        if (!teamProgress.unlockedPuzzlesInRoom) teamProgress.unlockedPuzzlesInRoom = {};
+        if (!teamProgress.unlockedPuzzlesInRoom)
+          teamProgress.unlockedPuzzlesInRoom = {};
         unlockedPuzzlesInRoom = teamProgress.unlockedPuzzlesInRoom;
 
         const unlockedRooms = teamProgress.unlockedRooms;
         const clearedRooms = teamProgress.clearedRooms;
 
         let firstUncleared = unlockedRooms.find(
-          (roomId) => !clearedRooms.includes(roomId)
+          (roomId) => !clearedRooms.includes(roomId),
         );
 
         if (!firstUncleared && unlockedRooms.length > 0) {
@@ -114,7 +114,7 @@ async function loadTeamData() {
           guessCount: {},
           viewedUnlocks: [],
           clearedRooms: [],
-          triggeredEvents: {}
+          triggeredEvents: {},
         };
         await db.collection("progress").doc(currentUser.uid).set(teamProgress);
       }
@@ -151,21 +151,21 @@ function isRoomCleared(roomId) {
           ? clearCondition.count || 1
           : room.clearCount || 1;
       const solvedCount = roomPuzzles.filter((puzzleId) =>
-        solvedPuzzles.includes(puzzleId)
+        solvedPuzzles.includes(puzzleId),
       ).length;
       return solvedCount >= requiredCount;
     }
 
     case "meta": {
       const metaPuzzles = roomPuzzles.filter(
-        (puzzleId) => puzzleData[puzzleId]?.type === "meta"
+        (puzzleId) => puzzleData[puzzleId]?.type === "meta",
       );
       return metaPuzzles.every((puzzleId) => solvedPuzzles.includes(puzzleId));
     }
 
     case "lock": {
       const lockPuzzles = roomPuzzles.filter(
-        (puzzleId) => puzzleData[puzzleId]?.type === "lock"
+        (puzzleId) => puzzleData[puzzleId]?.type === "lock",
       );
       return lockPuzzles.every((puzzleId) => solvedPuzzles.includes(puzzleId));
     }
@@ -176,7 +176,7 @@ function isRoomCleared(roomId) {
           ? clearCondition.puzzles || []
           : room.mustSolvePuzzles || [];
       return mustSolvePuzzles.every((puzzleId) =>
-        solvedPuzzles.includes(puzzleId)
+        solvedPuzzles.includes(puzzleId),
       );
     }
 
@@ -240,12 +240,16 @@ function checkForNewlyUnlockedContent() {
 
 async function loadRoomEvents(roomId) {
   try {
-
     if (roomData[roomId] && Array.isArray(roomData[roomId].events)) {
       return roomData[roomId].events;
     }
 
-    const roomDoc = await db.collection("rooms").doc("config").collection(roomId).doc("config").get();
+    const roomDoc = await db
+      .collection("rooms")
+      .doc("config")
+      .collection(roomId)
+      .doc("config")
+      .get();
 
     if (roomDoc.exists) {
       const roomDataFromFirebase = roomDoc.data();
@@ -268,12 +272,11 @@ async function checkAndTriggerRoomEvents(roomId) {
     const solvedPuzzles = teamProgress.solvedPuzzles || [];
     const roomPuzzles = roomData[roomId]?.puzzles || [];
 
-    const solvedInRoom = roomPuzzles.filter(puzzleId => 
-      solvedPuzzles.includes(puzzleId)
+    const solvedInRoom = roomPuzzles.filter((puzzleId) =>
+      solvedPuzzles.includes(puzzleId),
     ).length;
 
     for (const [index, event] of events.entries()) {
-
       if (!event.triggerType || !event.action) {
         continue;
       }
@@ -295,8 +298,8 @@ async function checkAndTriggerRoomEvents(roomId) {
 
         case "specificPuzzles":
           const requiredPuzzles = event.puzzles || [];
-          shouldTrigger = requiredPuzzles.every(puzzleId => 
-            solvedPuzzles.includes(puzzleId)
+          shouldTrigger = requiredPuzzles.every((puzzleId) =>
+            solvedPuzzles.includes(puzzleId),
           );
           break;
 
@@ -305,7 +308,6 @@ async function checkAndTriggerRoomEvents(roomId) {
       }
 
       if (shouldTrigger) {
-
         teamProgress.triggeredEvents[eventKey] = true;
         await db.collection("progress").doc(currentUser.uid).set(teamProgress);
 
@@ -320,28 +322,26 @@ async function checkAndTriggerRoomEvents(roomId) {
 async function handleEventAction(event, roomId, eventIndex) {
   switch (event.action) {
     case "notify":
-
       showNotification(event.actionValue, "error", 5000, true);
       break;
 
     case "unlock":
+      if (puzzleData[event.actionValue]) {
+        if (!unlockedPuzzlesInRoom[roomId]) unlockedPuzzlesInRoom[roomId] = [];
+        if (!unlockedPuzzlesInRoom[roomId].includes(event.actionValue)) {
+          unlockedPuzzlesInRoom[roomId].push(event.actionValue);
 
-  if (puzzleData[event.actionValue]) {
-
-    if (!unlockedPuzzlesInRoom[roomId]) unlockedPuzzlesInRoom[roomId] = [];
-    if (!unlockedPuzzlesInRoom[roomId].includes(event.actionValue)) {
-      unlockedPuzzlesInRoom[roomId].push(event.actionValue);
-
-      teamProgress.unlockedPuzzlesInRoom = unlockedPuzzlesInRoom;
-      await db.collection("progress").doc(currentUser.uid).set(teamProgress);
-    }
-  } else if (roomData[event.actionValue]) {
-
+          teamProgress.unlockedPuzzlesInRoom = unlockedPuzzlesInRoom;
+          await db
+            .collection("progress")
+            .doc(currentUser.uid)
+            .set(teamProgress);
+        }
+      } else if (roomData[event.actionValue]) {
         if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
           teamProgress.unlockedRooms.push(event.actionValue);
         }
       } else {
-
         if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
           unlockedNewContent[event.actionValue] = roomId;
         }
@@ -351,12 +351,6 @@ async function handleEventAction(event, roomId, eventIndex) {
     case "solve":
       if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
         teamProgress.solvedPuzzles.push(event.actionValue);
-        showNotification(
-          `Puzzle "${puzzleData[event.actionValue]?.name || event.actionValue}" automatically solved!`,
-          "success",
-          5000,
-          true 
-        );
       }
       break;
   }
@@ -365,19 +359,22 @@ async function handleEventAction(event, roomId, eventIndex) {
 
   renderCurrentRoom();
 }
-function showNotification(message, type = "info", duration = 3000, isEvent = false) {
-
-  if (isEvent && !document.getElementById('notification-container')) {
-    const container = document.createElement('div');
-    container.id = 'notification-container';
-    container.className = 'notification-container';
+function showNotification(
+  message,
+  type = "info",
+  duration = 3000,
+  isEvent = false,
+) {
+  if (isEvent && !document.getElementById("notification-container")) {
+    const container = document.createElement("div");
+    container.id = "notification-container";
+    container.className = "notification-container";
     document.body.appendChild(container);
   }
 
   const notification = document.createElement("div");
 
   if (isEvent) {
-
     notification.className = `notification-event-alert`;
     notification.innerHTML = `
       <div class="notification-content">
@@ -386,16 +383,18 @@ function showNotification(message, type = "info", duration = 3000, isEvent = fal
       </div>
     `;
 
-    const container = document.getElementById('notification-container');
+    const container = document.getElementById("notification-container");
     container.appendChild(notification);
 
-    const notifications = container.querySelectorAll('.notification-event-alert');
+    const notifications = container.querySelectorAll(
+      ".notification-event-alert",
+    );
     notifications.forEach((notif, index) => {
-      notif.style.top = `${index * 70}px`; 
+      notif.style.top = `${index * 70}px`;
     });
   } else {
-
-    const isEventNotification = message.includes("unlocked") || message.includes("automatically solved");
+    const isEventNotification =
+      message.includes("unlocked") || message.includes("automatically solved");
 
     if (isEventNotification) {
       notification.className = `notification notification-${type} notification-event`;
@@ -404,7 +403,7 @@ function showNotification(message, type = "info", duration = 3000, isEvent = fal
     }
 
     notification.innerHTML = `
-      <div class="notification-content ${isEventNotification ? 'notification-event' : ''}">
+      <div class="notification-content ${isEventNotification ? "notification-event" : ""}">
         <span class="notification-message">${message}</span>
         <button class="notification-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
       </div>
@@ -418,9 +417,11 @@ function showNotification(message, type = "info", duration = 3000, isEvent = fal
       notification.remove();
 
       if (isEvent) {
-        const container = document.getElementById('notification-container');
+        const container = document.getElementById("notification-container");
         if (container) {
-          const notifications = container.querySelectorAll('.notification-event-alert');
+          const notifications = container.querySelectorAll(
+            ".notification-event-alert",
+          );
           notifications.forEach((notif, index) => {
             notif.style.top = `${index * 70}px`;
           });
@@ -505,7 +506,7 @@ async function registerTeam() {
   try {
     const userCredential = await auth.createUserWithEmailAndPassword(
       email,
-      password
+      password,
     );
     const user = userCredential.user;
 
@@ -646,7 +647,7 @@ async function renderCurrentRoom() {
     });
 
   const dropdown = document.querySelector(
-    ".cleared-rooms-dropdown .dropdown-content"
+    ".cleared-rooms-dropdown .dropdown-content",
   );
   dropdown.innerHTML = clearedRooms
     .map((roomId) => {
@@ -702,9 +703,14 @@ function renderNormalRoom(room) {
     addFollowupPuzzles(puzzleId, container);
   });
 
-  const unlockedForThisRoom = unlockedPuzzlesInRoom[room.id || currentRoom] || [];
+  const unlockedForThisRoom =
+    unlockedPuzzlesInRoom[room.id || currentRoom] || [];
   unlockedForThisRoom.forEach((puzzleId) => {
-    if (!room.puzzles.includes(puzzleId) && puzzleData[puzzleId] && !roomData[puzzleId]) {
+    if (
+      !room.puzzles.includes(puzzleId) &&
+      puzzleData[puzzleId] &&
+      !roomData[puzzleId]
+    ) {
       const puzzle = puzzleData[puzzleId];
       const puzzleElement = createPuzzleElement(puzzle, puzzleId);
       container.appendChild(puzzleElement);
@@ -728,9 +734,14 @@ function renderImageRoom(room) {
     addFloatingFollowupPuzzles(puzzleId, container);
   });
 
-  const unlockedForThisRoom = unlockedPuzzlesInRoom[room.id || currentRoom] || [];
+  const unlockedForThisRoom =
+    unlockedPuzzlesInRoom[room.id || currentRoom] || [];
   unlockedForThisRoom.forEach((puzzleId) => {
-    if (!room.puzzles.includes(puzzleId) && puzzleData[puzzleId] && !roomData[puzzleId]) {
+    if (
+      !room.puzzles.includes(puzzleId) &&
+      puzzleData[puzzleId] &&
+      !roomData[puzzleId]
+    ) {
       const puzzle = puzzleData[puzzleId];
       const puzzleElement = createFloatingPuzzleElement(puzzle, puzzleId);
       container.appendChild(puzzleElement);
@@ -748,7 +759,7 @@ function addFollowupPuzzles(puzzleId, container) {
     if (followupPuzzle) {
       const followupElement = createPuzzleElement(
         followupPuzzle,
-        puzzle.followup
+        puzzle.followup,
       );
       followupElement.classList.add("followup-puzzle");
       container.appendChild(followupElement);
@@ -767,12 +778,12 @@ function addFloatingFollowupPuzzles(puzzleId, container) {
     if (followupPuzzle) {
       const followupElement = createFloatingPuzzleElement(
         followupPuzzle,
-        puzzle.followup
+        puzzle.followup,
       );
       followupElement.classList.add("followup-puzzle");
 
       const parentElement = container.querySelector(
-        `[onclick="openPuzzle('${puzzleId}')"]`
+        `[onclick="openPuzzle('${puzzleId}')"]`,
       );
       if (parentElement) {
         const parentLeft = parseInt(parentElement.style.left) || 100;
@@ -817,18 +828,18 @@ function createPuzzleElement(puzzle, puzzleId) {
         </div>
       `
           : puzzle.media.find((m) => m.type === "pdf")
-          ? `
+            ? `
         <iframe src="${
           puzzle.media.find((m) => m.type === "pdf").url
         }#view=fitH" width="100%" height="100%" style="border: none; pointer-events: none;"></iframe>
       `
-          : puzzle.type === "lock"
-          ? `
+            : puzzle.type === "lock"
+              ? `
         <div style="padding: 20px; text-align: center;">${
           puzzle.description || "Lock Puzzle"
         }</div>
       `
-          : '<div style="padding: 20px; text-align: center;">Puzzle</div>'
+              : '<div style="padding: 20px; text-align: center;">Puzzle</div>'
       }
     </div>
     <div class="puzzle-title">${puzzle.name}</div>
@@ -866,8 +877,8 @@ function createFloatingPuzzleElement(puzzle, puzzleId) {
         coverImage
           ? `<img src="${coverImage.url}" alt="Puzzle Preview" class="floating-puzzle-cover">`
           : puzzle.type === "lock"
-          ? puzzle.description
-          : ""
+            ? puzzle.description
+            : ""
       }
     </div>
     <div style="font-size: 12px; font-weight: bold; text-align: center;">${
@@ -953,7 +964,6 @@ function openPuzzleFullscreen(puzzleId) {
       answerBtn.className = "btn btn-primary";
       answerBtn.textContent = "Check Answer";
       answerBtn.onclick = function () {
-
         initAnswerBox(puzzle);
         toggleAnswerBox();
       };
@@ -1025,7 +1035,7 @@ function handleClickOutside(event) {
 
   if (answerBoxVisible && answerBox && !answerBox.contains(event.target)) {
     const answerBtn = document.querySelector(
-      '.puzzle-viewer-actions button[onclick="toggleAnswerBox()"]'
+      '.puzzle-viewer-actions button[onclick="toggleAnswerBox()"]',
     );
     if (answerBtn && !answerBtn.contains(event.target)) {
       toggleAnswerBox();
@@ -1034,7 +1044,7 @@ function handleClickOutside(event) {
 
   if (hintBoxVisible && hintBox && !hintBox.contains(event.target)) {
     const hintBtn = document.querySelector(
-      '.puzzle-viewer-actions button[onclick="toggleHintBox()"]'
+      '.puzzle-viewer-actions button[onclick="toggleHintBox()"]',
     );
     if (hintBtn && !hintBtn.contains(event.target)) {
       toggleHintBox();
@@ -1068,8 +1078,8 @@ function initAnswerBox(puzzle) {
     div.innerHTML = `
       <label class="lock-answer-label">Answer ${index + 1}:</label>
       <input type="text" id="answer-${index}" class="lock-answer-input" placeholder="Enter answer ${
-      index + 1
-    }">
+        index + 1
+      }">
     `;
     inputsContainer.appendChild(div);
   });
@@ -1149,7 +1159,7 @@ function renderHints(puzzle) {
         "Invalid hint found at index",
         index,
         "in puzzle",
-        currentPuzzle
+        currentPuzzle,
       );
       return;
     }
@@ -1255,7 +1265,6 @@ async function submitMultipleAnswers() {
   }
 
   try {
-
     if (puzzle.events) {
       for (const event of puzzle.events) {
         if (event.trigger === "answer") {
@@ -1279,7 +1288,6 @@ async function submitMultipleAnswers() {
 
     const requiredCorrect = puzzle.requiredCorrect || 1;
     if (correctCount >= requiredCorrect) {
-
       if (puzzle.events) {
         for (const event of puzzle.events) {
           if (event.trigger === "solve") {
@@ -1294,7 +1302,7 @@ async function submitMultipleAnswers() {
       await handleIncorrectAnswer(puzzleId);
       showNotification(
         `You got ${correctCount} out of ${requiredCorrect} required answers correct. Please try again.`,
-        "error"
+        "error",
       );
       updateGuessCounter(puzzleId, true);
     }
@@ -1312,15 +1320,15 @@ async function checkRoomPersistentUnlocks(roomId) {
     let updated = false;
 
     for (const event of events) {
-      if (event.action !== "unlock") continue; 
+      if (event.action !== "unlock") continue;
 
       let shouldTrigger = false;
       switch (event.triggerType) {
         case "solveCount":
           {
             const requiredCount = parseInt(event.triggerValue) || 0;
-            const solvedInRoom = roomPuzzles.filter(puzzleId =>
-              solvedPuzzles.includes(puzzleId)
+            const solvedInRoom = roomPuzzles.filter((puzzleId) =>
+              solvedPuzzles.includes(puzzleId),
             ).length;
             shouldTrigger = solvedInRoom >= requiredCount;
           }
@@ -1328,8 +1336,8 @@ async function checkRoomPersistentUnlocks(roomId) {
         case "specificPuzzles":
           {
             const requiredPuzzles = event.puzzles || [];
-            shouldTrigger = requiredPuzzles.every(puzzleId =>
-              solvedPuzzles.includes(puzzleId)
+            shouldTrigger = requiredPuzzles.every((puzzleId) =>
+              solvedPuzzles.includes(puzzleId),
             );
           }
           break;
@@ -1338,15 +1346,7 @@ async function checkRoomPersistentUnlocks(roomId) {
       }
 
       if (shouldTrigger) {
-
-        if (puzzleData[event.actionValue]) {
-          if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
-            teamProgress.solvedPuzzles.push(event.actionValue);
-            updated = true;
-          }
-        }
-
-        else if (roomData[event.actionValue]) {
+        if (roomData[event.actionValue]) {
           if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
             teamProgress.unlockedRooms.push(event.actionValue);
             updated = true;
@@ -1365,7 +1365,7 @@ async function checkRoomPersistentUnlocks(roomId) {
 
 async function handleCorrectAnswer(puzzleId) {
   const puzzle = puzzleData[puzzleId];
-  const roomId = currentRoom; 
+  const roomId = currentRoom;
 
   if (!teamProgress.solvedPuzzles.includes(puzzleId)) {
     teamProgress.solvedPuzzles.push(puzzleId);
@@ -1382,7 +1382,7 @@ async function handleCorrectAnswer(puzzleId) {
           `Puzzle "${
             puzzleData[binding.targetPuzzle]?.name || binding.targetPuzzle
           }" automatically solved!`,
-          "success"
+          "success",
         );
       }
     }
@@ -1424,7 +1424,7 @@ async function handleCorrectAnswer(puzzleId) {
           `Puzzle "${
             puzzleData[unlockId]?.name || unlockId
           }" automatically solved!`,
-          "success"
+          "success",
         );
       }
     }
@@ -1436,7 +1436,7 @@ async function handleCorrectAnswer(puzzleId) {
     }
 
     const nextRoom = teamProgress.unlockedRooms.find(
-      (r) => !teamProgress.clearedRooms.includes(r)
+      (r) => !teamProgress.clearedRooms.includes(r),
     );
     if (nextRoom) {
       teamProgress.currentRoom = nextRoom;
@@ -1458,7 +1458,6 @@ async function handleCorrectAnswer(puzzleId) {
 }
 
 async function handlePuzzleEvent(event) {
-
   const triggerValue = event.triggerValue
     ? decryptAnswer(event.triggerValue)
     : "";
@@ -1471,7 +1470,7 @@ async function handlePuzzleEvent(event) {
           `New room unlocked: "${
             roomData[event.actionValue]?.name || event.actionValue
           }"`,
-          "success"
+          "success",
         );
       }
       break;
@@ -1482,7 +1481,7 @@ async function handlePuzzleEvent(event) {
           `Puzzle "${
             puzzleData[event.actionValue]?.name || event.actionValue
           }" automatically solved!`,
-          "success"
+          "success",
         );
       }
       break;
@@ -1503,16 +1502,16 @@ async function handleRoomEvent(event, roomId) {
   switch (event.triggerType) {
     case "solveCount":
       const requiredCount = parseInt(event.triggerValue) || 1;
-      const solvedCount = roomPuzzles.filter(puzzleId => 
-        solvedPuzzles.includes(puzzleId)
+      const solvedCount = roomPuzzles.filter((puzzleId) =>
+        solvedPuzzles.includes(puzzleId),
       ).length;
       triggerMet = solvedCount >= requiredCount;
       break;
 
     case "specificPuzzles":
       const requiredPuzzles = event.puzzles || [];
-      triggerMet = requiredPuzzles.every(puzzleId => 
-        solvedPuzzles.includes(puzzleId)
+      triggerMet = requiredPuzzles.every((puzzleId) =>
+        solvedPuzzles.includes(puzzleId),
       );
       break;
 
@@ -1528,28 +1527,13 @@ async function handleRoomEvent(event, roomId) {
       break;
 
     case "unlock":
-
       if (puzzleData[event.actionValue]) {
-
         if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
           unlockedNewContent[event.actionValue] = roomId;
-          showNotification(
-            `New puzzle unlocked: "${puzzleData[event.actionValue]?.name || event.actionValue}"`,
-            "success",
-            5000,
-            true
-          );
         }
       } else if (roomData[event.actionValue]) {
-
         if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
           teamProgress.unlockedRooms.push(event.actionValue);
-          showNotification(
-            `New room unlocked: "${roomData[event.actionValue]?.name || event.actionValue}"`,
-            "success",
-            5000,
-            true
-          );
         }
       }
       break;
@@ -1561,7 +1545,7 @@ async function handleRoomEvent(event, roomId) {
           `Puzzle "${puzzleData[event.actionValue]?.name || event.actionValue}" automatically solved!`,
           "success",
           5000,
-          true
+          true,
         );
       }
       break;
@@ -1620,7 +1604,7 @@ function updateGuessCounter(puzzleId, isMulti) {
       const timeUntilReset = resetTime.getTime() - now.getTime();
       const hours = Math.floor(timeUntilReset / (1000 * 60 * 60));
       const minutes = Math.floor(
-        (timeUntilReset % (1000 * 60 * 60)) / (1000 * 60)
+        (timeUntilReset % (1000 * 60 * 60)) / (1000 * 60),
       );
 
       counterElement.innerHTML = `Guesses refresh in: ${hours}h ${minutes}m`;
@@ -1659,7 +1643,7 @@ function scheduleDailyGuessReset() {
         updateGuessCounter(currentPuzzle, true);
       }
       if (document.querySelectorAll(".lock-answer-input")) {
-        document.querySelectorAll(".lock-answer-input").forEach(input => {
+        document.querySelectorAll(".lock-answer-input").forEach((input) => {
           input.disabled = false;
         });
       }
@@ -1734,7 +1718,7 @@ function encryptAnswer(answer) {
 function decryptAnswer(encryptedAnswer) {
   try {
     return CryptoJS.AES.decrypt(encryptedAnswer, SECURITY_SALT).toString(
-      CryptoJS.enc.Utf8
+      CryptoJS.enc.Utf8,
     );
   } catch (e) {
     console.error("Decryption error:", e);

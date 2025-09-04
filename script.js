@@ -242,7 +242,17 @@ async function loadRoomEvents(roomId) {
     const eventsDoc = await eventsRef.get();
     
     if (eventsDoc.exists) {
-      return eventsDoc.data();
+      const eventsData = eventsDoc.data();
+      const events = {};
+      
+      // Extract events from the document data
+      Object.keys(eventsData).forEach(key => {
+        if (key.startsWith("event")) {
+          events[key] = eventsData[key];
+        }
+      });
+      
+      return events;
     }
     return {};
   } catch (error) {
@@ -279,6 +289,13 @@ async function checkAndTriggerRoomEvents(roomId) {
           shouldTrigger = solvedInRoom >= requiredCount;
           break;
           
+        case "specificPuzzles":
+          const requiredPuzzles = event.puzzles || [];
+          shouldTrigger = requiredPuzzles.every(puzzleId => 
+            solvedPuzzles.includes(puzzleId)
+          );
+          break;
+          
         // Add other trigger types here as needed
       }
       
@@ -306,7 +323,7 @@ async function handleEventAction(event, roomId, eventKey) {
     case "unlock":
       // Check if it's a puzzle or room to unlock
       if (puzzleData[event.actionValue]) {
-        // Add puzzle to current room as unlocked content
+        // Add puzzle to current room as unlocked content (only for this user)
         if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
           unlockedNewContent[event.actionValue] = roomId;
           showNotification(
@@ -321,6 +338,17 @@ async function handleEventAction(event, roomId, eventKey) {
           teamProgress.unlockedRooms.push(event.actionValue);
           showNotification(
             `New room unlocked: "${roomData[event.actionValue]?.name || event.actionValue}"`,
+            "success",
+            5000
+          );
+        }
+      } else {
+        // If it's not a known puzzle or room, treat it as a new puzzle ID
+        // This handles cases like "y=x+10" which might not be in puzzleData yet
+        if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
+          unlockedNewContent[event.actionValue] = roomId;
+          showNotification(
+            `New content unlocked: ${event.actionValue}`,
             "success",
             5000
           );
@@ -1259,6 +1287,7 @@ async function submitMultipleAnswers() {
 
 async function handleCorrectAnswer(puzzleId) {
   const puzzle = puzzleData[puzzleId];
+  const roomId = currentRoom; // Initialize roomId here
 
   // Mark puzzle as solved if not already
   if (!teamProgress.solvedPuzzles.includes(puzzleId)) {
@@ -1284,7 +1313,13 @@ async function handleCorrectAnswer(puzzleId) {
   }
 
   // Handle puzzle events
-    checkAndTriggerRoomEvents(roomId)
+  if (puzzle.events) {
+    for (const event of puzzle.events) {
+      if (event.trigger === "solve") {
+        await handlePuzzleEvent(event);
+      }
+    }
+  }
 
   // Handle unlocks
   if (puzzle.unlocks && !teamProgress.unlockedRooms.includes(puzzle.unlocks)) {
@@ -1293,7 +1328,6 @@ async function handleCorrectAnswer(puzzleId) {
   }
 
   // Check room clear conditions
-  const roomId = currentRoom;
   if (isRoomCleared(roomId) && !teamProgress.clearedRooms.includes(roomId)) {
     teamProgress.clearedRooms.push(roomId);
 
@@ -1324,12 +1358,11 @@ async function handleCorrectAnswer(puzzleId) {
     }
 
     // Handle room events
-// Handle room events - ADD THIS SECTION
-if (room.events) {
-  for (const event of room.events) {
-    await handleRoomEvent(event, roomId);
-  }
-}
+    if (room.events) {
+      for (const event of room.events) {
+        await handleRoomEvent(event, roomId);
+      }
+    }
 
     // Find next uncleared room
     const nextRoom = teamProgress.unlockedRooms.find(
@@ -1340,6 +1373,9 @@ if (room.events) {
       currentRoom = nextRoom;
     }
   }
+
+  // Check for room events after solving a puzzle
+  checkAndTriggerRoomEvents(roomId);
 
   // Save progress
   await db.collection("progress").doc(currentUser.uid).set(teamProgress);
@@ -1387,7 +1423,7 @@ async function handleRoomEvent(event, roomId) {
   // Execute the action
   switch (event.action) {
     case "notify":
-      showNotification(event.actionValue, "info", 5000);
+      showNotification(event.actionValue, "info", 5000, true);
       break;
       
     case "unlock":

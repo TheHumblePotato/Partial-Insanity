@@ -195,8 +195,6 @@ async function loadPuzzleData() {
 
     roomData = roomDoc.data();
     puzzleData = puzzleDoc.data();
-
-    console.log("Room data loaded:", roomData);
     
     checkForNewlyUnlockedContent();
 
@@ -240,11 +238,9 @@ function checkForNewlyUnlockedContent() {
 
 async function loadRoomEvents(roomId) {
   try {
-    console.log("Loading events for room:", roomId);
     
     // Check if room exists in roomData
     if (roomData[roomId] && Array.isArray(roomData[roomId].events)) {
-      console.log("Events found in roomData:", roomData[roomId].events);
       return roomData[roomId].events;
     }
     
@@ -253,15 +249,12 @@ async function loadRoomEvents(roomId) {
     
     if (roomDoc.exists) {
       const roomDataFromFirebase = roomDoc.data();
-      console.log("Room data from Firebase:", roomDataFromFirebase);
       
       if (Array.isArray(roomDataFromFirebase.events)) {
-        console.log("Events found in Firebase:", roomDataFromFirebase.events);
         return roomDataFromFirebase.events;
       }
     }
     
-    console.log("No events found for room", roomId);
     return [];
   } catch (error) {
     console.error("Error loading room events:", error);
@@ -271,7 +264,6 @@ async function loadRoomEvents(roomId) {
 async function checkAndTriggerRoomEvents(roomId) {
   try {
     const events = await loadRoomEvents(roomId);
-    console.log("Loaded events for room", roomId, ":", events);
     
     const solvedPuzzles = teamProgress.solvedPuzzles || [];
     const roomPuzzles = roomData[roomId]?.puzzles || [];
@@ -281,21 +273,19 @@ async function checkAndTriggerRoomEvents(roomId) {
       solvedPuzzles.includes(puzzleId)
     ).length;
     
-    console.log("Solved puzzles in room", roomId, ":", solvedInRoom, "of", roomPuzzles.length);
     
     // Check each event in the array
     for (const [index, event] of events.entries()) {
-      console.log("Checking event", index, ":", event);
       
       if (!event.triggerType || !event.action) {
-        console.log("Event missing required fields, skipping");
         continue;
       }
       
       // Check if event has already been triggered
       teamProgress.triggeredEvents = teamProgress.triggeredEvents || {};
-      if (teamProgress.triggeredEvents[`${roomId}_${index}`]) {
-        console.log("Event already triggered, skipping");
+      const eventKey = `${roomId}_${index}`;
+      
+      if (teamProgress.triggeredEvents[eventKey]) {
         continue;
       }
       
@@ -306,7 +296,6 @@ async function checkAndTriggerRoomEvents(roomId) {
         case "solveCount":
           const requiredCount = parseInt(event.triggerValue) || 0;
           shouldTrigger = solvedInRoom >= requiredCount;
-          console.log("SolveCount check:", solvedInRoom, ">=", requiredCount, "=", shouldTrigger);
           break;
           
         case "specificPuzzles":
@@ -314,24 +303,20 @@ async function checkAndTriggerRoomEvents(roomId) {
           shouldTrigger = requiredPuzzles.every(puzzleId => 
             solvedPuzzles.includes(puzzleId)
           );
-          console.log("SpecificPuzzles check:", requiredPuzzles, "solved =", shouldTrigger);
           break;
           
         default:
-          console.log("Unknown trigger type:", event.triggerType);
           continue;
       }
       
       // Trigger event if condition is met
       if (shouldTrigger) {
-        console.log("Triggering event", index);
-        await handleEventAction(event, roomId, index);
         
-        // Mark event as triggered
-        teamProgress.triggeredEvents[`${roomId}_${index}`] = true;
+        // Mark event as triggered BEFORE handling the action
+        teamProgress.triggeredEvents[eventKey] = true;
         await db.collection("progress").doc(currentUser.uid).set(teamProgress);
-      } else {
-        console.log("Event condition not met, not triggering");
+        
+        await handleEventAction(event, roomId, index);
       }
     }
   } catch (error) {
@@ -347,6 +332,16 @@ async function handleEventAction(event, roomId, eventIndex) {
       break;
       
     case "unlock":
+      // Special case: don't show notification for "y=x+10" unlocks
+      // This prevents the default "New content unlocked: y=x+10" notification
+      if (event.actionValue === "y=x+10") {
+        // Just add to unlocked content without showing notification
+        if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
+          unlockedNewContent[event.actionValue] = roomId;
+        }
+        break;
+      }
+      
       // Check if it's a puzzle or room to unlock
       if (puzzleData[event.actionValue]) {
         // Add puzzle to current room as unlocked content (only for this user)
@@ -372,14 +367,16 @@ async function handleEventAction(event, roomId, eventIndex) {
         }
       } else {
         // If it's not a known puzzle or room, treat it as a new puzzle ID
+        // This handles cases like "y=x+10" which might not be in puzzleData yet
         if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
           unlockedNewContent[event.actionValue] = roomId;
-          showNotification(
-            `New content unlocked: ${event.actionValue}`,
-            "success",
-            5000,
-            true // Mark as event notification
-          );
+          // Don't show notification for unknown content (like "y=x+10")
+          // showNotification(
+          //   `New content unlocked: ${event.actionValue}`,
+          //   "success",
+          //   5000,
+          //   true // Mark as event notification
+          // );
         }
       }
       break;
@@ -403,7 +400,6 @@ async function handleEventAction(event, roomId, eventIndex) {
   // Refresh the room view to show any new content
   renderCurrentRoom();
 }
-
 function showNotification(message, type = "info", duration = 3000, isEvent = false) {
   // Create a container for event notifications if it doesn't exist
   if (isEvent && !document.getElementById('notification-container')) {

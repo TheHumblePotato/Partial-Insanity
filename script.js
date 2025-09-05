@@ -494,9 +494,8 @@ function showForgotKeyForm() {
 async function registerTeam() {
   const teamName = document.getElementById("new-team-name").value.trim();
   const email = document.getElementById("team-email").value.trim();
-  const password = document
-    .getElementById("team-password-register")
-    .value.trim();
+  const password = document.getElementById("team-password-register").value.trim();
+  const leaderboardOptOut = document.getElementById("leaderboard-opt-out").checked;
 
   if (!teamName || !email || !password) {
     showNotification("Please fill in all fields", "error");
@@ -504,30 +503,26 @@ async function registerTeam() {
   }
 
   try {
-    const userCredential = await auth.createUserWithEmailAndPassword(
-      email,
-      password,
-    );
+    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
     const user = userCredential.user;
 
     await db.collection("teams").doc(user.uid).set({
       name: teamName,
       email: email,
+      leaderboardOptOut: leaderboardOptOut, // Store the opt-out preference
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
 
-    await db
-      .collection("progress")
-      .doc(user.uid)
-      .set({
-        startTime: Date.now(),
-        solvedPuzzles: [],
-        currentRoom: "starting_room",
-        unlockedRooms: ["starting_room"],
-        guessCount: {},
-        viewedUnlocks: [],
-        clearedRooms: [],
-      });
+    await db.collection("progress").doc(user.uid).set({
+      startTime: Date.now(),
+      solvedPuzzles: [],
+      currentRoom: "starting_room",
+      unlockedRooms: ["starting_room"],
+      guessCount: {},
+      viewedUnlocks: [],
+      clearedRooms: [],
+      lastSolveTime: 0, // Initialize last solve time
+    });
 
     await auth.signInWithEmailAndPassword(email, password);
   } catch (error) {
@@ -535,6 +530,8 @@ async function registerTeam() {
     showNotification("Error creating team: " + error.message, "error");
   }
 }
+
+
 
 async function loginTeam() {
   const teamName = document.getElementById("team-name").value.trim();
@@ -1388,6 +1385,8 @@ async function handleCorrectAnswer(puzzleId) {
     }
   }
 
+    await updateLastSolveTime();
+
   if (puzzle.events) {
     for (const event of puzzle.events) {
       if (event.trigger === "solve") {
@@ -1442,6 +1441,7 @@ async function handleCorrectAnswer(puzzleId) {
       teamProgress.currentRoom = nextRoom;
       currentRoom = nextRoom;
     }
+    
   }
 
   checkAndTriggerRoomEvents(roomId);
@@ -1697,6 +1697,163 @@ function goToUnlockedNew() {
 
 function viewOriginalPuzzle() {
   openPuzzle(currentPuzzle);
+}
+
+function showLeaderboard() {
+  document.getElementById("auth-page").style.display = "none";
+  document.getElementById("puzzle-page").style.display = "none";
+  document.getElementById("rules-page").style.display = "none";
+  document.getElementById("leaderboard-page").style.display = "block";
+  
+  loadLeaderboard();
+}
+
+// Function to load and display the leaderboard
+async function loadLeaderboard() {
+  try {
+    const showAllTeams = document.getElementById("show-all-teams").checked;
+    
+    // Get all teams
+    const teamsSnapshot = await db.collection("teams").get();
+    const teams = [];
+    
+    for (const teamDoc of teamsSnapshot.docs) {
+      const teamData = teamDoc.data();
+      
+      // Skip teams that opted out of leaderboard (unless showAllTeams is true)
+      if (teamData.leaderboardOptOut && !showAllTeams) {
+        continue;
+      }
+      
+      // Get team progress
+      const progressDoc = await db.collection("progress").doc(teamDoc.id).get();
+      
+      if (progressDoc.exists) {
+        const progressData = progressDoc.data();
+        
+        teams.push({
+          id: teamDoc.id,
+          name: teamData.name,
+          leaderboardOptOut: teamData.leaderboardOptOut || false,
+          roomsCleared: progressData.clearedRooms ? progressData.clearedRooms.length : 0,
+          puzzlesSolved: progressData.solvedPuzzles ? progressData.solvedPuzzles.length : 0,
+          lastSolveTime: progressData.lastSolveTime || 0,
+          progress: progressData
+        });
+      }
+    }
+    
+    // Sort teams according to the ranking rules
+    const sortedTeams = sortTeamsForLeaderboard(teams);
+    
+    // Display the leaderboard
+    displayLeaderboard(sortedTeams);
+  } catch (error) {
+    console.error("Error loading leaderboard:", error);
+    showNotification("Error loading leaderboard", "error");
+  }
+}
+
+// Function to sort teams according to the ranking rules
+function sortTeamsForLeaderboard(teams) {
+  return teams.sort((a, b) => {
+    // 1. Rank by number of rooms cleared (descending)
+    if (a.roomsCleared !== b.roomsCleared) {
+      return b.roomsCleared - a.roomsCleared;
+    }
+    
+    // If all rooms are cleared, skip to last tiebreaker
+    const allRoomsCleared = a.roomsCleared === (roomData ? Object.keys(roomData).length : 0);
+    
+    if (!allRoomsCleared) {
+      // 2. Tiebreak by puzzles solved in the last uncleared room
+      const aLastUnclearedRoom = getLastUnclearedRoom(a.progress);
+      const bLastUnclearedRoom = getLastUnclearedRoom(b.progress);
+      
+      // If both teams are in the same room
+      if (aLastUnclearedRoom === bLastUnclearedRoom) {
+        const aPuzzlesInRoom = countPuzzlesSolvedInRoom(a.progress, aLastUnclearedRoom);
+        const bPuzzlesInRoom = countPuzzlesSolvedInRoom(b.progress, bLastUnclearedRoom);
+        
+        if (aPuzzlesInRoom !== bPuzzlesInRoom) {
+          return bPuzzlesInRoom - aPuzzlesInRoom;
+        }
+      }
+    }
+    
+    // 3. Final tiebreak by last solve time (earlier is better)
+    return a.lastSolveTime - b.lastSolveTime;
+  });
+}
+
+// Helper function to get the last uncleared room for a team
+function getLastUnclearedRoom(progress) {
+  if (!progress.unlockedRooms || !progress.clearedRooms) {
+    return null;
+  }
+  
+  // Find the first unlocked room that hasn't been cleared
+  return progress.unlockedRooms.find(roomId => 
+    !progress.clearedRooms.includes(roomId)
+  ) || progress.unlockedRooms[progress.unlockedRooms.length - 1];
+}
+
+// Helper function to count puzzles solved in a specific room
+function countPuzzlesSolvedInRoom(progress, roomId) {
+  if (!roomId || !progress.solvedPuzzles || !roomData[roomId]) {
+    return 0;
+  }
+  
+  const roomPuzzles = roomData[roomId].puzzles || [];
+  return roomPuzzles.filter(puzzleId => 
+    progress.solvedPuzzles.includes(puzzleId)
+  ).length;
+}
+
+// Function to display the leaderboard
+function displayLeaderboard(teams) {
+  const leaderboardBody = document.getElementById("leaderboard-body");
+  leaderboardBody.innerHTML = "";
+  
+  teams.forEach((team, index) => {
+    const row = document.createElement("tr");
+    
+    // Highlight current team
+    if (currentTeam && team.id === currentUser.uid) {
+      row.classList.add("current-team");
+    }
+    
+    // Style teams that opted out
+    if (team.leaderboardOptOut) {
+      row.classList.add("opt-out-team");
+    }
+    
+    const lastSolveTime = team.lastSolveTime ? 
+      new Date(team.lastSolveTime).toLocaleString() : "Never";
+    
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${team.name} ${team.leaderboardOptOut ? "(Opted Out)" : ""}</td>
+      <td>${team.roomsCleared}</td>
+      <td>${team.puzzlesSolved}</td>
+      <td>${lastSolveTime}</td>
+    `;
+    
+    leaderboardBody.appendChild(row);
+  });
+}
+
+// Function to update last solve time when a puzzle is solved
+async function updateLastSolveTime() {
+  if (!currentUser || !currentTeam) return;
+  
+  try {
+    await db.collection("progress").doc(currentUser.uid).update({
+      lastSolveTime: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (error) {
+    console.error("Error updating last solve time:", error);
+  }
 }
 
 function init() {

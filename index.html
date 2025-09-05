@@ -49,38 +49,32 @@
           </div>
 
           <div id="register-form" class="hidden">
-            <h2>Create Team</h2>
-            <div class="form-group">
-              <label for="new-team-name">Team Name:</label>
-              <input
-                type="text"
-                id="new-team-name"
-                placeholder="Enter your team name"
-              />
-            </div>
-            <div class="form-group">
-              <label for="team-email">Team Email:</label>
-              <input
-                type="email"
-                id="team-email"
-                placeholder="Enter team email for password recovery"
-              />
-            </div>
-            <div class="form-group">
-              <label for="team-password-register">Team Password:</label>
-              <input
-                type="password"
-                id="team-password-register"
-                placeholder="Create a team password"
-              />
-            </div>
-            <button class="btn btn-primary" onclick="registerTeam()">
-              Create Team
-            </button>
-            <button class="btn btn-secondary" onclick="showLoginForm()">
-              Back to Login
-            </button>
-          </div>
+  <h2>Create Team</h2>
+  <div class="form-group">
+    <label for="new-team-name">Team Name:</label>
+    <input type="text" id="new-team-name" placeholder="Enter your team name" />
+  </div>
+  <div class="form-group">
+    <label for="team-email">Team Email:</label>
+    <input type="email" id="team-email" placeholder="Enter team email for password recovery" />
+  </div>
+  <div class="form-group">
+    <label for="team-password-register">Team Password:</label>
+    <input type="password" id="team-password-register" placeholder="Create a team password" />
+  </div>
+  <!-- Add the leaderboard opt-out checkbox -->
+  <div class="form-group checkbox-group">
+    <label class="checkbox-label">
+      <input type="checkbox" id="leaderboard-opt-out" />
+      Hide our team from the public leaderboard
+    </label>
+    <div class="checkbox-description">
+      You'll still be able to see other teams on the leaderboard, but your team won't be shown.
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="registerTeam()">Create Team</button>
+  <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
+</div>
 
           <div id="forgot-key-form" class="hidden">
             <h2>Recover Password</h2>
@@ -114,6 +108,7 @@
       <div id="puzzle-page" class="puzzle-page">
         <div class="nav-buttons">
           <button class="nav-btn" onclick="logout()">Logout</button>
+          <button class="nav-btn" onclick="showLeaderboard()">Leaderboard</button>
           <span id="team-info" style="color: white; margin-left: 20px"></span>
         </div>
 
@@ -133,6 +128,31 @@
 
         <div id="image-room" class="image-puzzle-room hidden"></div>
       </div>
+
+      <div id="leaderboard-page" class="rules-page" style="display: none;">
+  <h1>Leaderboard</h1>
+  <div id="leaderboard-content">
+    <div class="leaderboard-controls">
+      <label>
+        <input type="checkbox" id="show-all-teams" onchange="loadLeaderboard()">
+        Show all teams (including those not on leaderboard)
+      </label>
+    </div>
+    <table id="leaderboard-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Team</th>
+          <th>Rooms Cleared</th>
+          <th>Puzzles Solved</th>
+          <th>Last Solve Time</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-body"></tbody>
+    </table>
+  </div>
+  <button class="btn btn-primary" onclick="showPuzzlePage()">Back to Puzzles</button>
+</div>
 
       <div id="rules-page" class="rules-page">
         <h1>Partial Insanity</h1>

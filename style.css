@@ -1328,3 +1328,95 @@ body {
   align-items: center;
   gap: 10px;
 }
+
+#leaderboard-page {
+  background: white;
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  margin: 20px auto;
+  max-width: 1000px;
+}
+
+#leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+#leaderboard-table th,
+#leaderboard-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+#leaderboard-table th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+}
+
+#leaderboard-table tr:hover {
+  background-color: #f5f5f5;
+}
+
+.current-team {
+  background-color: #e3f2fd !important;
+  font-weight: bold;
+}
+
+.opt-out-team {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.leaderboard-controls {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.leaderboard-controls label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.leaderboard-controls input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+.checkbox-group {
+  margin-bottom: 20px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin-right: 10px;
+  width: 18px;
+  height: 18px;
+}
+
+.checkbox-description {
+  font-size: 0.9em;
+  color: #666;
+  margin-top: 5px;
+  margin-left: 28px;
+}
+
+#leaderboard-opt-out-btn {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+#leaderboard-opt-out-btn:hover {
+  background-color: #e0a800;
+}

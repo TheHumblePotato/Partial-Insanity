@@ -1359,6 +1359,7 @@ async function checkRoomPersistentUnlocks(roomId) {
   }
 }
 
+// Update the handleCorrectAnswer function
 async function handleCorrectAnswer(puzzleId) {
   const puzzle = puzzleData[puzzleId];
   const roomId = currentRoom;
@@ -1366,6 +1367,9 @@ async function handleCorrectAnswer(puzzleId) {
   if (!teamProgress.solvedPuzzles.includes(puzzleId)) {
     teamProgress.solvedPuzzles.push(puzzleId);
   }
+
+  // Update last solve time with current timestamp
+  teamProgress.lastSolveTime = Date.now();
 
   if (puzzle.answerBindings) {
     for (const binding of puzzle.answerBindings) {
@@ -1383,8 +1387,6 @@ async function handleCorrectAnswer(puzzleId) {
       }
     }
   }
-
-    await updateLastSolveTime();
 
   if (puzzle.events) {
     for (const event of puzzle.events) {
@@ -1440,7 +1442,6 @@ async function handleCorrectAnswer(puzzleId) {
       teamProgress.currentRoom = nextRoom;
       currentRoom = nextRoom;
     }
-
   }
 
   checkAndTriggerRoomEvents(roomId);
@@ -1476,6 +1477,8 @@ async function handlePuzzleEvent(event) {
     case "solve":
       if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
         teamProgress.solvedPuzzles.push(event.actionValue);
+        // Update last solve time when puzzle is automatically solved
+        teamProgress.lastSolveTime = Date.now();
         showNotification(
           `Puzzle "${
             puzzleData[event.actionValue]?.name || event.actionValue
@@ -1540,6 +1543,8 @@ async function handleRoomEvent(event, roomId) {
     case "solve":
       if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
         teamProgress.solvedPuzzles.push(event.actionValue);
+        // Update last solve time when puzzle is automatically solved
+        teamProgress.lastSolveTime = Date.now();
         showNotification(
           `Puzzle "${puzzleData[event.actionValue]?.name || event.actionValue}" automatically solved!`,
           "success",
@@ -1801,42 +1806,35 @@ function countPuzzlesSolvedInRoom(progress, roomId) {
 function displayLeaderboard(teams) {
   const leaderboardBody = document.getElementById("leaderboard-body");
   leaderboardBody.innerHTML = "";
-
+  
   teams.forEach((team, index) => {
     const row = document.createElement("tr");
-
+    
+    // Highlight current team
     if (currentTeam && team.id === currentUser.uid) {
       row.classList.add("current-team");
     }
-
-    const lastSolveTime = team.lastSolveTime ? 
-      new Date(team.lastSolveTime).toLocaleString() : "Never";
-
+    
+    // Format the last solve time properly
+    let lastSolveTimeFormatted = "Never";
+    if (team.lastSolveTime && team.lastSolveTime > 0) {
+      lastSolveTimeFormatted = new Date(team.lastSolveTime).toLocaleString();
+    }
+    
     row.innerHTML = `
       <td>${index + 1}</td>
       <td>${team.name}</td>
       <td>${team.roomsCleared}</td>
       <td>${team.puzzlesSolved}</td>
-      <td>${lastSolveTime}</td>
+      <td>${lastSolveTimeFormatted}</td>
     `;
-
+    
     leaderboardBody.appendChild(row);
   });
-
+  
+  // Hide loading message, show table
   document.getElementById("leaderboard-loading").style.display = "none";
   document.getElementById("leaderboard-table").style.display = "table";
-}
-
-async function updateLastSolveTime() {
-  if (!currentUser || !currentTeam) return;
-
-  try {
-    await db.collection("progress").doc(currentUser.uid).update({
-      lastSolveTime: firebase.firestore.FieldValue.serverTimestamp()
-    });
-  } catch (error) {
-    console.error("Error updating last solve time:", error);
-  }
 }
 
 function init() {

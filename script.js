@@ -1857,7 +1857,7 @@ function displayLeaderboard(teams) {
     }
 
     row.innerHTML = `
-      <td>${rank}</td>
+      <td>${rank <= 3 ? ['🥇', '🥈', '🥉'][rank - 1] : rank}</td>
       <td>${medalIcon}${team.name}</td>
       <td>${team.roomsCleared}</td>
       <td>${team.puzzlesSolved}</td>

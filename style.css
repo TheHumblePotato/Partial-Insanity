@@ -1316,7 +1316,6 @@ body {
   }
 }
 
-/* Add a container for multiple event notifications */
 .notification-container {
   position: fixed;
   top: 20px;
@@ -1419,4 +1418,11 @@ body {
 
 #leaderboard-opt-out-btn:hover {
   background-color: #e0a800;
+}
+
+#leaderboard-loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+  color: #666;
 }

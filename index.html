@@ -62,7 +62,7 @@
     <label for="team-password-register">Team Password:</label>
     <input type="password" id="team-password-register" placeholder="Create a team password" />
   </div>
-  <!-- Add the leaderboard opt-out checkbox -->
+  
   <div class="form-group checkbox-group">
     <label class="checkbox-label">
       <input type="checkbox" id="leaderboard-opt-out" />
@@ -132,13 +132,8 @@
       <div id="leaderboard-page" class="rules-page" style="display: none;">
   <h1>Leaderboard</h1>
   <div id="leaderboard-content">
-    <div class="leaderboard-controls">
-      <label>
-        <input type="checkbox" id="show-all-teams" onchange="loadLeaderboard()">
-        Show all teams (including those not on leaderboard)
-      </label>
-    </div>
-    <table id="leaderboard-table">
+    <div id="leaderboard-loading">Loading...</div>
+    <table id="leaderboard-table" style="display: none;">
       <thead>
         <tr>
           <th>Rank</th>

@@ -1851,14 +1851,9 @@ function displayLeaderboard(teams) {
       });
     }
 
-    let medalIcon = "";
-    if (rank <= 3) {
-      medalIcon = `<span class="medal-icon">${rank}</span>`;
-    }
-
     row.innerHTML = `
       <td>${rank <= 3 ? ['🥇', '🥈', '🥉'][rank - 1] : rank}</td>
-      <td>${medalIcon}${team.name}</td>
+      <td>${team.name}</td>
       <td>${team.roomsCleared}</td>
       <td>${team.puzzlesSolved}</td>
       <td>${lastSolveTimeFormatted}</td>

@@ -281,17 +281,7 @@ async function checkAndTriggerRoomEvents(roomId) {
         continue;
       }
 
-      let eventKey;
-      if (event.triggerType === "solveCount") {
-        eventKey = `${roomId}_solveCount_${event.triggerValue}`;
-      } else if (event.triggerType === "specificPuzzles") {
-
-        const sortedPuzzles = event.puzzles ? [...event.puzzles].sort() : [];
-        eventKey = `${roomId}_specificPuzzles_${sortedPuzzles.join('_')}`;
-      } else {
-
-        eventKey = `${roomId}_${index}`;
-      }
+      const eventKey = `${roomId}_${index}_${event.triggerType}_${event.triggerValue || 'specific'}`;
 
       if (teamProgress.triggeredEvents[eventKey]) {
         continue;

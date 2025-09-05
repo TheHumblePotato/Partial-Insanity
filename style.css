@@ -1362,6 +1362,13 @@ body {
 .current-team {
   background-color: #e3f2fd !important;
   font-weight: bold;
+  border: 2px solid #2196f3 !important;
+}
+
+.current-team.rank-1,
+.current-team.rank-2,
+.current-team.rank-3 {
+  color: #000 !important;
 }
 
 .opt-out-team {
@@ -1425,4 +1432,48 @@ body {
   padding: 40px;
   font-size: 18px;
   color: #666;
+}
+
+.rank-1 {
+  background: linear-gradient(135deg, #ffd700 0%, #d4af37 100%) !important;
+  color: #000 !important;
+  font-weight: bold;
+}
+
+.rank-2 {
+  background: linear-gradient(135deg, #c0c0c0 0%, #a8a8a8 100%) !important;
+  color: #000 !important;
+  font-weight: bold;
+}
+
+.rank-3 {
+  background: linear-gradient(135deg, #cd7f32 0%, #8c6b46 100%) !important;
+  color: #000 !important;
+  font-weight: bold;
+}
+
+.medal-icon {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 20px;
+  font-weight: bold;
+}
+
+.rank-1 .medal-icon {
+  background: #ffd700;
+  color: #000;
+}
+
+.rank-2 .medal-icon {
+  background: #c0c0c0;
+  color: #000;
+}
+
+.rank-3 .medal-icon {
+  background: #cd7f32;
+  color: #000;
 }

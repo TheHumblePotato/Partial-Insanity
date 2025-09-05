@@ -463,7 +463,7 @@ function showPuzzlePage() {
   document.getElementById("auth-page").style.display = "none";
   document.getElementById("puzzle-page").style.display = "block";
   document.getElementById("rules-page").style.display = "none";
-    document.getElementById("leaderboard-page").style.display = "none";
+  document.getElementById("leaderboard-page").style.display = "none";
   renderCurrentRoom();
 }
 
@@ -495,8 +495,12 @@ function showForgotKeyForm() {
 async function registerTeam() {
   const teamName = document.getElementById("new-team-name").value.trim();
   const email = document.getElementById("team-email").value.trim();
-  const password = document.getElementById("team-password-register").value.trim();
-  const leaderboardOptOut = document.getElementById("leaderboard-opt-out").checked;
+  const password = document
+    .getElementById("team-password-register")
+    .value.trim();
+  const leaderboardOptOut = document.getElementById(
+    "leaderboard-opt-out",
+  ).checked;
 
   if (!teamName || !email || !password) {
     showNotification("Please fill in all fields", "error");
@@ -504,26 +508,32 @@ async function registerTeam() {
   }
 
   try {
-    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+    const userCredential = await auth.createUserWithEmailAndPassword(
+      email,
+      password,
+    );
     const user = userCredential.user;
 
     await db.collection("teams").doc(user.uid).set({
       name: teamName,
       email: email,
-      leaderboardOptOut: leaderboardOptOut, 
+      leaderboardOptOut: leaderboardOptOut,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
 
-    await db.collection("progress").doc(user.uid).set({
-      startTime: Date.now(),
-      solvedPuzzles: [],
-      currentRoom: "starting_room",
-      unlockedRooms: ["starting_room"],
-      guessCount: {},
-      viewedUnlocks: [],
-      clearedRooms: [],
-      lastSolveTime: 0, 
-    });
+    await db
+      .collection("progress")
+      .doc(user.uid)
+      .set({
+        startTime: Date.now(),
+        solvedPuzzles: [],
+        currentRoom: "starting_room",
+        unlockedRooms: ["starting_room"],
+        guessCount: {},
+        viewedUnlocks: [],
+        clearedRooms: [],
+        lastSolveTime: 0,
+      });
 
     await auth.signInWithEmailAndPassword(email, password);
   } catch (error) {
@@ -1359,7 +1369,6 @@ async function checkRoomPersistentUnlocks(roomId) {
   }
 }
 
-// Update the handleCorrectAnswer function
 async function handleCorrectAnswer(puzzleId) {
   const puzzle = puzzleData[puzzleId];
   const roomId = currentRoom;
@@ -1368,7 +1377,6 @@ async function handleCorrectAnswer(puzzleId) {
     teamProgress.solvedPuzzles.push(puzzleId);
   }
 
-  // Update last solve time with current timestamp
   teamProgress.lastSolveTime = Date.now();
 
   if (puzzle.answerBindings) {
@@ -1477,7 +1485,7 @@ async function handlePuzzleEvent(event) {
     case "solve":
       if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
         teamProgress.solvedPuzzles.push(event.actionValue);
-        // Update last solve time when puzzle is automatically solved
+
         teamProgress.lastSolveTime = Date.now();
         showNotification(
           `Puzzle "${
@@ -1543,7 +1551,7 @@ async function handleRoomEvent(event, roomId) {
     case "solve":
       if (!teamProgress.solvedPuzzles.includes(event.actionValue)) {
         teamProgress.solvedPuzzles.push(event.actionValue);
-        // Update last solve time when puzzle is automatically solved
+
         teamProgress.lastSolveTime = Date.now();
         showNotification(
           `Puzzle "${puzzleData[event.actionValue]?.name || event.actionValue}" automatically solved!`,
@@ -1714,7 +1722,6 @@ function showLeaderboard() {
 
 async function loadLeaderboard() {
   try {
-
     document.getElementById("leaderboard-loading").style.display = "block";
     document.getElementById("leaderboard-table").style.display = "none";
 
@@ -1737,10 +1744,14 @@ async function loadLeaderboard() {
           id: teamDoc.id,
           name: teamData.name,
           leaderboardOptOut: teamData.leaderboardOptOut || false,
-          roomsCleared: progressData.clearedRooms ? progressData.clearedRooms.length : 0,
-          puzzlesSolved: progressData.solvedPuzzles ? progressData.solvedPuzzles.length : 0,
+          roomsCleared: progressData.clearedRooms
+            ? progressData.clearedRooms.length
+            : 0,
+          puzzlesSolved: progressData.solvedPuzzles
+            ? progressData.solvedPuzzles.length
+            : 0,
           lastSolveTime: progressData.lastSolveTime || 0,
-          progress: progressData
+          progress: progressData,
         });
       }
     }
@@ -1756,21 +1767,26 @@ async function loadLeaderboard() {
 
 function sortTeamsForLeaderboard(teams) {
   return teams.sort((a, b) => {
-
     if (a.roomsCleared !== b.roomsCleared) {
       return b.roomsCleared - a.roomsCleared;
     }
 
-    const allRoomsCleared = a.roomsCleared === (roomData ? Object.keys(roomData).length : 0);
+    const allRoomsCleared =
+      a.roomsCleared === (roomData ? Object.keys(roomData).length : 0);
 
     if (!allRoomsCleared) {
-
       const aLastUnclearedRoom = getLastUnclearedRoom(a.progress);
       const bLastUnclearedRoom = getLastUnclearedRoom(b.progress);
 
       if (aLastUnclearedRoom === bLastUnclearedRoom) {
-        const aPuzzlesInRoom = countPuzzlesSolvedInRoom(a.progress, aLastUnclearedRoom);
-        const bPuzzlesInRoom = countPuzzlesSolvedInRoom(b.progress, bLastUnclearedRoom);
+        const aPuzzlesInRoom = countPuzzlesSolvedInRoom(
+          a.progress,
+          aLastUnclearedRoom,
+        );
+        const bPuzzlesInRoom = countPuzzlesSolvedInRoom(
+          b.progress,
+          bLastUnclearedRoom,
+        );
 
         if (aPuzzlesInRoom !== bPuzzlesInRoom) {
           return bPuzzlesInRoom - aPuzzlesInRoom;
@@ -1787,9 +1803,11 @@ function getLastUnclearedRoom(progress) {
     return null;
   }
 
-  return progress.unlockedRooms.find(roomId => 
-    !progress.clearedRooms.includes(roomId)
-  ) || progress.unlockedRooms[progress.unlockedRooms.length - 1];
+  return (
+    progress.unlockedRooms.find(
+      (roomId) => !progress.clearedRooms.includes(roomId),
+    ) || progress.unlockedRooms[progress.unlockedRooms.length - 1]
+  );
 }
 
 function countPuzzlesSolvedInRoom(progress, roomId) {
@@ -1798,41 +1816,57 @@ function countPuzzlesSolvedInRoom(progress, roomId) {
   }
 
   const roomPuzzles = roomData[roomId].puzzles || [];
-  return roomPuzzles.filter(puzzleId => 
-    progress.solvedPuzzles.includes(puzzleId)
+  return roomPuzzles.filter((puzzleId) =>
+    progress.solvedPuzzles.includes(puzzleId),
   ).length;
 }
 
 function displayLeaderboard(teams) {
   const leaderboardBody = document.getElementById("leaderboard-body");
   leaderboardBody.innerHTML = "";
-  
+
   teams.forEach((team, index) => {
     const row = document.createElement("tr");
-    
-    // Highlight current team
+    const rank = index + 1;
+
+    if (rank === 1) {
+      row.classList.add("rank-1");
+    } else if (rank === 2) {
+      row.classList.add("rank-2");
+    } else if (rank === 3) {
+      row.classList.add("rank-3");
+    }
+
     if (currentTeam && team.id === currentUser.uid) {
       row.classList.add("current-team");
     }
-    
-    // Format the last solve time properly
+
     let lastSolveTimeFormatted = "Never";
     if (team.lastSolveTime && team.lastSolveTime > 0) {
-      lastSolveTimeFormatted = new Date(team.lastSolveTime).toLocaleString();
+      const date = new Date(team.lastSolveTime);
+      lastSolveTimeFormatted = date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
     }
-    
+
+    let medalIcon = "";
+    if (rank <= 3) {
+      medalIcon = `<span class="medal-icon">${rank}</span>`;
+    }
+
     row.innerHTML = `
-      <td>${index + 1}</td>
-      <td>${team.name}</td>
+      <td>${rank}</td>
+      <td>${medalIcon}${team.name}</td>
       <td>${team.roomsCleared}</td>
       <td>${team.puzzlesSolved}</td>
       <td>${lastSolveTimeFormatted}</td>
     `;
-    
+
     leaderboardBody.appendChild(row);
   });
-  
-  // Hide loading message, show table
+
   document.getElementById("leaderboard-loading").style.display = "none";
   document.getElementById("leaderboard-table").style.display = "table";
 }

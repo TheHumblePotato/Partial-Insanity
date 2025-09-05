@@ -281,8 +281,7 @@ async function checkAndTriggerRoomEvents(roomId) {
         continue;
       }
 
-      teamProgress.triggeredEvents = teamProgress.triggeredEvents || {};
-      const eventKey = `${roomId}_${index}`;
+      const eventKey = `${roomId}_${index}_${event.triggerType}_${event.triggerValue || 'specific'}`;
 
       if (teamProgress.triggeredEvents[eventKey]) {
         continue;
@@ -308,6 +307,7 @@ async function checkAndTriggerRoomEvents(roomId) {
       }
 
       if (shouldTrigger) {
+
         teamProgress.triggeredEvents[eventKey] = true;
         await db.collection("progress").doc(currentUser.uid).set(teamProgress);
 

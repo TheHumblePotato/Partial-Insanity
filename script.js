@@ -283,7 +283,7 @@ async function checkAndTriggerRoomEvents(roomId) {
 
       const eventKey = `${roomId}_${index}_${event.triggerType}_${event.triggerValue || "specific"}`;
 
-      if (teamProgress.triggeredEvents[eventKey]) {
+      if (teamProgress.triggeredEvents && teamProgress.triggeredEvents[eventKey]) {
         continue;
       }
 
@@ -307,6 +307,10 @@ async function checkAndTriggerRoomEvents(roomId) {
       }
 
       if (shouldTrigger) {
+        if (!teamProgress.triggeredEvents) {
+          teamProgress.triggeredEvents = {};
+        }
+        
         teamProgress.triggeredEvents[eventKey] = true;
         await db.collection("progress").doc(currentUser.uid).set(teamProgress);
 
@@ -1804,7 +1808,10 @@ function displayLeaderboard(teams) {
     let lastSolveTimeFormatted = "Never";
     if (team.lastSolveTime && team.lastSolveTime > 0) {
       const date = new Date(team.lastSolveTime);
-      lastSolveTimeFormatted = date.toLocaleTimeString([], {
+      lastSolveTimeFormatted = date.toLocaleString([], {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
         hour: "2-digit",
         minute: "2-digit",
         hour12: true,

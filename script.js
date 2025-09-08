@@ -1436,8 +1436,8 @@ async function handleCorrectAnswer(puzzleId) {
     }
 
     if (room.events) {
-      for (const event of room.events) {
-        await handleRoomEvent(event, roomId);
+      for (const [eventIndex, event] of room.events.entries()) {
+        await handleRoomEvent(event, roomId, eventIndex);
       }
     }
 
@@ -1459,6 +1459,10 @@ async function handleCorrectAnswer(puzzleId) {
 
   closePuzzleViewer();
   renderCurrentRoom();
+}
+
+function getRoomEventKey(roomId, eventIndex, event) {
+  return `${roomId}_${eventIndex}_${event.triggerType}_${event.triggerValue || "specific"}`;
 }
 
 async function handlePuzzleEvent(event) {
@@ -1498,7 +1502,7 @@ async function handlePuzzleEvent(event) {
   await db.collection("progress").doc(currentUser.uid).set(teamProgress);
 }
 
-async function handleRoomEvent(event, roomId) {
+async function handleRoomEvent(event, roomId, eventIndex) {
   const room = roomData[roomId];
   const solvedPuzzles = teamProgress.solvedPuzzles || [];
   const roomPuzzles = room.puzzles || [];
@@ -1525,7 +1529,16 @@ async function handleRoomEvent(event, roomId) {
       return;
   }
 
-  if (!triggerMet) return;
+  const eventKey = getRoomEventKey(roomId, eventIndex, event);
+  if (!teamProgress.triggeredEvents) teamProgress.triggeredEvents = {};
+  if (teamProgress.triggeredEvents[eventKey]) {
+    return;
+  }
+  if (triggerMet) {
+    teamProgress.triggeredEvents[eventKey] = true;
+  } else {
+    return;
+  }
 
   switch (event.action) {
     case "notify":

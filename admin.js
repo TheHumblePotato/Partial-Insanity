@@ -129,7 +129,7 @@ function initializeDiagram() {
         editable: true,
         margin: new go.Margin(2, 4),
       },
-      new go.Binding("text", "name")
+      new go.Binding("text", "name"),
     ),
     $(
       go.Panel,
@@ -139,8 +139,8 @@ function initializeDiagram() {
         stroke: "#D2691E",
         strokeWidth: 2,
       }),
-      $(go.Placeholder, { padding: 8 })
-    )
+      $(go.Placeholder, { padding: 8 }),
+    ),
   );
 
   diagram.nodeTemplate = $(
@@ -177,10 +177,10 @@ function initializeDiagram() {
         const charWidth = 6;
         const calculatedWidth = Math.max(
           baseWidth,
-          Math.min(150, name.length * charWidth + 20)
+          Math.min(150, name.length * charWidth + 20),
         );
         return calculatedWidth;
-      })
+      }),
     ),
     $(
       go.TextBlock,
@@ -191,8 +191,8 @@ function initializeDiagram() {
         textAlign: "center",
         overflow: go.TextBlock.OverflowEllipsis,
       },
-      new go.Binding("text", "name")
-    )
+      new go.Binding("text", "name"),
+    ),
   );
 
   diagram.linkTemplate = $(
@@ -208,7 +208,7 @@ function initializeDiagram() {
       fill: "#333",
       stroke: null,
       scale: 0.8,
-    })
+    }),
   );
 
   diagram.linkTemplateMap.add(
@@ -231,8 +231,8 @@ function initializeDiagram() {
         fill: "#FF6B35",
         stroke: null,
         scale: 1.2,
-      })
-    )
+      }),
+    ),
   );
 
   addZoomControls("mindmapDiagram", diagram);
@@ -488,7 +488,7 @@ function showTeamDetails(team) {
                         (progress.clearedRooms || []).includes(r)
                           ? "(Cleared)"
                           : ""
-                      }</li>`
+                      }</li>`,
                   )
                   .join("")}</ul>
 
@@ -497,25 +497,6 @@ function showTeamDetails(team) {
             `;
 
   document.getElementById("teamDetails").classList.remove("hidden");
-}
-
-function showTeamMindMap() {
-  if (!selectedTeam) {
-    alert("Please select a team first.");
-    return;
-  }
-  const modal = document.getElementById("teamMindmapModal");
-  modal.style.display = "block";
-  document.getElementById("teamMindmapName").textContent = selectedTeam.name;
-  initializeTeamMindmap();
-}
-
-function closeTeamMindmap() {
-  document.getElementById("teamMindmapModal").style.display = "none";
-  if (teamDiagram) {
-    teamDiagram.div = null;
-    teamDiagram = null;
-  }
 }
 
 function initializeTeamMindmap() {
@@ -548,10 +529,10 @@ function initializeTeamMindmap() {
       click: function (e, group) {
         const roomId = group.data.key;
         const isUnlocked = (selectedTeam.progress.unlockedRooms || []).includes(
-          roomId
+          roomId,
         );
         const isCleared = (selectedTeam.progress.clearedRooms || []).includes(
-          roomId
+          roomId,
         );
 
         if (
@@ -560,9 +541,9 @@ function initializeTeamMindmap() {
               isCleared
                 ? "Room is cleared. Lock it?"
                 : isUnlocked
-                ? "Lock this room?"
-                : "Unlock this room?"
-            }`
+                  ? "Lock this room?"
+                  : "Unlock this room?"
+            }`,
           )
         ) {
           toggleRoomStatus(roomId, !isUnlocked, isCleared);
@@ -575,7 +556,7 @@ function initializeTeamMindmap() {
         font: "bold 10pt sans-serif",
         margin: new go.Margin(2, 4),
       },
-      new go.Binding("text", "name")
+      new go.Binding("text", "name"),
     ),
     $(
       go.Panel,
@@ -590,8 +571,8 @@ function initializeTeamMindmap() {
           return "#FFFF99";
         return "#FF9999";
       }),
-      $(go.Placeholder, { padding: 8 })
-    )
+      $(go.Placeholder, { padding: 8 }),
+    ),
   );
 
   teamDiagram.nodeTemplate = $(
@@ -601,7 +582,7 @@ function initializeTeamMindmap() {
       click: function (e, node) {
         const puzzleId = node.data.key;
         const isDone = (selectedTeam.progress.solvedPuzzles || []).includes(
-          puzzleId
+          puzzleId,
         );
         if (confirm(`Mark puzzle as ${isDone ? "not done" : "done"}?`)) {
           togglePuzzleStatus(puzzleId, !isDone);
@@ -636,8 +617,8 @@ function initializeTeamMindmap() {
         textAlign: "center",
         overflow: go.TextBlock.OverflowEllipsis,
       },
-      new go.Binding("text", "name")
-    )
+      new go.Binding("text", "name"),
+    ),
   );
 
   teamDiagram.linkTemplate = $(
@@ -653,7 +634,7 @@ function initializeTeamMindmap() {
       fill: "#333",
       stroke: null,
       scale: 0.8,
-    })
+    }),
   );
 
   teamDiagram.linkTemplateMap.add(
@@ -676,8 +657,8 @@ function initializeTeamMindmap() {
         fill: "#FF6B35",
         stroke: null,
         scale: 1.2,
-      })
-    )
+      }),
+    ),
   );
 
   const nodes = [];
@@ -739,161 +720,6 @@ function initializeTeamMindmap() {
   addZoomControls("teamMindmapDiagram", teamDiagram);
 
   teamDiagram.layoutDiagram(true);
-}
-
-function initializeDiagram() {
-  const $ = go.GraphObject.make;
-  diagram = $(go.Diagram, "mindmapDiagram", {
-    "undoManager.isEnabled": true,
-    layout: $(go.ForceDirectedLayout, {
-      maxIterations: 300,
-      defaultSpringLength: 80,
-      defaultElectricalCharge: 100,
-      defaultGravitationalMass: 0.5,
-    }),
-    "toolManager.hoverDelay": 500,
-
-    allowZoom: true,
-    allowHorizontalScroll: true,
-    allowVerticalScroll: true,
-    initialContentAlignment: go.Spot.Center,
-
-    "toolManager.mouseWheelBehavior": go.ToolManager.WheelZoom,
-    minScale: 0.3,
-    maxScale: 3.0,
-    initialScale: 0.8,
-  });
-
-  diagram.groupTemplate = $(
-    go.Group,
-    "Vertical",
-    {
-      selectionChanged: function (group) {},
-      ungroupable: true,
-      layout: $(go.GridLayout, {
-        wrappingColumn: 3,
-        spacing: new go.Size(5, 5),
-      }),
-      click: function (e, group) {
-        editRoom(group.data.key);
-      },
-    },
-    $(
-      go.TextBlock,
-      {
-        font: "bold 10pt sans-serif",
-        editable: true,
-        margin: new go.Margin(2, 4),
-      },
-      new go.Binding("text", "name")
-    ),
-    $(
-      go.Panel,
-      "Auto",
-      $(go.Shape, "Rectangle", {
-        fill: "transparent",
-        stroke: "#D2691E",
-        strokeWidth: 2,
-      }),
-      $(go.Placeholder, { padding: 8 })
-    )
-  );
-
-  diagram.nodeTemplate = $(
-    go.Node,
-    "Auto",
-    {
-      selectionAdorned: true,
-      click: function (e, node) {
-        editPuzzle(node.data.key);
-      },
-    },
-    $(
-      go.Shape,
-      "Rectangle",
-      {
-        minSize: new go.Size(60, 40),
-        maxSize: new go.Size(150, 60),
-        strokeWidth: 1.5,
-        stroke: "#333",
-      },
-      new go.Binding("fill", "type", function (type) {
-        switch (type) {
-          case "meta":
-            return "#D8BFD8";
-          case "lock":
-            return "#FFA07A";
-          default:
-            return "#ADD8E6";
-        }
-      }),
-
-      new go.Binding("width", "name", function (name) {
-        const baseWidth = 60;
-        const charWidth = 6;
-        const calculatedWidth = Math.max(
-          baseWidth,
-          Math.min(150, name.length * charWidth + 20)
-        );
-        return calculatedWidth;
-      })
-    ),
-    $(
-      go.TextBlock,
-      {
-        margin: new go.Margin(4, 6),
-        font: "9px sans-serif",
-        wrap: go.TextBlock.WrapFit,
-        textAlign: "center",
-        overflow: go.TextBlock.OverflowEllipsis,
-      },
-      new go.Binding("text", "name")
-    )
-  );
-
-  diagram.linkTemplate = $(
-    go.Link,
-    {
-      routing: go.Link.AvoidsNodes,
-      curve: go.Link.JumpOver,
-      corner: 8,
-    },
-    $(go.Shape, { stroke: "#333", strokeWidth: 1.5 }),
-    $(go.Shape, {
-      toArrow: "Standard",
-      fill: "#333",
-      stroke: null,
-      scale: 0.8,
-    })
-  );
-
-  diagram.linkTemplateMap.add(
-    "roomUnlock",
-    $(
-      go.Link,
-      {
-        routing: go.Link.AvoidsNodes,
-        curve: go.Link.JumpOver,
-        layerName: "Background",
-        corner: 8,
-      },
-      $(go.Shape, {
-        stroke: "#FF6B35",
-        strokeWidth: 2,
-        strokeDashArray: [6, 3],
-      }),
-      $(go.Shape, {
-        toArrow: "Standard",
-        fill: "#FF6B35",
-        stroke: null,
-        scale: 1.2,
-      })
-    )
-  );
-
-  addZoomControls("mindmapDiagram", diagram);
-
-  loadDiagramData();
 }
 
 function addZoomControls(containerId, diagramInstance) {
@@ -964,7 +790,7 @@ function isPuzzleUnlockedForTeam(puzzleId) {
   return Object.values(puzzleData).some(
     (p) =>
       p.followup === puzzleId &&
-      (selectedTeam.progress.solvedPuzzles || []).includes(p.key)
+      (selectedTeam.progress.solvedPuzzles || []).includes(p.key),
   );
 }
 async function toggleRoomStatus(roomId, unlock, wasCleared) {
@@ -1133,10 +959,10 @@ function fillPuzzleEditor(puzzle) {
         binding.isSolveBinding
           ? ""
           : binding.answer
-          ? decryptAnswer(binding.answer)
-          : "",
+            ? decryptAnswer(binding.answer)
+            : "",
         binding.targetPuzzle,
-        binding.isSolveBinding
+        binding.isSolveBinding,
       );
     });
   }
@@ -1148,7 +974,7 @@ function fillPuzzleEditor(puzzle) {
         event.trigger,
         event.action,
         event.actionValue,
-        event.triggerValue
+        event.triggerValue,
       );
     });
   }
@@ -1366,8 +1192,8 @@ async function savePuzzle() {
           answer: isSolveBinding
             ? "SOLVE_BINDING"
             : answer
-            ? encryptAnswer(answer)
-            : "",
+              ? encryptAnswer(answer)
+              : "",
           targetPuzzle: target,
           isSolveBinding,
         });
@@ -1429,7 +1255,7 @@ async function savePuzzle() {
   }
 
   const hasPdf = Array.from(document.querySelectorAll(".media-item")).some(
-    (item) => item.dataset.type === "pdf"
+    (item) => item.dataset.type === "pdf",
   );
 
   if (!hasPdf) {
@@ -1442,7 +1268,7 @@ async function savePuzzle() {
       type: item.dataset.type,
       url: item.dataset.url,
       order: Array.from(item.parentNode.children).indexOf(item),
-    })
+    }),
   );
 
   puzzle.media = media;
@@ -1488,7 +1314,7 @@ async function deletePuzzle() {
 
   if (
     !confirm(
-      `Are you sure you want to delete puzzle "${currentEditingPuzzle}"?`
+      `Are you sure you want to delete puzzle "${currentEditingPuzzle}"?`,
     )
   ) {
     return;
@@ -1544,12 +1370,12 @@ function fillRoomEditor(room) {
         event.triggerValue,
         event.puzzles || [],
         event.action,
-        event.actionValue
+        event.actionValue,
       );
     });
   }
   document.getElementById("roomPuzzles").value = (room.puzzles || []).join(
-    ", "
+    ", ",
   );
   document.getElementById("roomDescription").value = room.description || "";
 }
@@ -1667,7 +1493,7 @@ async function saveRoom() {
   } else if (room.clearCondition === "mustsolve") {
     const select = document.getElementById("roomMustSolvePuzzles");
     room.mustSolvePuzzles = Array.from(select.selectedOptions).map(
-      (option) => option.value
+      (option) => option.value,
     );
   }
 
@@ -1684,9 +1510,8 @@ async function saveRoom() {
     if (triggerType === "solveCount") {
       triggerValue = row.querySelector(".event-trigger-value").value.trim();
     } else {
-      // specificPuzzles
       puzzles = Array.from(
-        row.querySelector(".event-trigger-puzzles").selectedOptions
+        row.querySelector(".event-trigger-puzzles").selectedOptions,
       ).map((opt) => opt.value);
     }
 
@@ -1747,10 +1572,6 @@ async function deleteRoom() {
     console.error("Error deleting room:", error);
     alert("Error deleting room: " + error.message);
   }
-}
-
-function generateId() {
-  return "item_" + Math.random().toString(36).substr(2, 9);
 }
 
 function addMedia() {
@@ -1826,7 +1647,7 @@ function moveMediaDown(mediaId) {
 
 function checkPdfRequirement() {
   const hasPdf = Array.from(document.querySelectorAll(".media-item")).some(
-    (item) => item.dataset.type === "pdf"
+    (item) => item.dataset.type === "pdf",
   );
 
   const warning = document.getElementById("pdfWarning");
@@ -1856,7 +1677,7 @@ document.addEventListener("DOMContentLoaded", function () {
 function checkUserEditing() {
   const modals = ["puzzleEditor", "roomEditor"];
   return modals.some(
-    (modalId) => document.getElementById(modalId).style.display === "block"
+    (modalId) => document.getElementById(modalId).style.display === "block",
   );
 }
 
@@ -2017,7 +1838,7 @@ function encryptAnswer(answer) {
 function decryptAnswer(encryptedAnswer) {
   try {
     return CryptoJS.AES.decrypt(encryptedAnswer, SECURITY_SALT).toString(
-      CryptoJS.enc.Utf8
+      CryptoJS.enc.Utf8,
     );
   } catch (e) {
     console.error("Decryption error:", e);
@@ -2028,7 +1849,7 @@ function decryptAnswer(encryptedAnswer) {
 function addAnswerBinding(
   answer = "",
   targetPuzzle = "",
-  isSolveBinding = false
+  isSolveBinding = false,
 ) {
   const container = document.getElementById("answerBindingsContainer");
   const div = document.createElement("div");
@@ -2044,7 +1865,7 @@ function addAnswerBinding(
           (pId) =>
             `<option value="${pId}" ${targetPuzzle === pId ? "selected" : ""}>
           ${puzzleData[pId].name || pId}
-        </option>`
+        </option>`,
         )
         .join("")}
     </select>
@@ -2057,7 +1878,6 @@ function addAnswerBinding(
     <button class="btn btn-sm btn-danger" onclick="removeAnswerBinding(this)">×</button>
   `;
 
-  // Add event listener for the checkbox
   div.querySelector(".binding-solve").addEventListener("change", function () {
     const answerInput = div.querySelector(".binding-answer");
     if (this.checked) {
@@ -2079,7 +1899,7 @@ function addPuzzleEvent(
   trigger = "",
   action = "",
   actionValue = "",
-  triggerValue = ""
+  triggerValue = "",
 ) {
   const container = document.getElementById("puzzleEventsContainer");
   const div = document.createElement("div");
@@ -2118,7 +1938,7 @@ function addPuzzleEvent(
               actionValue === pId && action !== "notify" ? "selected" : ""
             }>
           ${puzzleData[pId].name || pId}
-        </option>`
+        </option>`,
         )
         .join("")}
     </select>
@@ -2128,7 +1948,6 @@ function addPuzzleEvent(
     <button class="btn btn-sm btn-danger" onclick="removePuzzleEvent(this)">×</button>
   `;
 
-  // Add event listeners
   div.querySelector(".event-action").addEventListener("change", function () {
     const isNotify = this.value === "notify";
     div.querySelector(".event-action-value").style.display = isNotify
@@ -2156,7 +1975,7 @@ function addRoomEvent(
   triggerValue = "1",
   puzzles = [],
   action = "unlock",
-  actionValue = ""
+  actionValue = "",
 ) {
   const container = document.getElementById("roomEventsContainer");
   const div = document.createElement("div");
@@ -2184,7 +2003,7 @@ function addRoomEvent(
           (pId) =>
             `<option value="${pId}" ${puzzles.includes(pId) ? "selected" : ""}>
           ${puzzleData[pId].name || pId}
-        </option>`
+        </option>`,
         )
         .join("")}
     </select>
@@ -2208,7 +2027,7 @@ function addRoomEvent(
               actionValue === pId && action !== "notify" ? "selected" : ""
             }>
           ${puzzleData[pId].name || pId}
-        </option>`
+        </option>`,
         )
         .join("")}
     </select>
@@ -2218,7 +2037,6 @@ function addRoomEvent(
     <button class="btn btn-sm btn-danger" onclick="removeRoomEvent(this)">×</button>
   `;
 
-  // Add event listeners for dynamic fields
   div.querySelector(".event-action").addEventListener("change", function () {
     const isNotify = this.value === "notify";
     div.querySelector(".event-action-value").style.display = isNotify

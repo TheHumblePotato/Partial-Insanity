@@ -281,7 +281,7 @@ async function checkAndTriggerRoomEvents(roomId) {
         continue;
       }
 
-      const eventKey = `${roomId}_${index}_${event.triggerType}_${event.triggerValue || 'specific'}`;
+      const eventKey = `${roomId}_${index}_${event.triggerType}_${event.triggerValue || "specific"}`;
 
       if (teamProgress.triggeredEvents[eventKey]) {
         continue;
@@ -307,7 +307,6 @@ async function checkAndTriggerRoomEvents(roomId) {
       }
 
       if (shouldTrigger) {
-
         teamProgress.triggeredEvents[eventKey] = true;
         await db.collection("progress").doc(currentUser.uid).set(teamProgress);
 
@@ -610,16 +609,6 @@ async function recoverPassword() {
 
 function logout() {
   auth.signOut();
-}
-
-function generateRandomPassword() {
-  const chars =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let result = "";
-  for (let i = 0; i < 12; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
 }
 
 async function renderCurrentRoom() {
@@ -1682,35 +1671,6 @@ function switchRoom(roomId) {
   renderCurrentRoom();
 }
 
-function viewFollowup() {
-  const puzzle = puzzleData[currentPuzzle];
-  if (puzzle.followup) {
-    openPuzzle(puzzle.followup);
-  }
-}
-
-function goToUnlockedRoom() {
-  const puzzle = puzzleData[currentPuzzle];
-  if (puzzle.unlocks) {
-    switchRoom(puzzle.unlocks);
-    closePuzzleViewer();
-  }
-}
-
-function goToUnlockedNew() {
-  const puzzle = puzzleData[currentPuzzle];
-  if (puzzle.unlocks) {
-    switchRoom(puzzle.unlocks);
-    closePuzzleViewer();
-  } else if (puzzle.followup) {
-    openPuzzle(puzzle.followup);
-  }
-}
-
-function viewOriginalPuzzle() {
-  openPuzzle(currentPuzzle);
-}
-
 function showLeaderboard() {
   document.getElementById("auth-page").style.display = "none";
   document.getElementById("puzzle-page").style.display = "none";
@@ -1852,7 +1812,7 @@ function displayLeaderboard(teams) {
     }
 
     row.innerHTML = `
-      <td>${rank <= 3 ? ['🥇', '🥈', '🥉'][rank - 1] : rank}</td>
+      <td>${rank <= 3 ? ["🥇", "🥈", "🥉"][rank - 1] : rank}</td>
       <td>${team.name}</td>
       <td>${team.roomsCleared}</td>
       <td>${team.puzzlesSolved}</td>

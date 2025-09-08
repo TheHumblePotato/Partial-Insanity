@@ -1445,7 +1445,7 @@ async function handleCorrectAnswer(puzzleId) {
     }
   }
 
-  checkAndTriggerRoomEvents(roomId);
+  await checkAndTriggerRoomEvents(roomId);
 
   await db.collection("progress").doc(currentUser.uid).set(teamProgress);
   showNotification("Correct answer! Puzzle marked as solved.", "success");

@@ -1477,3 +1477,15 @@ body {
   background: #cd7f32;
   color: #000;
 }
+
+.lock-answer-input[disabled] {
+  background: #e8f5e8;
+  border-color: #28a745 !important;
+  color: #155724;
+  font-weight: bold;
+}
+.answer-correct-indicator {
+  margin-left: 10px;
+  font-size: 18px;
+  vertical-align: middle;
+}

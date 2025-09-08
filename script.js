@@ -25,6 +25,7 @@ let unlockedNewContent = {};
 let unlockedPuzzlesInRoom = {};
 let answerBoxVisible = false;
 let hintBoxVisible = false;
+let correctAnswersSoFar = {};
 
 auth.onAuthStateChanged((user) => {
   if (user) {
@@ -1064,129 +1065,63 @@ function initAnswerBox(puzzle) {
   const answers = puzzle.answers || [];
   const requiredCorrect = puzzle.requiredCorrect || answers.length;
 
-  box.innerHTML = `
-    <h3>Submit Answers</h3>
-    <button class="close-box" onclick="toggleAnswerBox()">✖</button>
-    <div id="answer-inputs"></div>
-    <div class="required-correct">Require ${requiredCorrect} correct answer(s) to solve</div>
-    <button class="submit-btn" onclick="submitMultipleAnswers()">Submit</button>
-    <div class="guess-counter" id="guess-counter"></div>
-  `;
+  if (answers.length === 1) {
+    box.innerHTML = `
+      <h3>Submit Answer</h3>
+      <button class="close-box" onclick="toggleAnswerBox()">✖</button>
+      <div id="answer-inputs"></div>
+      <button class="submit-btn" onclick="submitMultipleAnswers()">Submit</button>
+      <div class="guess-counter" id="guess-counter"></div>
+    `;
+  } else {
+    box.innerHTML = `
+      <h3>Submit Answers</h3>
+      <button class="close-box" onclick="toggleAnswerBox()">✖</button>
+      <div id="answer-inputs"></div>
+      <div class="required-correct">Require ${requiredCorrect} correct answer(s) to solve</div>
+      <button class="submit-btn" onclick="submitMultipleAnswers()">Submit</button>
+      <div class="guess-counter" id="guess-counter"></div>
+    `;
+  }
 
   const inputsContainer = box.querySelector("#answer-inputs");
+  correctAnswersSoFar[currentPuzzle] = correctAnswersSoFar[currentPuzzle] || Array(answers.length).fill(false);
   answers.forEach((_, index) => {
     const div = document.createElement("div");
     div.className = "lock-answer-row";
-    div.innerHTML = `
-      <label class="lock-answer-label">Answer ${index + 1}:</label>
-      <input type="text" id="answer-${index}" class="lock-answer-input" placeholder="Enter answer ${
-        index + 1
-      }">
-    `;
+    if (answers.length === 1) {
+
+      div.innerHTML = `
+        <input type="text" id="answer-0" class="lock-answer-input" placeholder="Enter answer">
+      `;
+    } else {
+
+      div.innerHTML = `
+        <label class="lock-answer-label">Answer ${index + 1}:</label>
+        <input type="text" id="answer-${index}" class="lock-answer-input" placeholder="Enter answer ${index + 1}">
+        <span class="answer-correct-indicator" id="answer-indicator-${index}"></span>
+      `;
+    }
     inputsContainer.appendChild(div);
   });
 
+  if (answers.length > 1 && correctAnswersSoFar[currentPuzzle]) {
+    correctAnswersSoFar[currentPuzzle].forEach((isCorrect, i) => {
+      const input = document.getElementById(`answer-${i}`);
+      const indicator = document.getElementById(`answer-indicator-${i}`);
+      if (isCorrect && input) {
+        input.disabled = true;
+        input.style.borderColor = "#28a745";
+        if (indicator) {
+          indicator.textContent = "✔️";
+          indicator.style.color = "#28a745";
+        }
+      }
+    });
+  }
+
   document.body.appendChild(box);
   updateGuessCounter(currentPuzzle, true);
-}
-
-function initHintBox(puzzle) {
-  document.getElementById("hint-box")?.remove();
-
-  if (!puzzle.hints?.length) return;
-
-  const box = document.createElement("div");
-  box.className = "hint-box";
-  box.id = "hint-box";
-  box.innerHTML = `
-    <h3>Hints</h3>
-    <button class="close-box" onclick="toggleHintBox()">✖</button>
-    <div id="hint-list"></div>
-  `;
-
-  document.body.appendChild(box);
-  renderHints(puzzle);
-}
-
-function toggleAnswerBox() {
-  const box = document.getElementById("answer-box");
-  if (box) {
-    answerBoxVisible = !answerBoxVisible;
-    box.style.display = answerBoxVisible ? "block" : "none";
-
-    if (answerBoxVisible) {
-      const hintBox = document.getElementById("hint-box");
-      if (hintBox) {
-        hintBox.style.display = "none";
-        hintBoxVisible = false;
-      }
-    }
-  }
-}
-
-function toggleHintBox() {
-  const box = document.getElementById("hint-box");
-  if (box) {
-    hintBoxVisible = !hintBoxVisible;
-    box.style.display = hintBoxVisible ? "block" : "none";
-
-    if (hintBoxVisible) {
-      const answerBox = document.getElementById("answer-box");
-      if (answerBox) {
-        answerBox.style.display = "none";
-        answerBoxVisible = false;
-      }
-    }
-  }
-}
-
-function getContentImages(puzzle) {
-  if (!puzzle.media) return [];
-  return puzzle.media
-    .filter((m) => m.type === "jpg-content")
-    .sort((a, b) => (a.order || 0) - (b.order || 0));
-}
-
-function renderHints(puzzle) {
-  const hintList = document.getElementById("hint-list");
-  if (!hintList) return;
-
-  hintList.innerHTML = "";
-
-  teamProgress.viewedHints = teamProgress.viewedHints || [];
-
-  puzzle.hints.forEach((hint, index) => {
-    if (!hint || typeof hint !== "object" || !hint.problem || !hint.text) {
-      console.warn(
-        "Invalid hint found at index",
-        index,
-        "in puzzle",
-        currentPuzzle,
-      );
-      return;
-    }
-
-    const hintItem = document.createElement("div");
-    hintItem.className = "hint-item";
-    hintItem.innerHTML = `
-      <div class="hint-problem">${hint.problem}</div>
-      ${
-        teamProgress.viewedHints.includes(hint.text)
-          ? `<div class="hint-text visible">${hint.text}</div>`
-          : `<button class="hint-reveal-btn" 
-            onclick="revealHint(${index})"
-            ${teamProgress.viewedHints.length >= 10 ? "disabled" : ""}>
-            Show Hint
-        </button>`
-      }
-    `;
-    hintList.appendChild(hintItem);
-  });
-
-  const counter = document.getElementById("hint-counter");
-  if (counter) {
-    counter.textContent = teamProgress.viewedHints.length;
-  }
 }
 
 async function revealHint(hintIndex) {
@@ -1282,10 +1217,18 @@ async function submitMultipleAnswers() {
     }
 
     let correctCount = 0;
+    let correctArray = Array(answers.length).fill(false);
+
     for (let i = 0; i < answers.length; i++) {
       if (checkAnswer(answers[i], [puzzle.answers[i]])) {
         correctCount++;
+        correctArray[i] = true;
       }
+    }
+
+    if (!correctAnswersSoFar[puzzleId]) correctAnswersSoFar[puzzleId] = Array(answers.length).fill(false);
+    for (let i = 0; i < answers.length; i++) {
+      if (correctArray[i]) correctAnswersSoFar[puzzleId][i] = true;
     }
 
     const requiredCorrect = puzzle.requiredCorrect || 1;
@@ -1299,13 +1242,47 @@ async function submitMultipleAnswers() {
       }
 
       await handleCorrectAnswer(puzzleId);
+      correctAnswersSoFar[puzzleId] = Array(answers.length).fill(false); 
       closePuzzleViewer();
     } else {
       await handleIncorrectAnswer(puzzleId);
-      showNotification(
-        `You got ${correctCount} out of ${requiredCorrect} required answers correct. Please try again.`,
-        "error",
-      );
+
+      if (answers.length === 1) {
+        showNotification("Incorrect Answer. Please try again.", "error");
+      } else {
+        showNotification(
+          `You got ${correctCount} out of ${requiredCorrect} required answers correct. Please try again.`,
+          "error",
+        );
+      }
+
+      if (answers.length > 1) {
+        for (let i = 0; i < answers.length; i++) {
+          const input = document.getElementById(`answer-${i}`);
+          const indicator = document.getElementById(`answer-indicator-${i}`);
+          if (correctAnswersSoFar[puzzleId][i]) {
+            if (input) {
+              input.disabled = true;
+              input.style.borderColor = "#28a745";
+            }
+            if (indicator) {
+              indicator.textContent = "✔️";
+              indicator.style.color = "#28a745";
+            }
+          } else {
+
+            if (input) {
+              input.disabled = false;
+              input.style.borderColor = "";
+            }
+            if (indicator) {
+              indicator.textContent = "";
+              indicator.style.color = "";
+            }
+          }
+        }
+      }
+
       updateGuessCounter(puzzleId, true);
     }
   } catch (error) {

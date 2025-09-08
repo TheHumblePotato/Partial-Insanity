@@ -1402,6 +1402,8 @@ async function handleCorrectAnswer(puzzleId) {
     unlockedNewContent[puzzle.unlocks] = puzzleId;
   }
 
+  await checkAndTriggerRoomEvents(roomId);
+
   if (isRoomCleared(roomId) && !teamProgress.clearedRooms.includes(roomId)) {
     teamProgress.clearedRooms.push(roomId);
 
@@ -1444,8 +1446,6 @@ async function handleCorrectAnswer(puzzleId) {
       currentRoom = nextRoom;
     }
   }
-
-  await checkAndTriggerRoomEvents(roomId);
 
   await db.collection("progress").doc(currentUser.uid).set(teamProgress);
   showNotification("Correct answer! Puzzle marked as solved.", "success");

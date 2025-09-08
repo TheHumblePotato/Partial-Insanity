@@ -23,9 +23,9 @@ let roomData = {};
 let teamProgress = {};
 let unlockedNewContent = {};
 let unlockedPuzzlesInRoom = {};
+let correctAnswersSoFar = {};
 let answerBoxVisible = false;
 let hintBoxVisible = false;
-let correctAnswersSoFar = {};
 
 auth.onAuthStateChanged((user) => {
   if (user) {
@@ -1122,6 +1122,105 @@ function initAnswerBox(puzzle) {
 
   document.body.appendChild(box);
   updateGuessCounter(currentPuzzle, true);
+}
+
+function initHintBox(puzzle) {
+  document.getElementById("hint-box")?.remove();
+
+  if (!puzzle.hints?.length) return;
+
+  const box = document.createElement("div");
+  box.className = "hint-box";
+  box.id = "hint-box";
+  box.innerHTML = `
+    <h3>Hints</h3>
+    <button class="close-box" onclick="toggleHintBox()">✖</button>
+    <div id="hint-list"></div>
+  `;
+
+  document.body.appendChild(box);
+  renderHints(puzzle);
+}
+
+function toggleAnswerBox() {
+  const box = document.getElementById("answer-box");
+  if (box) {
+    answerBoxVisible = !answerBoxVisible;
+    box.style.display = answerBoxVisible ? "block" : "none";
+
+    if (answerBoxVisible) {
+      const hintBox = document.getElementById("hint-box");
+      if (hintBox) {
+        hintBox.style.display = "none";
+        hintBoxVisible = false;
+      }
+    }
+  }
+}
+
+function toggleHintBox() {
+  const box = document.getElementById("hint-box");
+  if (box) {
+    hintBoxVisible = !hintBoxVisible;
+    box.style.display = hintBoxVisible ? "block" : "none";
+
+    if (hintBoxVisible) {
+      const answerBox = document.getElementById("answer-box");
+      if (answerBox) {
+        answerBox.style.display = "none";
+        answerBoxVisible = false;
+      }
+    }
+  }
+}
+
+function getContentImages(puzzle) {
+  if (!puzzle.media) return [];
+  return puzzle.media
+    .filter((m) => m.type === "jpg-content")
+    .sort((a, b) => (a.order || 0) - (b.order || 0));
+}
+
+function renderHints(puzzle) {
+  const hintList = document.getElementById("hint-list");
+  if (!hintList) return;
+
+  hintList.innerHTML = "";
+
+  teamProgress.viewedHints = teamProgress.viewedHints || [];
+
+  puzzle.hints.forEach((hint, index) => {
+    if (!hint || typeof hint !== "object" || !hint.problem || !hint.text) {
+      console.warn(
+        "Invalid hint found at index",
+        index,
+        "in puzzle",
+        currentPuzzle,
+      );
+      return;
+    }
+
+    const hintItem = document.createElement("div");
+    hintItem.className = "hint-item";
+    hintItem.innerHTML = `
+      <div class="hint-problem">${hint.problem}</div>
+      ${
+        teamProgress.viewedHints.includes(hint.text)
+          ? `<div class="hint-text visible">${hint.text}</div>`
+          : `<button class="hint-reveal-btn" 
+            onclick="revealHint(${index})"
+            ${teamProgress.viewedHints.length >= 10 ? "disabled" : ""}>
+            Show Hint
+        </button>`
+      }
+    `;
+    hintList.appendChild(hintItem);
+  });
+
+  const counter = document.getElementById("hint-counter");
+  if (counter) {
+    counter.textContent = teamProgress.viewedHints.length;
+  }
 }
 
 async function revealHint(hintIndex) {

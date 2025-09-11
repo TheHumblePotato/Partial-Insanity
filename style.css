@@ -1489,3 +1489,14 @@ body {
   font-size: 18px;
   vertical-align: middle;
 }
+
+#issues-page form > div {
+  margin-bottom: 10px;
+}
+#my-issues-list .my-issue {
+  background: #f5f7fa;
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 8px;
+  border: 1px solid #d2dbe2;
+}

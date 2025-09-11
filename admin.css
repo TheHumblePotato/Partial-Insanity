@@ -594,3 +594,28 @@
   font-size: 12px;
   margin-top: 5px;
 }
+
+#admin-issues-list .admin-issue {
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  background: #f9f9f9;
+  border-radius: 6px;
+}
+#admin-issues-list textarea {
+  width: 100%;
+  margin-top: 4px;
+}
+#admin-issues-list select, #admin-issues-list button {
+  margin-top: 4px;
+}
+
+#admin-leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+#admin-leaderboard-table th, #admin-leaderboard-table td {
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}

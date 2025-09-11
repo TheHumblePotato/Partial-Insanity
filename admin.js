@@ -2065,3 +2065,92 @@ function addRoomEvent(
 function removeRoomEvent(btn) {
   btn.closest(".form-row").remove();
 }
+
+function loadAdminLeaderboard() {
+  const loading = document.getElementById("admin-leaderboard-loading");
+  const table = document.getElementById("admin-leaderboard-table");
+  const tbody = document.getElementById("admin-leaderboard-body");
+  loading.style.display = "block";
+  table.style.display = "none";
+  tbody.innerHTML = "";
+
+  db.collection("teams").get().then(async (teamsSnapshot) => {
+    const teams = [];
+    for (const teamDoc of teamsSnapshot.docs) {
+      const teamData = teamDoc.data();
+      if (teamData.leaderboardOptOut) continue;
+      const progressDoc = await db.collection("progress").doc(teamDoc.id).get();
+      if (progressDoc.exists) {
+        const progressData = progressDoc.data();
+        teams.push({
+          id: teamDoc.id,
+          name: teamData.name,
+          roomsCleared: progressData.clearedRooms ? progressData.clearedRooms.length : 0,
+          puzzlesSolved: progressData.solvedPuzzles ? progressData.solvedPuzzles.length : 0,
+          lastSolveTime: progressData.lastSolveTime || 0
+        });
+      }
+    }
+    teams.sort((a, b) => b.roomsCleared - a.roomsCleared || b.puzzlesSolved - a.puzzlesSolved || b.lastSolveTime - a.lastSolveTime);
+    teams.forEach((team, idx) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${idx + 1}</td>
+        <td>${team.name}</td>
+        <td>${team.roomsCleared}</td>
+        <td>${team.puzzlesSolved}</td>
+        <td>${team.lastSolveTime ? (new Date(team.lastSolveTime)).toLocaleString() : "Never"}</td>
+      `;
+      tbody.appendChild(row);
+    });
+    loading.style.display = "none";
+    table.style.display = "table";
+  });
+}
+
+// --- ISSUES TAB (Admin) ---
+
+function loadAdminIssues() {
+  const list = document.getElementById("admin-issues-list");
+  list.innerHTML = "Loading...";
+  db.collection("issues").orderBy("timestamp", "desc").get().then((snapshot) => {
+    if (snapshot.empty) {
+      list.innerHTML = "<p>No issues reported.</p>";
+      return;
+    }
+    list.innerHTML = "";
+    snapshot.forEach(doc => {
+      const issue = doc.data();
+      const div = document.createElement("div");
+      div.className = "admin-issue";
+      div.innerHTML = `
+        <div>
+          <strong>${issue.title}</strong> (by ${issue.teamName || "anonymous"} at ${new Date(issue.timestamp).toLocaleString()})
+        </div>
+        <div>${issue.description}</div>
+        <div>Status: 
+          <select onchange="updateIssueStatus('${doc.id}',this.value)">
+            <option value="open"${issue.status==="open"?" selected":""}>Open</option>
+            <option value="fixed"${issue.status==="fixed"?" selected":""}>Fixed</option>
+            <option value="intentional"${issue.status==="intentional"?" selected":""}>Intentional</option>
+          </select>
+        </div>
+        <div>
+          <textarea rows="2" placeholder="Reply to reporter...">${issue.adminReply||""}</textarea>
+          <button onclick="replyToIssue('${doc.id}', this.previousElementSibling.value)">Send Reply</button>
+        </div>
+        <hr>
+      `;
+      list.appendChild(div);
+    });
+  });
+}
+
+function updateIssueStatus(issueId, status) {
+  db.collection("issues").doc(issueId).update({status});
+}
+
+function replyToIssue(issueId, reply) {
+  db.collection("issues").doc(issueId).update({adminReply: reply});
+  alert("Reply sent!");
+}

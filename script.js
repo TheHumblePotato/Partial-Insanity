@@ -499,6 +499,15 @@ function showForgotKeyForm() {
   document.getElementById("forgot-key-form").classList.remove("hidden");
 }
 
+function showIssuesPage() {
+  document.getElementById("auth-page").style.display = "none";
+  document.getElementById("puzzle-page").style.display = "none";
+  document.getElementById("rules-page").style.display = "none";
+  document.getElementById("leaderboard-page").style.display = "none";
+  document.getElementById("issues-page").style.display = "block";
+  loadMyIssues();
+}
+
 async function registerTeam() {
   const teamName = document.getElementById("new-team-name").value.trim();
   const email = document.getElementById("team-email").value.trim();
@@ -1923,6 +1932,53 @@ function displayLeaderboard(teams) {
 
   document.getElementById("leaderboard-loading").style.display = "none";
   document.getElementById("leaderboard-table").style.display = "table";
+}
+
+function submitIssue(e) {
+  e.preventDefault();
+  const title = document.getElementById("issue-title").value.trim();
+  const description = document.getElementById("issue-description").value.trim();
+  if (!title || !description) return;
+
+  db.collection("issues").add({
+    title,
+    description,
+    teamId: currentTeam?.id || currentUser?.uid || null,
+    teamName: currentTeam?.name || null,
+    timestamp: Date.now(),
+    status: "open"
+  }).then(() => {
+    document.getElementById("issue-form").reset();
+    document.getElementById("issue-success").style.display = "block";
+    loadMyIssues();
+    setTimeout(() => {
+      document.getElementById("issue-success").style.display = "none";
+    }, 2500);
+  });
+}
+
+function loadMyIssues() {
+  const list = document.getElementById("my-issues-list");
+  if (!currentUser) return;
+  db.collection("issues").where("teamId", "==", currentUser.uid)
+    .orderBy("timestamp", "desc")
+    .get().then((snapshot) => {
+      if (snapshot.empty) {
+        list.innerHTML = "<p>No issues submitted yet.</p>";
+        return;
+      }
+      let html = "";
+      snapshot.forEach(doc => {
+        const issue = doc.data();
+        html += `<div class="my-issue">
+          <b>${issue.title}</b> - <i>${new Date(issue.timestamp).toLocaleString()}</i> <br>
+          ${issue.description}<br>
+          Status: <b>${issue.status}</b>
+          ${issue.adminReply ? `<div style="color:blue;margin-top:4px;">Admin reply: ${issue.adminReply}</div>` : ""}
+        </div><hr>`;
+      });
+      list.innerHTML = html;
+    });
 }
 
 function init() {

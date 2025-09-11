@@ -1489,14 +1489,77 @@ body {
   font-size: 18px;
   vertical-align: middle;
 }
+#issues-page form {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 20px;
+  max-width: 480px;
+  margin: 0 auto 24px auto;
+}
 
-#issues-page form > div {
+#issues-page h2, #issues-page h3 {
+  text-align: center;
+}
+
+#issues-page input[type="text"], #issues-page textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #dbe0e6;
+  border-radius: 5px;
+  padding: 8px;
+  font-size: 1em;
+  background: #f7fafd;
   margin-bottom: 10px;
 }
-#my-issues-list .my-issue {
-  background: #f5f7fa;
-  border-radius: 6px;
-  padding: 8px;
-  margin-bottom: 8px;
-  border: 1px solid #d2dbe2;
+
+#issues-page button[type="submit"], #close-issues-btn {
+  background: #2196f3;
+  color: #fff;
+  border-radius: 4px;
+  border: none;
+  padding: 8px 18px;
+  margin-top: 6px;
+  cursor: pointer;
+  font-size: 1em;
+}
+
+#close-issues-btn {
+  background: #aaa;
+  color: #fff;
+  padding: 4px 14px;
+  font-size: 1.1em;
+  float: right;
+}
+
+#all-issues-list, #my-issues-list {
+  max-width: 600px;
+  margin: 18px auto;
+}
+
+.issue-card {
+  background: #f5f8fa;
+  border-radius: 8px;
+  border: 1px solid #dbe0e6;
+  margin-bottom: 12px;
+  padding: 14px 18px 10px 18px;
+}
+.issue-card .issue-title {
+  font-weight: bold;
+  font-size: 1.1em;
+  color: #1a237e;
+}
+.issue-card .issue-meta {
+  color: #666;
+  font-size: 0.93em;
+  margin-bottom: 6px;
+}
+.issue-card .issue-status {
+  font-size: 0.96em;
+  color: #00897b;
+}
+.issue-card .issue-reply {
+  color: #0b5394;
+  margin-top: 6px;
+  font-size: 0.96em;
 }

@@ -460,6 +460,11 @@ function closeSolveMessageModal() {
   document.getElementById("solve-message-modal").style.display = "none";
 }
 
+function closeIssuesPage() {
+  document.getElementById("issues-page").style.display = "none";
+  showPuzzlePage();
+}
+
 function showAuthPage() {
   document.getElementById("auth-page").style.display = "block";
   document.getElementById("puzzle-page").style.display = "none";
@@ -505,6 +510,7 @@ function showIssuesPage() {
   document.getElementById("rules-page").style.display = "none";
   document.getElementById("leaderboard-page").style.display = "none";
   document.getElementById("issues-page").style.display = "block";
+  loadAllIssues();
   loadMyIssues();
 }
 
@@ -1950,11 +1956,35 @@ function submitIssue(e) {
   }).then(() => {
     document.getElementById("issue-form").reset();
     document.getElementById("issue-success").style.display = "block";
+    loadAllIssues();
     loadMyIssues();
     setTimeout(() => {
       document.getElementById("issue-success").style.display = "none";
-    }, 2500);
+    }, 2000);
   });
+}
+
+function loadAllIssues() {
+  const list = document.getElementById("all-issues-list");
+  db.collection("issues").orderBy("timestamp", "desc")
+    .onSnapshot((snapshot) => {
+      if (snapshot.empty) {
+        list.innerHTML = "<p>No issues reported yet.</p>";
+        return;
+      }
+      let html = "";
+      snapshot.forEach(doc => {
+        const issue = doc.data();
+        html += `<div class="issue-card">
+          <div class="issue-title">${issue.title}</div>
+          <div class="issue-meta">By <b>${issue.teamName || "anonymous"}</b> at ${new Date(issue.timestamp).toLocaleString()}</div>
+          <div>${issue.description}</div>
+          <div class="issue-status">Status: <b>${issue.status}</b></div>
+          ${issue.adminReply ? `<div class="issue-reply">Admin reply: ${issue.adminReply}</div>` : ""}
+        </div>`;
+      });
+      list.innerHTML = html;
+    });
 }
 
 function loadMyIssues() {
@@ -1962,7 +1992,7 @@ function loadMyIssues() {
   if (!currentUser) return;
   db.collection("issues").where("teamId", "==", currentUser.uid)
     .orderBy("timestamp", "desc")
-    .get().then((snapshot) => {
+    .onSnapshot((snapshot) => {
       if (snapshot.empty) {
         list.innerHTML = "<p>No issues submitted yet.</p>";
         return;
@@ -1970,12 +2000,13 @@ function loadMyIssues() {
       let html = "";
       snapshot.forEach(doc => {
         const issue = doc.data();
-        html += `<div class="my-issue">
-          <b>${issue.title}</b> - <i>${new Date(issue.timestamp).toLocaleString()}</i> <br>
-          ${issue.description}<br>
-          Status: <b>${issue.status}</b>
-          ${issue.adminReply ? `<div style="color:blue;margin-top:4px;">Admin reply: ${issue.adminReply}</div>` : ""}
-        </div><hr>`;
+        html += `<div class="issue-card">
+          <div class="issue-title">${issue.title}</div>
+          <div class="issue-meta">${new Date(issue.timestamp).toLocaleString()}</div>
+          <div>${issue.description}</div>
+          <div class="issue-status">Status: <b>${issue.status}</b></div>
+          ${issue.adminReply ? `<div class="issue-reply">Admin reply: ${issue.adminReply}</div>` : ""}
+        </div>`;
       });
       list.innerHTML = html;
     });

@@ -242,22 +242,27 @@
     </div>
 
     <div id="issues-page" class="rules-page" style="display: none;">
-    <h2>Report an Issue</h2>
-    <form id="issue-form" onsubmit="submitIssue(event)">
-      <div>
-        <label>Title:</label>
-        <input type="text" id="issue-title" required maxlength="60">
+      <div style="text-align:right;">
+        <button id="close-issues-btn" class="btn btn-secondary" style="margin-bottom:10px;" onclick="closeIssuesPage()">&times; Close</button>
       </div>
-      <div>
-        <label>Description:</label>
-        <textarea id="issue-description" required maxlength="300" rows="4"></textarea>
-      </div>
-      <button class="btn btn-primary" type="submit">Submit Issue</button>
-    </form>
-    <div id="issue-success" style="display:none;color:green;margin-top:10px;">Thank you! Your issue has been submitted.</div>
-    <h3>My Submitted Issues</h3>
-    <div id="my-issues-list"></div>
-  </div>
+      <h2>Report an Issue</h2>
+      <form id="issue-form" onsubmit="submitIssue(event)">
+        <div>
+          <label>Title:</label>
+          <input type="text" id="issue-title" required maxlength="60">
+        </div>
+        <div>
+          <label>Description:</label>
+          <textarea id="issue-description" required maxlength="300" rows="4"></textarea>
+        </div>
+        <button class="btn btn-primary" type="submit">Submit Issue</button>
+      </form>
+      <div id="issue-success" style="display:none;color:green;margin-top:10px;text-align:center;">Thank you! Your issue has been submitted.</div>
+      <h3 style="margin-top:30px;">All Reported Issues</h3>
+      <div id="all-issues-list"></div>
+      <h3>My Submitted Issues</h3>
+      <div id="my-issues-list"></div>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>

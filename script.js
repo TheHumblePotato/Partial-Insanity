@@ -13,7 +13,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 const rtdb = firebase.database();
 
-const SECURITY_SALT = "partial-insanity-2025-salt";
+const SECURITY_SALT = "partial-insanity-salt";
 let currentUser = null;
 let currentTeam = null;
 let currentRoom = "starting_room";

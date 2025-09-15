@@ -842,7 +842,7 @@ function createPuzzleElement(puzzle, puzzleId) {
           <img src="${
             coverImage.url
           }" alt="Puzzle Preview" class="puzzle-cover">
-          ${answer ? `<div class="puzzle-answer-overlay">${answer}</div>` : ""}
+          ${answer ? `<div class="puzzle-answer-overlay">${answer.toUpperCase()}</div>` : ""}
         </div>
       `
           : puzzle.media.find((m) => m.type === "pdf")

@@ -1,4 +1,4 @@
 # Partial-Insanity
 A puzzle hunt
 
-  [(https://thehumblepotato.github.io/Partial-Insanity/]
+[Link to the Partial Insanity Website](https://thehumblepotato.github.io/Partial-Insanity/)

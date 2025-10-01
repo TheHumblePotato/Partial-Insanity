@@ -9,6 +9,7 @@
 ## Suggestions
 1. make hints more customized
 2. settings page for team
+3. show answers only on toggle
 
 ## Puzzle Stuff
-I <3 bob
+1. GREMMER

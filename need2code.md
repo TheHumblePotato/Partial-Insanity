@@ -1,3 +1,6 @@
+## General Rules
+1. Don't make irrelevant/unnecessary commits (ex. "I <3 bob")
+
 ## BUGS
 1. in image rooms, the image doesnt take the full page
 2. in image rooms, puzzles can clip out of view

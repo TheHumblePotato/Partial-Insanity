@@ -48,7 +48,7 @@ function checkAnswer(answer, encryptedAnswers) {
     return encryptedAnswers.some((encrypted) => {
       try {
         const decrypted = decryptAnswer(encrypted);
-        return decrypted.toUpperCase() === normalizedAnswer;
+        return normalizeAnswer(decrypted) === normalizedAnswer;
       } catch (e) {
         console.error("Error decrypting answer:", e);
         return false;

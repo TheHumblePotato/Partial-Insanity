@@ -8,7 +8,6 @@
 ## Visual
 1. locks don't looks good
 2. need better background
-3. change the font to be Source Sans Pro ([here's the download link](https://www.fontsquirrel.com/fonts/source-sans-pro))
 
 ## Suggestions/Features
 1. make hints more customized

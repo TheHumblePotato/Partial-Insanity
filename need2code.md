@@ -16,6 +16,8 @@
 3. show answers only on toggle
 4. add ai to get context of puzzle and what the person knows about the puzzle so far, and it returns a hint to what to do next?
 5. remove the hide from leaderboard button on team creation
+6. add email verifacation.
+7. It would be good to store puzzles on firebase instead of github.
 
 ## Puzzle Stuff
 1. GREMMER

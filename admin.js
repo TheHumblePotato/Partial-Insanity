@@ -82,6 +82,8 @@ function showAdminSection(section) {
   document.getElementById(`admin-${section}`).classList.remove("hidden");
   if (section === "mindmap") {
     setTimeout(() => diagram && diagram.requestUpdate(), 100);
+  } else if (section === "leaderboard") {
+    loadLeaderboard();
   }
 }
 
@@ -1750,6 +1752,11 @@ async function refreshAllData(forceRefresh = false) {
     if (document.getElementById("roomEditor").style.display === "block") {
       updateRoomEditorDropdowns();
     }
+
+    const leaderboardSection = document.getElementById("admin-leaderboard");
+    if (!leaderboardSection.classList.contains("hidden")) {
+      loadLeaderboard();
+    }
   } catch (error) {
     console.error("Error refreshing data:", error);
   }
@@ -1828,6 +1835,218 @@ function stopAutoRefresh() {
     clearInterval(autoRefreshInterval);
     autoRefreshInterval = null;
     console.log("Auto-refresh stopped");
+  }
+}
+
+async function loadLeaderboard() {
+  try {
+    const loadingDiv = document.getElementById("admin-leaderboard-loading");
+    const table = document.getElementById("admin-leaderboard-table");
+    const emptyDiv = document.getElementById("admin-leaderboard-empty");
+    const tbody = document.getElementById("admin-leaderboard-body");
+    const statsDiv = document.getElementById("admin-leaderboard-stats");
+    
+    loadingDiv.style.display = "block";
+    table.style.display = "none";
+    emptyDiv.style.display = "none";
+    tbody.innerHTML = "";
+    statsDiv.innerHTML = "";
+
+    const showOptedOut = document.getElementById("show-opted-out").checked;
+    const showInactive = document.getElementById("show-inactive").checked;
+
+    const teamsSnapshot = await db.collection("teams").get();
+    const teams = [];
+
+    for (const teamDoc of teamsSnapshot.docs) {
+      const teamData = teamDoc.data();
+
+      if (!showOptedOut && teamData.leaderboardOptOut) {
+        continue;
+      }
+
+      const progressDoc = await db.collection("progress").doc(teamDoc.id).get();
+      const progressData = progressDoc.exists ? progressDoc.data() : {};
+
+      const roomsCleared = (progressData.clearedRooms || []).length;
+      const puzzlesSolved = (progressData.solvedPuzzles || []).length;
+      const unlockedRooms = (progressData.unlockedRooms || []).length;
+      
+      let lastSolveTime = null;
+      let lastSolveTimeFormatted = "Never";
+      if (progressData.lastSolveTime && progressData.lastSolveTime > 0) {
+        lastSolveTime = progressData.lastSolveTime;
+        const date = new Date(lastSolveTime);
+        lastSolveTimeFormatted = date.toLocaleString([], {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+      }
+
+      const currentRoom = progressData.currentRoom || "starting-room";
+      const currentRoomName = roomData[currentRoom]?.name || currentRoom;
+
+      const isActive = puzzlesSolved > 0 || roomsCleared > 0;
+      
+      if (!showInactive && !isActive) {
+        continue;
+      }
+
+      teams.push({
+        id: teamDoc.id,
+        name: teamData.name || "Unknown Team",
+        email: teamData.email || "N/A",
+        leaderboardOptOut: teamData.leaderboardOptOut || false,
+        roomsCleared,
+        puzzlesSolved,
+        unlockedRooms,
+        currentRoom,
+        currentRoomName,
+        lastSolveTime,
+        lastSolveTimeFormatted,
+        isActive,
+        progress: progressData
+      });
+    }
+
+    teams.sort((a, b) => {
+      if (b.roomsCleared !== a.roomsCleared) {
+        return b.roomsCleared - a.roomsCleared;
+      }
+      if (b.puzzlesSolved !== a.puzzlesSolved) {
+        return b.puzzlesSolved - a.puzzlesSolved;
+      }
+      return (b.lastSolveTime || 0) - (a.lastSolveTime || 0);
+    });
+
+    // Calculate and display stats
+    const totalTeams = teams.length;
+    const activeTeams = teams.filter(t => t.isActive).length;
+    const optedOutTeams = teams.filter(t => t.leaderboardOptOut).length;
+    const totalRoomsCleared = teams.reduce((sum, t) => sum + t.roomsCleared, 0);
+    const totalPuzzlesSolved = teams.reduce((sum, t) => sum + t.puzzlesSolved, 0);
+
+    statsDiv.innerHTML = `
+      <div class="admin-stat-card">
+        <h3>${totalTeams}</h3>
+        <p>Total Teams</p>
+      </div>
+      <div class="admin-stat-card">
+        <h3>${activeTeams}</h3>
+        <p>Active Teams</p>
+      </div>
+      <div class="admin-stat-card">
+        <h3>${totalRoomsCleared}</h3>
+        <p>Total Rooms Cleared</p>
+      </div>
+      <div class="admin-stat-card">
+        <h3>${totalPuzzlesSolved}</h3>
+        <p>Total Puzzles Solved</p>
+      </div>
+      <div class="admin-stat-card">
+        <h3>${optedOutTeams}</h3>
+        <p>Opted Out Teams</p>
+      </div>
+    `;
+
+    loadingDiv.style.display = "none";
+
+    if (teams.length === 0) {
+      emptyDiv.style.display = "block";
+      return;
+    }
+
+    table.style.display = "table";
+
+    teams.forEach((team, index) => {
+      const row = tbody.insertRow();
+      const rank = index + 1;
+
+      if (rank === 1) {
+        row.classList.add("rank-1");
+      } else if (rank === 2) {
+        row.classList.add("rank-2");
+      } else if (rank === 3) {
+        row.classList.add("rank-3");
+      }
+
+      const statusBadge = team.leaderboardOptOut 
+        ? '<span style="background: #ffc107; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 11px;">OPTED OUT</span>'
+        : team.isActive 
+          ? '<span style="background: #28a745; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">ACTIVE</span>'
+          : '<span style="background: #6c757d; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">INACTIVE</span>';
+
+      row.innerHTML = `
+        <td>${rank <= 3 ? ["🥇", "🥈", "🥉"][rank - 1] : rank}</td>
+        <td>
+          <div>${team.name}</div>
+          <div class="team-progress-details">ID: ${team.id}</div>
+        </td>
+        <td>
+          <div>${team.email}</div>
+        </td>
+        <td>${team.roomsCleared}</td>
+        <td>${team.puzzlesSolved}</td>
+        <td>
+          <div>${team.currentRoomName}</div>
+          <div class="team-progress-details">${team.currentRoom}</div>
+        </td>
+        <td>${team.lastSolveTimeFormatted}</td>
+        <td>${statusBadge}</td>
+      `;
+    });
+
+  } catch (error) {
+    console.error("Error loading leaderboard:", error);
+    const loadingDiv = document.getElementById("admin-leaderboard-loading");
+    loadingDiv.textContent = "Error loading leaderboard data. Please try again.";
+    loadingDiv.style.color = "#dc3545";
+  }
+}
+
+function exportLeaderboard() {
+  try {
+    const table = document.getElementById("admin-leaderboard-table");
+    if (table.style.display === "none") {
+      alert("No data to export. Please load the leaderboard first.");
+      return;
+    }
+
+    let csv = "Rank,Team Name,Team Email,Rooms Cleared,Puzzles Solved,Current Room,Last Solve Time,Status\n";
+    
+    const rows = table.querySelectorAll("tbody tr");
+    rows.forEach(row => {
+      const cells = row.querySelectorAll("td");
+      const rowData = [
+        cells[0].textContent.trim(),
+        cells[1].textContent.trim().split('\n')[0], // Team name only
+        cells[2].textContent.trim(),
+        cells[3].textContent.trim(),
+        cells[4].textContent.trim(),
+        cells[5].textContent.trim().split('\n')[0], // Current room name only
+        cells[6].textContent.trim(),
+        cells[7].textContent.trim()
+      ];
+      csv += rowData.map(cell => `"${cell.replace(/"/g, '""')}"`).join(",") + "\n";
+    });
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `leaderboard_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+  } catch (error) {
+    console.error("Error exporting leaderboard:", error);
+    alert("Error exporting leaderboard. Please try again.");
   }
 }
 

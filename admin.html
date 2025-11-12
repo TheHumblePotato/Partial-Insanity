@@ -413,23 +413,53 @@
     </div>
 
     <div id="admin-leaderboard" class="admin-section hidden">
-    <h2>Leaderboard</h2>
-    <div id="admin-leaderboard-content">
-      <div id="admin-leaderboard-loading">Loading...</div>
-      <table id="admin-leaderboard-table" style="display: none">
-        <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Team</th>
-            <th>Rooms Cleared</th>
-            <th>Puzzles Solved</th>
-            <th>Last Solve Time</th>
-          </tr>
-        </thead>
-        <tbody id="admin-leaderboard-body"></tbody>
-      </table>
+      <div id="admin-leaderboard-content">
+        <div class="admin-leaderboard-header">
+          <h2 class="admin-leaderboard-title">🏆 Admin Leaderboard</h2>
+          <div class="admin-leaderboard-actions">
+            <button class="btn-refresh" onclick="loadLeaderboard()">🔄 Refresh</button>
+            <button class="btn-export" onclick="exportLeaderboard()">📊 Export</button>
+          </div>
+        </div>
+
+        <div class="admin-leaderboard-stats" id="admin-leaderboard-stats">
+          <!-- Stats will be populated by JavaScript -->
+        </div>
+
+        <div class="admin-leaderboard-controls">
+          <div class="admin-leaderboard-filters">
+            <label>
+              <input type="checkbox" id="show-opted-out" onchange="loadLeaderboard()">
+              Show opted-out teams
+            </label>
+            <label>
+              <input type="checkbox" id="show-inactive" onchange="loadLeaderboard()">
+              Show inactive teams
+            </label>
+          </div>
+        </div>
+
+        <div id="admin-leaderboard-loading">Loading leaderboard data...</div>
+        <div id="admin-leaderboard-empty" class="admin-leaderboard-empty" style="display: none">
+          No teams found matching the current filters.
+        </div>
+        <table id="admin-leaderboard-table" style="display: none">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Team</th>
+              <th>Email</th>
+              <th>Rooms Cleared</th>
+              <th>Puzzles Solved</th>
+              <th>Current Room</th>
+              <th>Last Solve Time</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="admin-leaderboard-body"></tbody>
+        </table>
+      </div>
     </div>
-  </div>
 
   <div id="admin-issues" class="admin-section hidden">
     <h2>Reported Issues</h2>

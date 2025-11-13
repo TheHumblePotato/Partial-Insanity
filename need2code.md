@@ -8,7 +8,6 @@
 
 1. in image rooms, the image doesnt take the full page
 2. in image rooms, puzzles can clip out of view
-3. in the admin panel, the leaderboard doesn't load
 
 ## Visual
 
@@ -29,4 +28,3 @@
 
 1. GREMMER
 2. i <3 bob
-

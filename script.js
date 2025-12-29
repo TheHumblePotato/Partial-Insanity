@@ -490,9 +490,11 @@ function showPuzzlePage() {
 }
 
 function showRulesPage() {
-  document.getElementById("auth-page").style.display = "none";
-  document.getElementById("puzzle-page").style.display = "none";
   document.getElementById("rules-page").style.display = "block";
+}
+
+function closeRulesPage() {
+  document.getElementById("rules-page").style.display = "none";
 }
 
 function showRegisterForm() {
@@ -658,33 +660,54 @@ async function renderCurrentRoom() {
   const navGroup = document.querySelector("#room-nav-buttons .room-nav-group");
   navGroup.innerHTML = "";
 
-  const rulesBtn = document.createElement("button");
-  rulesBtn.className = "nav-btn";
-  rulesBtn.textContent = "Rules";
-  rulesBtn.onclick = showRulesPage;
-  navGroup.appendChild(rulesBtn);
-
   const clearedRooms = teamProgress.clearedRooms || [];
   const unlockedRooms = teamProgress.unlockedRooms || ["starting_room"];
 
-  unlockedRooms
-    .filter((roomId) => !clearedRooms.includes(roomId))
-    .forEach((roomId) => {
-      const btn = createRoomButton(roomId);
-      navGroup.appendChild(btn);
-    });
+  // inline cleared rooms (grayed) followed by the current room (highlighted)
+  const inlineContainer = document.createElement('div');
+  inlineContainer.className = 'room-inline-list';
 
-  const dropdown = document.querySelector(
-    ".cleared-rooms-dropdown .dropdown-content",
-  );
+  clearedRooms.forEach((rid) => {
+    const rb = document.createElement('button');
+    rb.className = 'nav-room cleared';
+    rb.textContent = roomData[rid]?.name || rid;
+    rb.onclick = () => switchRoom(rid);
+    inlineContainer.appendChild(rb);
+  });
+
+  const curBtn = document.createElement('button');
+  curBtn.className = 'nav-room current';
+  curBtn.textContent = room.name || currentRoom;
+  curBtn.disabled = true;
+  inlineContainer.appendChild(curBtn);
+
+  unlockedRooms
+    .filter((roomId) => roomId !== currentRoom && !clearedRooms.includes(roomId))
+    .forEach((roomId) => inlineContainer.appendChild(createRoomButton(roomId)));
+
+  navGroup.appendChild(inlineContainer);
+
+  // populate dropdown (fallback for overflow)
+  const dropdown = document.querySelector('.cleared-rooms-dropdown .dropdown-content');
   dropdown.innerHTML = clearedRooms
     .map((roomId) => {
       const room = roomData[roomId];
-      return `<button onclick="switchRoom('${roomId}')">${
-        room?.name || roomId
-      }</button>`;
+      return `<button onclick="switchRoom('${roomId}')">${room?.name || roomId}</button>`;
     })
-    .join("");
+    .join('');
+
+  // detect overflow and switch to dropdown if needed
+  setTimeout(() => {
+    const shouldOverflow = navGroup.scrollWidth > navGroup.clientWidth - 80;
+    const clearedDropdown = document.querySelector('.cleared-rooms-dropdown');
+    if (shouldOverflow && clearedRooms.length > 0) {
+      inlineContainer.style.display = 'none';
+      if (clearedDropdown) clearedDropdown.style.display = 'inline-block';
+    } else {
+      if (clearedDropdown) clearedDropdown.style.display = 'none';
+      inlineContainer.style.display = '';
+    }
+  }, 40);
 
   if (room.type === "normal") {
     renderNormalRoom(room);
@@ -1793,12 +1816,12 @@ function switchRoom(roomId) {
 }
 
 function showLeaderboard() {
-  document.getElementById("auth-page").style.display = "none";
-  document.getElementById("puzzle-page").style.display = "none";
-  document.getElementById("rules-page").style.display = "none";
   document.getElementById("leaderboard-page").style.display = "block";
-
   loadLeaderboard();
+}
+
+function closeLeaderboard() {
+  document.getElementById("leaderboard-page").style.display = "none";
 }
 
 async function loadLeaderboard() {

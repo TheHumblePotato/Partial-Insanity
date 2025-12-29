@@ -1,58 +1,28 @@
-.admin-section {
-  padding: 20px;
-}
-.team-list {
-  max-width: 400px;
-  margin-right: 20px;
-  display: inline-block;
-  vertical-align: top;
-}
-.team-card {
-  background: white;
-  padding: 15px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  border: 1px solid #ddd;
-}
-.team-card:hover {
-  background: #f0f0f0;
-}
-.team-card.selected {
-  background: #e3f2fd;
-  border-color: #2196f3;
-}
+.admin-section { padding: 20px; }
+#admin-progress { display:flex; gap: 20px; align-items:flex-start; }
+.team-list { width: 30%; max-width: 340px; margin: 0; }
+.team-list .team-card { margin-bottom: 10px; }
+.team-card { background: var(--card-bg); padding: 14px; border-radius: 10px; cursor: pointer; border: 1px solid rgba(2,6,23,0.06); transition: all 0.12s ease; }
+.team-card:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(2,6,23,0.04); }
+.team-card.selected { background: linear-gradient(90deg,#f8fbff,#ffffff); border-color: var(--accent); }
+
 .diagram-toolbar {
   margin-bottom: 10px;
 }
-.property-editor {
-  max-width: 500px;
-  background: #f5f5f5;
-  padding: 15px;
-  border-radius: 8px;
-  display: inline-block;
-  vertical-align: top;
-  margin-left: 20px;
-}
-.property-group {
-  margin-bottom: 15px;
-}
-.property-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-.property-group input,
-.property-group textarea,
-.property-group select {
-  width: 100%;
-  padding: 8px;
-  box-sizing: border-box;
-}
-.property-group textarea {
-  height: 60px;
-  resize: vertical;
-}
+.property-editor { width: 68%; background: var(--card-bg); padding: 16px; border-radius: 10px; margin-left: 0; }
+.property-editor h3 { margin-top: 0; }
+.property-group { margin-bottom: 12px; }
+.property-group label { display:block; margin-bottom:6px; font-weight:700; }
+.property-group input, .property-group textarea, .property-group select { width:100%; padding:8px; box-sizing:border-box; border-radius:6px; border:1px solid rgba(2,6,23,0.06); }
+.property-group textarea { min-height: 80px; max-height: 240px; }
+.set-status { margin-top: 8px; }
+.puzzle-preview h5 { margin: 0 0 8px 0; font-size: 15px; }
+.puzzle-preview .meta-line { font-size: 13px; color: #475569; margin: 4px 0; }
+.rooms-box ul { list-style: none; padding-left: 0; margin:0; }
+.room-item { padding: 8px 0; border-bottom: 1px dashed rgba(2,6,23,0.04); }
+.room-item .room-name { font-weight: 600; }
+.room-controls { margin-top: 6px; }
+
 .modal {
   display: none;
   position: fixed;

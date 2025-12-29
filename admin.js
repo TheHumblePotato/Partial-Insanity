@@ -441,15 +441,16 @@ function showTeamDetails(team) {
     puzzleGrid += `
       <div class="puzzle-preview ${statusClass}">
         <h5>${puzzle.name || puzzleId}</h5>
-        <p>Type: ${puzzle.type || "puzzle"}</p>
-        <p class="small">Hints used: ${progress.hintUsage?.[puzzleId]?.length || 0}</p>
-        <label>Set status: 
+        <p class="meta-line">Type: ${puzzle.type || "puzzle"}</p>
+        <p class="meta-line">Hints used: ${progress.hintUsage?.[puzzleId]?.length || 0}</p>
+        <div class="set-status">
+          <label>Set status:</label>
           <select onchange="updateTeamPuzzleStatus('${team.id}', '${puzzleId}', this.value)">
             <option value="locked" ${!isSolved && !isUnlockedRoom ? 'selected' : ''}>Locked</option>
             <option value="unlocked" ${!isSolved && isUnlockedRoom ? 'selected' : ''}>Unlocked</option>
             <option value="solved" ${isSolved ? 'selected' : ''}>Solved</option>
           </select>
-        </label>
+        </div>
       </div>`;
   });
   puzzleGrid += `</div>`;
@@ -460,15 +461,15 @@ function showTeamDetails(team) {
     const cleared = (progress.clearedRooms || []).includes(r);
     const unlocked = (progress.unlockedRooms || []).includes(r);
     return `
-      <li>
-        ${room.name || r}
-        <label> Set: 
+      <li class="room-item">
+        <div class="room-name">${room.name || r}</div>
+        <div class="room-controls">
           <select onchange="updateTeamRoomStatus('${team.id}', '${r}', this.value)">
             <option value="locked" ${!cleared && !unlocked ? 'selected' : ''}>Locked</option>
             <option value="unlocked" ${unlocked && !cleared ? 'selected' : ''}>Unlocked</option>
             <option value="cleared" ${cleared ? 'selected' : ''}>Cleared</option>
           </select>
-        </label>
+        </div>
       </li>`;
   }).join('');
 
@@ -2435,8 +2436,14 @@ function loadAdminIssues() {
     snapshot.forEach(doc => {
       const issue = doc.data();
       const entry = { id: doc.id, issue };
-      if (issue.status === 'resolved') resolved.push(entry);
-      else active.push(entry);
+      // keep recently-resolved issues visible for a short moment so admin sees the change
+      if (issue.status === 'resolved') {
+        const updatedAt = issue.adminUpdatedAt || issue.resolvedAt || 0;
+        if (Date.now() - updatedAt < 1200) active.push(entry);
+        else resolved.push(entry);
+      } else {
+        active.push(entry);
+      }
     });
 
     list.innerHTML = "";

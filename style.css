@@ -219,26 +219,40 @@ body.dark .issue-card .issue-reply { background: rgba(255,255,255,0.02); }
   position: relative;
   margin: 2% auto;
   width: 90%;
-  height: 90%;
-  background: white;
+  max-width: 1100px;
+  max-height: 86vh;
+  background: var(--panel-bg);
   border-radius: 10px;
   overflow: auto;
+  padding: 20px 28px;
+  box-shadow: 0 18px 40px rgba(2,6,23,0.08);
 }
 
 .close {
   position: absolute;
-  right: 20px;
-  top: 15px;
+  right: 18px;
+  top: 12px;
   font-size: 28px;
-  font-weight: bold;
+  font-weight: 700;
   cursor: pointer;
   z-index: 1001;
-  color: #333;
+  color: var(--muted);
+  background: transparent;
+  border: none;
 }
 
-.close:hover {
-  color: red;
-}
+.close:hover { color: var(--text); }
+
+..rules-modal-content { background: var(--panel-bg); box-shadow: none; border-radius: 10px; padding: 20px; }
+.rules-modal-content ul { padding-left: 28px; margin-left: 8px; }
+.rules-modal-content ul li { margin-bottom: 8px; }
+
+.leaderboard-modal { background: var(--panel-bg); }
+.rules-modal { background: transparent; }
+
+/* ensure modal panels adapt in dark mode */
+body.dark .modal-content { background: var(--panel-bg); box-shadow: 0 18px 40px rgba(0,0,0,0.6); }
+
 
 .pdf-frame {
   width: 100%;
@@ -324,17 +338,19 @@ body.dark .issue-card .issue-reply { background: rgba(255,255,255,0.02); }
 
 .room-title {
   color: var(--text);
-  font-size: 1.5em;
-  margin-bottom: 12px;
-  text-align: left;
-  text-shadow: none;
+  font-size: 1.8em;
+  margin-bottom: 8px;
+  text-align: center;
+  font-weight: 700;
 }
 
 .room-description {
-  color: var(--muted);
+  color: var(--muted) !important;
   max-width: 100%;
   margin-bottom: 12px;
-}
+  text-align: center;
+  background: transparent;
+} 
 
 .form-group {
   margin-bottom: 20px;
@@ -594,42 +610,27 @@ body.dark .issue-card .issue-reply { background: rgba(255,255,255,0.02); }
 }
 
 .room-description {
-  color: white;
+  color: var(--muted) !important;
   text-align: center;
-  margin-bottom: 20px;
-  max-width: 800px;
+  margin-bottom: 12px;
+  max-width: 900px;
   margin-left: auto;
   margin-right: auto;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-.cleared-rooms-dropdown {
-  position: relative;
-  display: inline-block;
-  margin-left: auto;
-}
+/* Navigation rooms inline */
+.room-inline-list { display:flex; gap:8px; align-items:center; flex-wrap:nowrap; }
+.nav-room { padding: 8px 12px; border-radius: 10px; background: var(--card-bg); border: 1px solid var(--nav-border); cursor: pointer; color: var(--text); font-weight: 600; }
+.nav-room.cleared { opacity: 0.64; background: transparent; border-style: dashed; }
+.nav-room.current { background: linear-gradient(90deg, rgba(37,99,235,0.12), rgba(37,99,235,0.06)); font-weight:700; }
 
-.dropdown-content {
-  display: none;
-  position: absolute;
-  right: 0;
-  background: white;
-  min-width: 200px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-  z-index: 1;
-}
+.cleared-rooms-dropdown { position: relative; display: none; margin-left: auto; }
 
-.cleared-rooms-dropdown:hover .dropdown-content {
-  display: block;
-}
+.dropdown-content { display: none; position: absolute; right: 0; background: var(--panel-bg); min-width: 200px; box-shadow: 0 8px 16px rgba(2,6,23,0.08); z-index: 1200; border-radius: 8px; }
 
-.dropdown-content button {
-  width: 100%;
-  text-align: left;
-  padding: 12px;
-  border: none;
-  background: none;
-  cursor: pointer;
+.cleared-rooms-dropdown.open .dropdown-content { display: block; }
+
+.dropdown-content button { width: 100%; text-align: left; padding: 10px 12px; border: none; background: transparent; cursor: pointer; color: var(--text); }
 }
 
 .dropdown-content button:hover {
@@ -1404,7 +1405,7 @@ body.dark .issue-card .issue-reply { background: rgba(255,255,255,0.02); }
 
 .notification-event-alert {
   pointer-events: auto;
-  background: rgba(255,255,255,0.98);
+  background: var(--panel-bg);
   padding: 10px 14px;
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(2,6,23,0.12);

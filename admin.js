@@ -84,6 +84,8 @@ function showAdminSection(section) {
     setTimeout(() => diagram && diagram.requestUpdate(), 100);
   } else if (section === "leaderboard") {
     loadLeaderboard();
+  } else if (section === "issues") {
+    loadAdminIssues();
   }
 }
 
@@ -2332,7 +2334,7 @@ function loadAdminLeaderboard() {
 function loadAdminIssues() {
   const list = document.getElementById("admin-issues-list");
   list.innerHTML = "Loading...";
-  db.collection("issues").orderBy("timestamp", "desc").get().then((snapshot) => {
+  db.collection("issues").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
     if (snapshot.empty) {
       list.innerHTML = "<p>No issues reported.</p>";
       return;
@@ -2342,23 +2344,31 @@ function loadAdminIssues() {
       const issue = doc.data();
       const div = document.createElement("div");
       div.className = "admin-issue";
+
+      const adminInfo = issue.adminReply ? `
+        <div class="admin-reply">Reply: <div class="reply-text">${issue.adminReply}</div>
+        <div class="reply-meta">By ${issue.adminReplyBy || "admin"} at ${issue.adminReplyAt ? new Date(issue.adminReplyAt).toLocaleString() : ""}</div>
+        </div>` : "";
+
       div.innerHTML = `
-        <div>
-          <strong>${issue.title}</strong> (by ${issue.teamName || "anonymous"} at ${new Date(issue.timestamp).toLocaleString()})
+        <div class="admin-issue-header">
+          <strong class="issue-title">${issue.title}</strong>
+          <div class="issue-meta">by <b>${issue.teamName || "anonymous"}</b> — ${new Date(issue.timestamp).toLocaleString()}</div>
         </div>
-        <div>${issue.description}</div>
-        <div>Status: 
-          <select onchange="updateIssueStatus('${doc.id}',this.value)">
+        <div class="issue-body">${issue.description}</div>
+        <div class="issue-controls">
+          <label>Status:</label>
+          <select class="issue-status-select" onchange="updateIssueStatus('${doc.id}',this.value)">
             <option value="open"${issue.status==="open"?" selected":""}>Open</option>
             <option value="fixed"${issue.status==="fixed"?" selected":""}>Fixed</option>
             <option value="intentional"${issue.status==="intentional"?" selected":""}>Intentional</option>
           </select>
         </div>
-        <div>
-          <textarea rows="2" placeholder="Reply to reporter...">${issue.adminReply||""}</textarea>
-          <button onclick="replyToIssue('${doc.id}', this.previousElementSibling.value)">Send Reply</button>
+        <div class="issue-admin-reply">
+          <textarea rows="3" placeholder="Reply to reporter...">${issue.adminReply||""}</textarea>
+          <button class="btn btn-sm" onclick="replyToIssue('${doc.id}', this.previousElementSibling.value)">Send Reply</button>
         </div>
-        <hr>
+        ${adminInfo}
       `;
       list.appendChild(div);
     });
@@ -2366,10 +2376,27 @@ function loadAdminIssues() {
 }
 
 function updateIssueStatus(issueId, status) {
-  db.collection("issues").doc(issueId).update({status});
+  db.collection("issues").doc(issueId).update({
+    status,
+    adminUpdatedAt: Date.now(),
+    adminUpdatedBy: "admin"
+  }).then(() => {
+    // optional: small visual feedback
+    const list = document.getElementById("admin-issues-list");
+    const el = list.querySelector(`[onclick*="updateIssueStatus('${issueId}'`);
+    // no-op if not found
+  }).catch((err) => console.error("Error updating issue status:", err));
 }
 
 function replyToIssue(issueId, reply) {
-  db.collection("issues").doc(issueId).update({adminReply: reply});
-  alert("Reply sent!");
+  db.collection("issues").doc(issueId).update({
+    adminReply: reply,
+    adminReplyAt: Date.now(),
+    adminReplyBy: "admin"
+  }).then(() => {
+    alert("Reply sent!");
+  }).catch((err) => {
+    console.error("Error sending reply:", err);
+    alert("Failed to send reply");
+  });
 }

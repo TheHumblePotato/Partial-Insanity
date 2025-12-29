@@ -65,6 +65,7 @@ async function loadTeamData() {
     const teamDoc = await db.collection("teams").doc(currentUser.uid).get();
     if (teamDoc.exists) {
       currentTeam = teamDoc.data();
+      currentTeam.id = teamDoc.id;
       document.getElementById("team-info").textContent =
         `Team: ${currentTeam.name}`;
 
@@ -1949,10 +1950,12 @@ function submitIssue(e) {
   db.collection("issues").add({
     title,
     description,
-    teamId: currentTeam?.id || currentUser?.uid || null,
+    teamId: currentUser?.uid || null,
     teamName: currentTeam?.name || null,
+    teamEmail: currentUser?.email || null,
     timestamp: Date.now(),
-    status: "open"
+    status: "open",
+    adminReply: null,
   }).then(() => {
     document.getElementById("issue-form").reset();
     document.getElementById("issue-success").style.display = "block";
@@ -1979,7 +1982,7 @@ function loadAllIssues() {
           <div class="issue-title">${issue.title}</div>
           <div class="issue-meta">By <b>${issue.teamName || "anonymous"}</b> at ${new Date(issue.timestamp).toLocaleString()}</div>
           <div>${issue.description}</div>
-          <div class="issue-status">Status: <b>${issue.status}</b></div>
+          <div class="issue-status status-${issue.status}">Status: <b>${issue.status}</b></div>
           ${issue.adminReply ? `<div class="issue-reply">Admin reply: ${issue.adminReply}</div>` : ""}
         </div>`;
       });
@@ -1990,26 +1993,47 @@ function loadAllIssues() {
 function loadMyIssues() {
   const list = document.getElementById("my-issues-list");
   if (!currentUser) return;
-  db.collection("issues").where("teamId", "==", currentUser.uid)
-    .orderBy("timestamp", "desc")
-    .onSnapshot((snapshot) => {
-      if (snapshot.empty) {
-        list.innerHTML = "<p>No issues submitted yet.</p>";
-        return;
-      }
-      let html = "";
-      snapshot.forEach(doc => {
-        const issue = doc.data();
-        html += `<div class="issue-card">
-          <div class="issue-title">${issue.title}</div>
-          <div class="issue-meta">${new Date(issue.timestamp).toLocaleString()}</div>
-          <div>${issue.description}</div>
-          <div class="issue-status">Status: <b>${issue.status}</b></div>
-          ${issue.adminReply ? `<div class="issue-reply">Admin reply: ${issue.adminReply}</div>` : ""}
-        </div>`;
-      });
-      list.innerHTML = html;
+
+  // We combine issues where teamId == currentUser.uid and any legacy ones that used teamEmail
+  const issuesMap = new Map();
+
+  const render = () => {
+    if (issuesMap.size === 0) {
+      list.innerHTML = "<p>No issues submitted yet.</p>";
+      return;
+    }
+    const all = Array.from(issuesMap.values()).sort((a,b) => b.timestamp - a.timestamp);
+    let html = "";
+    all.forEach(issue => {
+      html += `<div class="issue-card">
+        <div class="issue-title">${issue.title}</div>
+        <div class="issue-meta">${new Date(issue.timestamp).toLocaleString()}</div>
+        <div>${issue.description}</div>
+        <div class="issue-status status-${issue.status}">Status: <b>${issue.status}</b></div>
+        ${issue.adminReply ? `<div class="issue-reply">Admin reply: ${issue.adminReply}</div>` : ""}
+      </div>`;
     });
+    list.innerHTML = html;
+  };
+
+  // live listener for teamId
+  db.collection("issues").where("teamId", "==", currentUser.uid)
+    .onSnapshot((snapshot) => {
+      snapshot.forEach(doc => {
+        issuesMap.set(doc.id, doc.data());
+      });
+      render();
+    });
+
+  // fetch any legacy issues identified by email (one-time)
+  if (currentUser.email) {
+    db.collection("issues").where("teamEmail", "==", currentUser.email).get().then(snapshot => {
+      snapshot.forEach(doc => {
+        issuesMap.set(doc.id, doc.data());
+      });
+      render();
+    }).catch(err => console.error("Error fetching legacy issues:", err));
+  }
 }
 
 function init() {

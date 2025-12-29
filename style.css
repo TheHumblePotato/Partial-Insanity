@@ -13,27 +13,30 @@
 }
 
 body {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #f5f7fa; /* subtle neutral background */
   min-height: 100vh;
-  color: #333;
+  color: #111827;
 }
 
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 28px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
 }
 
 .header {
   text-align: center;
-  margin-bottom: 40px;
-  color: white;
+  margin-bottom: 28px;
+  color: #0f172a;
 }
 
 .header h1 {
-  font-size: 3em;
-  margin-bottom: 10px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  font-size: 1.9em;
+  margin-bottom: 6px;
+  font-weight: 700;
 }
 
 .auth-section {
@@ -297,22 +300,24 @@ body {
 }
 
 .btn {
-  padding: 12px 24px;
-  margin: 10px;
+  padding: 10px 18px;
+  margin: 6px;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 16px;
-  transition: background 0.3s ease;
+  font-size: 15px;
+  transition: all 0.18s ease;
+  box-shadow: 0 2px 6px rgba(2,6,23,0.04);
 }
 
 .btn-primary {
-  background: #007bff;
+  background: #2563eb;
   color: white;
 }
 
 .btn-primary:hover {
-  background: #0056b3;
+  background: #1e40af;
+  transform: translateY(-1px);
 }
 
 .btn-secondary {
@@ -1563,10 +1568,22 @@ body {
 }
 .issue-card .issue-status {
   font-size: 0.96em;
-  color: #00897b;
+  color: #374151;
+}
+.issue-card .issue-status.status-open {
+  color: #b45309; /* amber */
+}
+.issue-card .issue-status.status-fixed {
+  color: #15803d; /* green */
+}
+.issue-card .issue-status.status-intentional {
+  color: #6b7280; /* gray */
 }
 .issue-card .issue-reply {
   color: #0b5394;
   margin-top: 6px;
   font-size: 0.96em;
+  background: #f1f5f9;
+  padding: 8px;
+  border-radius: 6px;
 }

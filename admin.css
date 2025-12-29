@@ -599,20 +599,35 @@
 }
 
 #admin-issues-list {
-  max-width: 900px;
+  max-width: 980px;
   margin: 12px auto;
+  display: grid;
+  gap: 12px;
 }
 #admin-issues-list .admin-issue {
   padding: 14px;
-  margin-bottom: 12px;
-  border: 1px solid #e0e3e8;
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(20,30,60,0.04);
+  margin-bottom: 0;
+  border: none;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  position: relative;
+  box-shadow: 0 8px 20px rgba(11,20,42,0.06);
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
 }
+#admin-issues-list .admin-issue:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(11,20,42,0.09); }
+#admin-issues-list .admin-issue .issue-resolved-toggle {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 20px;
+  height: 20px;
+  transform: scale(1.05);
+}
+#admin-issues-list h4 { text-align:center; margin-bottom: 6px; }
+
 #admin-issues-list .admin-issue .admin-issue-header {
   display: flex;
   justify-content: space-between;
@@ -620,8 +635,8 @@
   gap: 12px;
 }
 #admin-issues-list .admin-issue .issue-title {
-  font-weight: 600;
-  font-size: 1rem;
+  font-weight: 700;
+  font-size: 1.02rem;
 }
 #admin-issues-list .admin-issue .issue-meta {
   color: #6b7280;
@@ -629,23 +644,26 @@
 }
 #admin-issues-list textarea {
   width: 100%;
-  margin-top: 4px;
+  margin-top: 6px;
   box-sizing: border-box;
-  border: 1px solid #dbe0e6;
-  padding: 8px;
-  border-radius: 6px;
-  background: #fbfdff;
+  border: 1px solid rgba(2,6,23,0.06);
+  padding: 10px;
+  border-radius: 8px;
+  background: #ffffff;
+  max-height: 240px;
+  overflow: auto;
 }
 #admin-issues-list select, #admin-issues-list .btn {
-  margin-top: 4px;
+  margin-top: 6px;
 }
 #admin-issues-list .admin-reply .reply-text {
   margin-top: 6px;
   white-space: pre-wrap;
-  background: #f6fbff;
-  padding: 8px;
-  border-radius: 6px;
+  background: #fbfdff;
+  padding: 10px;
+  border-radius: 8px;
   border: 1px solid #e6f0ff;
+  max-width: 100%;
 }
 #admin-issues-list .admin-reply .reply-meta {
   font-size: 0.85rem;
@@ -653,33 +671,58 @@
   margin-top: 6px;
 }
 
+.reply-sent {
+  display: inline-block;
+  font-weight: 700;
+  color: #15803d;
+  margin-left: 8px;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.reply-sent.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reply-sent.failed { color: #c82333; }
+
+@media (max-width: 720px) {
+  #admin-issues-list .admin-issue { padding: 12px; }
+  #admin-issues-list .admin-issue .issue-resolved-toggle { right: 8px; top: 8px; }
+}
+
 /* Team progress sheet styles */
 .property-editor {
-  max-width: 640px;
+  width: 100%;
+  max-width: none;
+  padding: 12px;
 }
 .property-editor ul {
-  padding-left: 20px;
-  list-style: disc inside;
+  padding-left: 28px;
+  list-style: disc;
 }
 .puzzle-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* smaller puzzle boxes */
+  gap: 10px;
 }
 .puzzle-preview.status-solved {
-  border: 2px solid #15803d;
-  background: #ecfdf5;
+  border: 3px solid #10b981;
+  background: linear-gradient(90deg, #ecfdf5 0%, #bbf7d0 100%);
 }
 .puzzle-preview.status-unlocked {
-  border: 2px solid #b45309;
-  background: #fff7ed;
+  border: 3px solid #f59e0b;
+  background: linear-gradient(90deg, #fff7ed 0%, #fff1cc 100%);
 }
 .puzzle-preview.status-locked {
-  border: 2px solid #dc2626;
-  background: #fff5f5;
+  border: 3px solid #ef4444;
+  background: linear-gradient(90deg, #fff5f5 0%, #ffd6d6 100%);
 }
-.puzzle-preview .small { font-size: 0.9em; color: #475569; }
+.puzzle-preview .small { font-size: 0.9em; color: #475569; display:block; margin-top:8px }
 .team-card.selected { box-shadow: 0 0 0 3px rgba(37,99,235,0.12); border-color: rgba(37,99,235,0.3); }
+.rooms-box { border: 2px dashed rgba(37,99,235,0.12); padding: 10px; border-radius: 8px; background: rgba(37,99,235,0.03); margin-bottom: 12px }
 
 
 #admin-leaderboard-content {

@@ -9,6 +9,21 @@
   </head>
   <body>
     <div class="container">
+
+      <div class="topbar">
+        <div class="nav-left">
+          <button class="nav-btn" onclick="showPuzzlePage()">Puzzles</button>
+          <button class="nav-btn" onclick="showLeaderboard()">Leaderboard</button>
+          <button class="nav-btn" onclick="showIssuesPage()">Issues</button>
+          <button class="nav-btn" onclick="showRulesPage()">Rules</button>
+        </div>
+        <div class="nav-right">
+          <button id="themeToggle" class="btn btn-secondary" onclick="toggleTheme()">Toggle Theme</button>
+          <span id="current-account" class="current-account"></span>
+          <button class="nav-btn" onclick="logout()">Logout</button>
+        </div>
+      </div>
+
       <div id="auth-page">
         <div class="header">
           <h1>2026 Partial Insanity Puzzle Hunt</h1>
@@ -168,7 +183,7 @@
         </button>
       </div>
 
-      <div id="rules-page" class="rules-page">
+      <div id="rules-page" class="rules-modal rules-page">
         <h1>Partial Insanity</h1>
         <div id="rules-content">
           <h3>Rules and Instructions</h3>
@@ -222,6 +237,32 @@
             Back to Puzzles
           </button>
         </div>
+
+      <!-- moved issues page inside container to ensure consistent layout -->
+
+      <div id="issues-page" class="rules-page" style="display: none;">
+        <div style="text-align:right;">
+          <button id="close-issues-btn" class="btn btn-secondary" style="margin-bottom:10px;" onclick="closeIssuesPage()">&times; Close</button>
+        </div>
+        <h2>Report an Issue</h2>
+        <form id="issue-form" onsubmit="submitIssue(event)">
+          <div>
+            <label>Title:</label>
+            <input type="text" id="issue-title" required maxlength="60">
+          </div>
+          <div>
+            <label>Description:</label>
+            <textarea id="issue-description" required maxlength="300" rows="4"></textarea>
+          </div>
+          <button class="btn btn-primary" type="submit">Submit Issue</button>
+        </form>
+        <div id="issue-success" style="display:none;color:green;margin-top:10px;text-align:center;">Thank you! Your issue has been submitted.</div>
+        <h3 style="margin-top:30px; text-align:center;">All Reported Issues</h3>
+        <div id="all-issues-list"></div>
+        <h3 style="text-align:center; margin-top:20px;">My Submitted Issues</h3>
+        <div id="my-issues-list"></div>
+      </div>
+
       </div>
     </div>
 
@@ -238,28 +279,7 @@
       </div>
     </div>
 
-    <div id="issues-page" class="rules-page" style="display: none;">
-      <div style="text-align:right;">
-        <button id="close-issues-btn" class="btn btn-secondary" style="margin-bottom:10px;" onclick="closeIssuesPage()">&times; Close</button>
-      </div>
-      <h2>Report an Issue</h2>
-      <form id="issue-form" onsubmit="submitIssue(event)">
-        <div>
-          <label>Title:</label>
-          <input type="text" id="issue-title" required maxlength="60">
-        </div>
-        <div>
-          <label>Description:</label>
-          <textarea id="issue-description" required maxlength="300" rows="4"></textarea>
-        </div>
-        <button class="btn btn-primary" type="submit">Submit Issue</button>
-      </form>
-      <div id="issue-success" style="display:none;color:green;margin-top:10px;text-align:center;">Thank you! Your issue has been submitted.</div>
-      <h3 style="margin-top:30px;">All Reported Issues</h3>
-      <div id="all-issues-list"></div>
-      <h3>My Submitted Issues</h3>
-      <div id="my-issues-list"></div>
-    </div>
+
 
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>

@@ -493,7 +493,7 @@ function showTeamDetails(team) {
     <p><strong>Current Room:</strong> ${progress.currentRoom || "starting-room"}</p>
 
     <h5>Rooms (set status):</h5>
-    <ul>${roomsList}</ul>
+    <div class="rooms-box"><ul>${roomsList}</ul></div>
 
     <h5>Puzzle Status (set status):</h5>
     ${puzzleGrid}
@@ -2455,6 +2455,7 @@ function loadAdminIssues() {
         <div class="admin-issue-header">
           <strong class="issue-title">${issue.title}</strong>
           <div class="issue-meta">by <b>${issue.teamName || "anonymous"}</b> — ${new Date(issue.timestamp).toLocaleString()}</div>
+          <input type="checkbox" class="issue-resolved-toggle" title="Mark resolved" ${issue.status==='resolved'?'checked':''} onclick="(e=>{ e.stopPropagation(); updateIssueStatus('${id}', this.checked ? 'resolved' : 'open') })(event)">
         </div>
         <div class="issue-body">${issue.description}</div>
         <div class="issue-controls">
@@ -2469,7 +2470,7 @@ function loadAdminIssues() {
         <div class="issue-admin-reply">
           <textarea rows="3" placeholder="Reply to reporter...">${issue.adminReply||""}</textarea>
           <button class="btn btn-sm" onclick="replyToIssue('${id}', this.previousElementSibling.value, this)">Send Reply</button>
-          <span class="reply-sent" style="display:none;margin-left:8px;color:#15803d;">Sent</span>
+          <span class="reply-sent">Sent</span>
         </div>
         ${adminInfo}
       `;
@@ -2517,8 +2518,9 @@ function replyToIssue(issueId, reply, btnEl = null) {
     if (btnEl) {
       const sentEl = btnEl.parentElement.querySelector('.reply-sent');
       if (sentEl) {
-        sentEl.style.display = 'inline';
-        setTimeout(() => (sentEl.style.display = 'none'), 2000);
+        sentEl.classList.remove('failed');
+        sentEl.classList.add('show');
+        setTimeout(() => sentEl.classList.remove('show'), 2000);
       }
     }
   }).catch((err) => {
@@ -2526,13 +2528,11 @@ function replyToIssue(issueId, reply, btnEl = null) {
     if (btnEl) {
       const sentEl = btnEl.parentElement.querySelector('.reply-sent');
       if (sentEl) {
-        sentEl.style.color = '#dc3545';
         sentEl.textContent = 'Failed';
-        sentEl.style.display = 'inline';
+        sentEl.classList.add('failed','show');
         setTimeout(() => {
-          sentEl.style.display = 'none';
+          sentEl.classList.remove('failed','show');
           sentEl.textContent = 'Sent';
-          sentEl.style.color = '#15803d';
         }, 2000);
       }
     }

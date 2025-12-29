@@ -68,6 +68,15 @@ async function loadTeamData() {
       currentTeam.id = teamDoc.id;
       document.getElementById("team-info").textContent =
         `Team: ${currentTeam.name}`;
+      const acct = document.getElementById('current-account');
+      if (acct) acct.textContent = currentTeam.name || '';
+      // apply saved theme from team settings
+      if (currentTeam.theme === 'dark') document.body.classList.add('dark');
+      else document.body.classList.remove('dark');
+
+      // update theme toggle button text
+      const themeBtn = document.getElementById('themeToggle');
+      if (themeBtn) themeBtn.textContent = document.body.classList.contains('dark') ? 'Light Mode' : 'Dark Mode';
 
       const progressDoc = await db
         .collection("progress")
@@ -2042,24 +2051,32 @@ function init() {
       currentUser = user;
       loadTeamData();
       scheduleDailyGuessReset();
+      // show topbar when logged in
+      const topbar = document.querySelector('.topbar');
+      if (topbar) topbar.style.display = 'flex';
+
     } else {
+      currentUser = null;
       showAuthPage();
+      // hide topbar when logged out
+      const topbar = document.querySelector('.topbar');
+      if (topbar) topbar.style.display = 'none';
     }
   });
 }
 
-function encryptAnswer(answer) {
-  return CryptoJS.AES.encrypt(answer, SECURITY_SALT).toString();
-}
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark');
+  // update button label
+  const themeBtn = document.getElementById('themeToggle');
+  if (themeBtn) themeBtn.textContent = isDark ? 'Light Mode' : 'Dark Mode';
 
-function decryptAnswer(encryptedAnswer) {
-  try {
-    return CryptoJS.AES.decrypt(encryptedAnswer, SECURITY_SALT).toString(
-      CryptoJS.enc.Utf8,
-    );
-  } catch (e) {
-    console.error("Decryption error:", e);
-    return "";
+  if (currentUser && currentTeam && currentTeam.id) {
+    currentTeam.theme = isDark ? 'dark' : 'light';
+    db.collection('teams').doc(currentTeam.id).update({ theme: currentTeam.theme }).catch(err => {
+      console.error('Error saving theme:', err);
+      showNotification('Failed to save theme preference', 'error', 3000);
+    });
   }
 }
 

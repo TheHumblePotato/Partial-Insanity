@@ -72,6 +72,17 @@ function showAdminError(message) {
   const errorDiv = document.getElementById("admin-error");
   errorDiv.textContent = message;
   errorDiv.classList.remove("hidden");
+  errorDiv.style.background = "#ffebee";
+  errorDiv.style.color = "#b91c1c";
+  setTimeout(() => errorDiv.classList.add("hidden"), 5000);
+}
+
+function showAdminMessage(message) {
+  const errorDiv = document.getElementById("admin-error");
+  errorDiv.textContent = message;
+  errorDiv.classList.remove("hidden");
+  errorDiv.style.background = "#ecfdf5";
+  errorDiv.style.color = "#065f46";
   setTimeout(() => errorDiv.classList.add("hidden"), 3000);
 }
 
@@ -377,6 +388,7 @@ async function loadTeamProgress() {
     teams.forEach((team) => {
       const div = document.createElement("div");
       div.className = "team-card";
+      div.dataset.teamId = team.id;
       div.innerHTML = `
                         <h4>${team.name}</h4>
                         <p>Email: ${team.email || "N/A"}</p>
@@ -404,101 +416,88 @@ function showTeamDetails(team) {
     card.classList.remove("selected");
   });
 
-  event.target.closest(".team-card").classList.add("selected");
+  // mark the matching card as selected (if present)
+  const teamCard = document.querySelector(`.team-card[data-team-id="${team.id}"]`);
+  if (teamCard) teamCard.classList.add("selected");
 
   const content = document.getElementById("teamProgressContent");
-  const progress = team.progress;
+  const progress = team.progress || {};
 
-  const allPuzzles = Object.keys(puzzleData);
+  const allPuzzles = Object.keys(puzzleData || {});
   const solvedPuzzles = progress.solvedPuzzles || [];
 
-  if (progress.hintUsage && progress.hintUsage[puzzleId]) {
-    const hintCount = progress.hintUsage[puzzleId].length;
-    puzzleHtml += `<p>Hints used: ${
-      progress.hintUsage?.[puzzleId]?.length || 0
-    }</p>`;
-  }
-
-  let puzzleGrid = `<div class="puzzle-grid">
-        ${allPuzzles
-          .map((puzzleId) => {
-            const isSolved = solvedPuzzles.includes(puzzleId);
-            const puzzle = puzzleData[puzzleId];
-            return `
-                <div class="puzzle-preview ${isSolved ? "solved" : "unsolved"}">
-                    <h5>${puzzle.name || puzzleId}</h5>
-                    <p>Type: ${puzzle.type || "puzzle"}</p>
-                    <p>Status: ${isSolved ? "✅ Solved" : "❌ Unsolved"}</p>
-                    ${
-                      progress.guessCount?.[puzzleId]
-                        ? `<p>Guesses used: ${progress.guessCount[puzzleId]}</p>`
-                        : ""
-                    }
-                    <p>Hints used: ${
-                      progress.hintUsage?.[puzzleId]?.length || 0
-                    }</p>
-                </div>
-            `;
-          })
-          .join("")}
-    </div>`;
+  // build puzzle grid once (no duplication)
+  let puzzleGrid = `<div class="puzzle-grid">`;
   allPuzzles.forEach((puzzleId) => {
-    const puzzle = puzzleData[puzzleId];
     const isSolved = solvedPuzzles.includes(puzzleId);
+    const puzzle = puzzleData[puzzleId] || {};
+
+    // determine unlocked at room level
+    const isUnlockedRoom = (progress.unlockedRooms || []).includes(
+      puzzle.room,
+    );
+    const statusClass = isSolved ? "status-solved" : isUnlockedRoom ? "status-unlocked" : "status-locked";
+
     puzzleGrid += `
-                    <div class="puzzle-preview ${
-                      isSolved ? "solved" : "unsolved"
-                    }">
-                        <h5>${puzzle.name || puzzleId}</h5>
-                        <p>Type: ${puzzle.type || "puzzle"}</p>
-                        <p>Status: ${isSolved ? "✅ Solved" : "❌ Unsolved"}</p>
-                        ${
-                          progress.guessCount && progress.guessCount[puzzleId]
-                            ? `<p>Guesses used: ${progress.guessCount[puzzleId]}</p>`
-                            : ""
-                        }
-                    </div>
-                `;
+      <div class="puzzle-preview ${statusClass}">
+        <h5>${puzzle.name || puzzleId}</h5>
+        <p>Type: ${puzzle.type || "puzzle"}</p>
+        <p class="small">Hints used: ${progress.hintUsage?.[puzzleId]?.length || 0}</p>
+        <label>Set status: 
+          <select onchange="updateTeamPuzzleStatus('${team.id}', '${puzzleId}', this.value)">
+            <option value="locked" ${!isSolved && !isUnlockedRoom ? 'selected' : ''}>Locked</option>
+            <option value="unlocked" ${!isSolved && isUnlockedRoom ? 'selected' : ''}>Unlocked</option>
+            <option value="solved" ${isSolved ? 'selected' : ''}>Solved</option>
+          </select>
+        </label>
+      </div>`;
   });
-  puzzleGrid += "</div>";
+  puzzleGrid += `</div>`;
+
+  // Rooms list with controls
+  const roomsList = (Object.keys(roomData || {}) || []).map((r) => {
+    const room = roomData[r] || {};
+    const cleared = (progress.clearedRooms || []).includes(r);
+    const unlocked = (progress.unlockedRooms || []).includes(r);
+    return `
+      <li>
+        ${room.name || r}
+        <label> Set: 
+          <select onchange="updateTeamRoomStatus('${team.id}', '${r}', this.value)">
+            <option value="locked" ${!cleared && !unlocked ? 'selected' : ''}>Locked</option>
+            <option value="unlocked" ${unlocked && !cleared ? 'selected' : ''}>Unlocked</option>
+            <option value="cleared" ${cleared ? 'selected' : ''}>Cleared</option>
+          </select>
+        </label>
+      </li>`;
+  }).join('');
 
   content.innerHTML = `
-                <div class="progress-stats">
-                    <div class="stat-card">
-                        <h4>${solvedPuzzles.length}</h4>
-                        <p>Puzzles Solved</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>${(progress.unlockedRooms || []).length}</h4>
-                        <p>Rooms Unlocked</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>${(progress.clearedRooms || []).length}</h4>
-                        <p>Rooms Cleared</p>
-                    </div>
-                </div>
+    <div class="progress-stats">
+      <div class="stat-card">
+        <h4>${solvedPuzzles.length}</h4>
+        <p>Puzzles Solved</p>
+      </div>
+      <div class="stat-card">
+        <h4>${(progress.unlockedRooms || []).length}</h4>
+        <p>Rooms Unlocked</p>
+      </div>
+      <div class="stat-card">
+        <h4>${(progress.clearedRooms || []).length}</h4>
+        <p>Rooms Cleared</p>
+      </div>
+    </div>
 
-                <h4>${team.name} - Detailed Progress</h4>
-                <p><strong>Email:</strong> ${team.email || "N/A"}</p>
-                <p><strong>Current Room:</strong> ${
-                  progress.currentRoom || "starting-room"
-                }</p>
+    <h4>${team.name} - Detailed Progress</h4>
+    <p><strong>Email:</strong> ${team.email || "N/A"}</p>
+    <p><strong>Current Room:</strong> ${progress.currentRoom || "starting-room"}</p>
 
-                <h5>Unlocked Rooms:</h5>
-                <ul>${(progress.unlockedRooms || ["starting-room"])
-                  .map(
-                    (r) =>
-                      `<li>${roomData[r]?.name || r} ${
-                        (progress.clearedRooms || []).includes(r)
-                          ? "(Cleared)"
-                          : ""
-                      }</li>`,
-                  )
-                  .join("")}</ul>
+    <h5>Rooms (set status):</h5>
+    <ul>${roomsList}</ul>
 
-                <h5>Puzzle Status:</h5>
-                ${puzzleGrid}
-            `;
+    <h5>Puzzle Status (set status):</h5>
+    ${puzzleGrid}
+  `;
 
   document.getElementById("teamDetails").classList.remove("hidden");
 }
@@ -817,10 +816,9 @@ async function toggleRoomStatus(roomId, unlock, wasCleared) {
     await teamRef.update(updates);
 
     if (unlock) {
-      selectedTeam.progress.unlockedRooms = [
-        ...(selectedTeam.progress.unlockedRooms || []),
-        roomId,
-      ];
+      selectedTeam.progress.unlockedRooms = Array.from(
+        new Set([...(selectedTeam.progress.unlockedRooms || []), roomId])
+      );
       if (wasCleared) {
         selectedTeam.progress.clearedRooms = (
           selectedTeam.progress.clearedRooms || []
@@ -842,7 +840,7 @@ async function toggleRoomStatus(roomId, unlock, wasCleared) {
     }
   } catch (error) {
     console.error("Error updating room status:", error);
-    alert("Error updating room status");
+    showAdminError("Error updating room status");
   }
 }
 
@@ -852,11 +850,12 @@ async function togglePuzzleStatus(puzzleId, done) {
     if (done) {
       await teamRef.update({
         solvedPuzzles: firebase.firestore.FieldValue.arrayUnion(puzzleId),
+        lastSolveTime: Date.now()
       });
-      selectedTeam.progress.solvedPuzzles = [
-        ...(selectedTeam.progress.solvedPuzzles || []),
-        puzzleId,
-      ];
+      // dedupe locally
+      selectedTeam.progress.solvedPuzzles = Array.from(
+        new Set([...(selectedTeam.progress.solvedPuzzles || []), puzzleId])
+      );
     } else {
       await teamRef.update({
         solvedPuzzles: firebase.firestore.FieldValue.arrayRemove(puzzleId),
@@ -873,7 +872,91 @@ async function togglePuzzleStatus(puzzleId, done) {
     }
   } catch (error) {
     console.error("Error updating puzzle status:", error);
-    alert("Error updating puzzle status");
+    showAdminError("Error updating puzzle status");
+  }
+}
+
+function updateTeamPuzzleStatus(teamId, puzzleId, status) {
+  const teamRef = db.collection('progress').doc(teamId);
+  const puzzle = puzzleData[puzzleId] || {};
+
+  const updates = {};
+
+  if (status === 'solved') {
+    updates['solvedPuzzles'] = firebase.firestore.FieldValue.arrayUnion(puzzleId);
+    updates['lastSolveTime'] = Date.now();
+  } else if (status === 'unlocked') {
+    updates['solvedPuzzles'] = firebase.firestore.FieldValue.arrayRemove(puzzleId);
+    if (puzzle.room) {
+      updates['unlockedRooms'] = firebase.firestore.FieldValue.arrayUnion(puzzle.room);
+    }
+  } else if (status === 'locked') {
+    updates['solvedPuzzles'] = firebase.firestore.FieldValue.arrayRemove(puzzleId);
+  }
+
+  teamRef.update(updates).then(async () => {
+    // refresh team progress and UI
+    const teamDoc = await db.collection('teams').doc(teamId).get();
+    const progressDoc = await teamRef.get();
+    const team = {
+      id: teamId,
+      name: teamDoc.exists ? teamDoc.data().name : 'Unknown',
+      email: teamDoc.exists ? teamDoc.data().email : 'N/A',
+      progress: progressDoc.exists ? progressDoc.data() : {},
+    };
+    // reload team list and show details
+    await loadTeamProgress();
+    showTeamDetails(team);
+  }).catch(err => {
+    console.error('Error updating puzzle status for team:', err);
+  });
+}
+
+function updateTeamRoomStatus(teamId, roomId, status) {
+  const teamRef = db.collection('progress').doc(teamId);
+  let updates = {};
+  if (status === 'cleared') {
+    updates['unlockedRooms'] = firebase.firestore.FieldValue.arrayUnion(roomId);
+    updates['clearedRooms'] = firebase.firestore.FieldValue.arrayUnion(roomId);
+  } else if (status === 'unlocked') {
+    updates['unlockedRooms'] = firebase.firestore.FieldValue.arrayUnion(roomId);
+    updates['clearedRooms'] = firebase.firestore.FieldValue.arrayRemove(roomId);
+  } else if (status === 'locked') {
+    updates['unlockedRooms'] = firebase.firestore.FieldValue.arrayRemove(roomId);
+    updates['clearedRooms'] = firebase.firestore.FieldValue.arrayRemove(roomId);
+  }
+
+  teamRef.update(updates).then(async () => {
+    const teamDoc = await db.collection('teams').doc(teamId).get();
+    const progressDoc = await teamRef.get();
+    const team = {
+      id: teamId,
+      name: teamDoc.exists ? teamDoc.data().name : 'Unknown',
+      email: teamDoc.exists ? teamDoc.data().email : 'N/A',
+      progress: progressDoc.exists ? progressDoc.data() : {},
+    };
+    await loadTeamProgress();
+    showTeamDetails(team);
+    if (teamDiagram) {
+      teamDiagram.startTransaction('room status updated');
+      teamDiagram.updateAllTargetBindings();
+      teamDiagram.commitTransaction('room status updated');
+    }
+  }).catch(err => console.error('Error updating room status for team:', err));
+}
+
+function showTeamMindMap() {
+  if (!selectedTeam) return;
+  document.getElementById('teamMindmapName').textContent = selectedTeam.name || 'Team';
+  document.getElementById('teamMindmapModal').style.display = 'block';
+  initializeTeamMindmap();
+}
+
+function closeTeamMindmap() {
+  document.getElementById('teamMindmapModal').style.display = 'none';
+  if (teamDiagram) {
+    teamDiagram.div = null;
+    teamDiagram = null;
   }
 }
 
@@ -1099,7 +1182,7 @@ function closePuzzleEditor() {
 
 function editPuzzle(puzzleId) {
   if (!puzzleData[puzzleId]) {
-    alert("Puzzle data not found for: " + puzzleId);
+    showAdminError("Puzzle data not found for: " + puzzleId);
     return;
   }
   showPuzzleEditor(puzzleId);
@@ -1263,7 +1346,7 @@ async function savePuzzle() {
   );
 
   if (!hasPdf) {
-    alert("At least one PDF is required for the puzzle");
+    showAdminError("At least one PDF is required for the puzzle");
     return;
   }
 
@@ -1306,10 +1389,10 @@ async function savePuzzle() {
 
     closePuzzleEditor();
     loadDiagramData();
-    alert("Puzzle saved successfully!");
+    showAdminMessage("Puzzle saved");
   } catch (error) {
     console.error("Error saving puzzle:", error);
-    alert("Error saving puzzle: " + error.message);
+    showAdminError("Error saving puzzle: " + error.message);
   }
 }
 
@@ -1329,10 +1412,10 @@ async function deletePuzzle() {
     await db.collection("puzzles").doc("config").set(puzzleData);
     closePuzzleEditor();
     loadDiagramData();
-    alert("Puzzle deleted successfully!");
+    showAdminMessage("Puzzle deleted");
   } catch (error) {
     console.error("Error deleting puzzle:", error);
-    alert("Error deleting puzzle: " + error.message);
+    showAdminError("Error deleting puzzle: " + error.message);
   }
 }
 
@@ -1551,10 +1634,10 @@ async function saveRoom() {
     await db.collection("rooms").doc("config").set(roomData);
     closeRoomEditor();
     loadDiagramData();
-    alert("Room saved successfully!");
+    showAdminMessage("Room saved");
   } catch (error) {
     console.error("Error saving room:", error);
-    alert("Error saving room: " + error.message);
+    showAdminError("Error saving room: " + error.message);
   }
 }
 async function deleteRoom() {
@@ -1571,10 +1654,10 @@ async function deleteRoom() {
     await db.collection("rooms").doc("config").set(roomData);
     closeRoomEditor();
     loadDiagramData();
-    alert("Room deleted successfully!");
+    showAdminMessage("Room deleted");
   } catch (error) {
     console.error("Error deleting room:", error);
-    alert("Error deleting room: " + error.message);
+    showAdminError("Error deleting room: " + error.message);
   }
 }
 
@@ -1583,14 +1666,14 @@ function addMedia() {
   const url = document.getElementById("mediaUrl").value.trim();
 
   if (!url) {
-    alert("Please enter a URL");
+    showAdminError("Please enter a URL");
     return;
   }
 
   try {
     new URL(url);
   } catch (e) {
-    alert("Please enter a valid URL");
+    showAdminError("Please enter a valid URL");
     return;
   }
 
@@ -1983,7 +2066,7 @@ async function loadLeaderboard() {
           : '<span style="background: #6c757d; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">INACTIVE</span>';
 
       row.innerHTML = `
-        <td>${rank <= 3 ? ["🥇", "🥈", "🥉"][rank - 1] : rank}</td>
+        <td>${rank}</td>
         <td>
           <div>${team.name}</div>
           <div class="team-progress-details">ID: ${team.id}</div>
@@ -2000,6 +2083,13 @@ async function loadLeaderboard() {
         <td>${team.lastSolveTimeFormatted}</td>
         <td>${statusBadge}</td>
       `;
+
+      // make row clickable to open team progress
+      row.style.cursor = 'pointer';
+      row.onclick = () => {
+        showAdminSection('progress');
+        showTeamDetails(team);
+      };
     });
 
   } catch (error) {
@@ -2014,7 +2104,7 @@ function exportLeaderboard() {
   try {
     const table = document.getElementById("admin-leaderboard-table");
     if (table.style.display === "none") {
-      alert("No data to export. Please load the leaderboard first.");
+      showAdminError("No data to export. Please load the leaderboard first.");
       return;
     }
 
@@ -2048,7 +2138,7 @@ function exportLeaderboard() {
 
   } catch (error) {
     console.error("Error exporting leaderboard:", error);
-    alert("Error exporting leaderboard. Please try again.");
+    showAdminError("Error exporting leaderboard. Please try again.");
   }
 }
 
@@ -2339,9 +2429,20 @@ function loadAdminIssues() {
       list.innerHTML = "<p>No issues reported.</p>";
       return;
     }
-    list.innerHTML = "";
+    const active = [];
+    const resolved = [];
+
     snapshot.forEach(doc => {
       const issue = doc.data();
+      const entry = { id: doc.id, issue };
+      if (issue.status === 'resolved') resolved.push(entry);
+      else active.push(entry);
+    });
+
+    list.innerHTML = "";
+
+    const appendIssue = (entry) => {
+      const { id, issue } = entry;
       const div = document.createElement("div");
       div.className = "admin-issue";
 
@@ -2358,45 +2459,82 @@ function loadAdminIssues() {
         <div class="issue-body">${issue.description}</div>
         <div class="issue-controls">
           <label>Status:</label>
-          <select class="issue-status-select" onchange="updateIssueStatus('${doc.id}',this.value)">
+          <select class="issue-status-select" onchange="updateIssueStatus('${id}',this.value)">
             <option value="open"${issue.status==="open"?" selected":""}>Open</option>
             <option value="fixed"${issue.status==="fixed"?" selected":""}>Fixed</option>
             <option value="intentional"${issue.status==="intentional"?" selected":""}>Intentional</option>
+            <option value="resolved"${issue.status==="resolved"?" selected":""}>Resolved</option>
           </select>
         </div>
         <div class="issue-admin-reply">
           <textarea rows="3" placeholder="Reply to reporter...">${issue.adminReply||""}</textarea>
-          <button class="btn btn-sm" onclick="replyToIssue('${doc.id}', this.previousElementSibling.value)">Send Reply</button>
+          <button class="btn btn-sm" onclick="replyToIssue('${id}', this.previousElementSibling.value, this)">Send Reply</button>
+          <span class="reply-sent" style="display:none;margin-left:8px;color:#15803d;">Sent</span>
         </div>
         ${adminInfo}
       `;
+
       list.appendChild(div);
-    });
+    };
+
+    // active first
+    active.forEach(appendIssue);
+
+    // then resolved category
+    if (resolved.length > 0) {
+      const header = document.createElement('h4');
+      header.textContent = 'Resolved Issues';
+      header.style.marginTop = '12px';
+      list.appendChild(header);
+      resolved.forEach(appendIssue);
+    }
   });
 }
 
 function updateIssueStatus(issueId, status) {
-  db.collection("issues").doc(issueId).update({
+  const updates = {
     status,
     adminUpdatedAt: Date.now(),
     adminUpdatedBy: "admin"
-  }).then(() => {
-    // optional: small visual feedback
-    const list = document.getElementById("admin-issues-list");
-    const el = list.querySelector(`[onclick*="updateIssueStatus('${issueId}'`);
-    // no-op if not found
-  }).catch((err) => console.error("Error updating issue status:", err));
+  };
+  if (status === 'resolved') {
+    updates.resolvedAt = Date.now();
+    updates.resolvedBy = 'admin';
+  }
+  db.collection("issues").doc(issueId).update(updates).catch((err) => console.error("Error updating issue status:", err));
 }
 
-function replyToIssue(issueId, reply) {
+function replyToIssue(issueId, reply, btnEl = null) {
   db.collection("issues").doc(issueId).update({
     adminReply: reply,
     adminReplyAt: Date.now(),
     adminReplyBy: "admin"
   }).then(() => {
-    alert("Reply sent!");
+    if (btnEl && btnEl.previousElementSibling) {
+      btnEl.previousElementSibling.value = '';
+    }
+    // show 'Sent' briefly
+    if (btnEl) {
+      const sentEl = btnEl.parentElement.querySelector('.reply-sent');
+      if (sentEl) {
+        sentEl.style.display = 'inline';
+        setTimeout(() => (sentEl.style.display = 'none'), 2000);
+      }
+    }
   }).catch((err) => {
     console.error("Error sending reply:", err);
-    alert("Failed to send reply");
+    if (btnEl) {
+      const sentEl = btnEl.parentElement.querySelector('.reply-sent');
+      if (sentEl) {
+        sentEl.style.color = '#dc3545';
+        sentEl.textContent = 'Failed';
+        sentEl.style.display = 'inline';
+        setTimeout(() => {
+          sentEl.style.display = 'none';
+          sentEl.textContent = 'Sent';
+          sentEl.style.color = '#15803d';
+        }, 2000);
+      }
+    }
   });
 }

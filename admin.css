@@ -653,6 +653,35 @@
   margin-top: 6px;
 }
 
+/* Team progress sheet styles */
+.property-editor {
+  max-width: 640px;
+}
+.property-editor ul {
+  padding-left: 20px;
+  list-style: disc inside;
+}
+.puzzle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.puzzle-preview.status-solved {
+  border: 2px solid #15803d;
+  background: #ecfdf5;
+}
+.puzzle-preview.status-unlocked {
+  border: 2px solid #b45309;
+  background: #fff7ed;
+}
+.puzzle-preview.status-locked {
+  border: 2px solid #dc2626;
+  background: #fff5f5;
+}
+.puzzle-preview .small { font-size: 0.9em; color: #475569; }
+.team-card.selected { box-shadow: 0 0 0 3px rgba(37,99,235,0.12); border-color: rgba(37,99,235,0.3); }
+
+
 #admin-leaderboard-content {
   background: white;
   padding: 40px;

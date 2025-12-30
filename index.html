@@ -8,8 +8,12 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧩</text></svg>" />
   </head>
   <body>
-    <div class="container">
-
+    <div class="container">        <div id="startup-loading" class="startup-loading" role="status" aria-live="polite">
+          <div class="startup-content">
+            <div class="spinner" aria-hidden="true"></div>
+            <div class="startup-text">Loading…</div>
+          </div>
+        </div>
       <div class="topbar">
         <div class="nav-left">
           <button class="nav-btn" onclick="showLeaderboard()">Leaderboard</button>
@@ -135,7 +139,7 @@
 
       <div id="puzzle-page" class="puzzle-page">
 
-        <h2 class="room-title" id="current-room-title">Starting Room</h2>
+        <h2 class="room-title" id="current-room-title">The Start</h2>
 
         <div id="room-description" class="room-description"></div>
 
@@ -157,39 +161,6 @@
       <div id="rules-page" class="modal rules-modal" style="display:none;">
         <div class="modal-content rules-modal-content">
           <span class="close" onclick="closeRulesPage()">&times;</span>
-          <h1>Partial Insanity</h1>
-          <div id="rules-content">
-            <h3>Rules and Instructions</h3>
-            <p>
-              Welcome to the 2026 Partial Insanity Puzzle Hunt! This is an escape
-              room style puzzle hunt where you'll solve puzzles to progress
-              through different rooms.
-            </p>
-
-            <h4>How to Play:</h4>
-            <ul>
-              <li>Click on puzzles to view them in full size</li>
-              <li>Some puzzles have answer submission boxes - enter your answers there</li>
-              <li>Correct answers will unlock new content or rooms</li>
-              <li>Metapuzzles may require solving multiple regular puzzles first</li>
-              <li>Work as a team - everyone can use the same login credentials</li>
-            </ul>
-
-            <h4>Puzzle Types:</h4>
-            <ul>
-              <li><strong>Regular Puzzles:</strong> PDF-based puzzles with optional answer submission</li>
-              <li><strong>Metapuzzles:</strong> Special puzzles that combine elements from other puzzles</li>
-              <li><strong>Locks:</strong> Answer-only challenges that unlock new areas</li>
-            </ul>
-
-            <h4>Important Notes:</h4>
-            <ul>
-              <li>You have limited guesses per puzzle, so think carefully!</li>
-              <li>Your progress is automatically saved</li>
-              <li>If you get stuck, try looking at solved puzzles for clues</li>
-              <li>Some rooms have special layouts - explore carefully!</li>
-            </ul>
-          </div>
         </div>
       </div>
 

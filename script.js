@@ -16,7 +16,7 @@ const rtdb = firebase.database();
 const SECURITY_SALT = "partial-insanity-salt";
 let currentUser = null;
 let currentTeam = null;
-let currentRoom = "starting_room";
+let currentRoom = "the_start";
 let currentPuzzle = null;
 let puzzleData = {};
 let roomData = {};
@@ -27,12 +27,40 @@ let correctAnswersSoFar = {};
 let answerBoxVisible = false;
 let hintBoxVisible = false;
 
+function showStartupLoading() {
+  const el = document.getElementById('startup-loading');
+  if (el) el.style.display = 'flex';
+}
+function hideStartupLoading() {
+  const el = document.getElementById('startup-loading');
+  if (el) el.style.display = 'none';
+}
+
+// Ensure a loading screen is visible while Firebase determines auth state
+document.addEventListener('DOMContentLoaded', () => {
+  showStartupLoading();
+  // keep puzzle page hidden until auth resolved
+  const puzzle = document.getElementById('puzzle-page'); if (puzzle) puzzle.style.display = 'none';
+  const topbar = document.querySelector('.topbar'); if (topbar) topbar.style.display = 'none';
+});
+
 auth.onAuthStateChanged((user) => {
   if (user) {
     currentUser = user;
-    loadTeamData();
+    // Keep the loading overlay while we load team data
+    loadTeamData()
+      .then(() => {
+        hideStartupLoading();
+      })
+      .catch((err) => {
+        console.error('Error loading team during auth check:', err);
+        hideStartupLoading();
+        showAuthPage();
+      });
   } else {
     currentUser = null;
+    // No saved account: hide loading and show login
+    hideStartupLoading();
     showAuthPage();
   }
 });
@@ -93,7 +121,7 @@ async function loadTeamData() {
 
         teamProgress.solvedPuzzles = teamProgress.solvedPuzzles || [];
         teamProgress.unlockedRooms = teamProgress.unlockedRooms || [
-          "starting_room",
+          "the_start",
         ];
         teamProgress.guessCount = teamProgress.guessCount || {};
         teamProgress.clearedRooms = teamProgress.clearedRooms || [];
@@ -113,7 +141,7 @@ async function loadTeamData() {
           firstUncleared = unlockedRooms[unlockedRooms.length - 1];
         }
 
-        currentRoom = firstUncleared || "starting_room";
+        currentRoom = firstUncleared || "the_start";
 
         if (teamProgress.currentRoom !== currentRoom) {
           teamProgress.currentRoom = currentRoom;
@@ -125,8 +153,8 @@ async function loadTeamData() {
       } else {
         teamProgress = {
           solvedPuzzles: [],
-          currentRoom: "starting_room",
-          unlockedRooms: ["starting_room"],
+          currentRoom: "the_start",
+          unlockedRooms: ["the_start"],
           guessCount: {},
           viewedUnlocks: [],
           clearedRooms: [],
@@ -228,7 +256,7 @@ async function loadPuzzleData() {
 function checkForNewlyUnlockedContent() {
   unlockedNewContent = {};
 
-  const unlockedRooms = teamProgress.unlockedRooms || ["starting_room"];
+  const unlockedRooms = teamProgress.unlockedRooms || ["the_start"];
 
   Object.keys(puzzleData).forEach((puzzleId) => {
     const puzzle = puzzleData[puzzleId];
@@ -490,6 +518,8 @@ function showAuthPage() {
 }
 
 function showPuzzlePage() {
+  // ensure any startup loading overlay is hidden when showing the puzzle UI
+  try { hideStartupLoading(); } catch (e) { /* ignore if not available yet */ }
   document.getElementById("auth-page").style.display = "none";
   document.getElementById("puzzle-page").style.display = "block";
   document.getElementById("rules-page").style.display = "none";
@@ -587,8 +617,8 @@ async function registerTeam() {
       .set({
         startTime: Date.now(),
         solvedPuzzles: [],
-        currentRoom: "starting_room",
-        unlockedRooms: ["starting_room"],
+        currentRoom: "the_start",
+        unlockedRooms: ["the_start"],
         guessCount: {},
         viewedUnlocks: [],
         clearedRooms: [],
@@ -687,7 +717,7 @@ async function renderCurrentRoom() {
   navGroup.innerHTML = "";
 
   const clearedRooms = teamProgress.clearedRooms || [];
-  const unlockedRooms = teamProgress.unlockedRooms || ["starting_room"];
+  const unlockedRooms = teamProgress.unlockedRooms || ["the_start"];
 
   // inline cleared rooms (grayed) followed by the current room (highlighted)
   const inlineContainer = document.createElement('div');

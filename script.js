@@ -500,7 +500,23 @@ function showPuzzlePage() {
 function showRulesPage() {
   // close leaderboard if open
   const lb = document.getElementById('leaderboard-modal') || document.querySelector('.leaderboard-modal'); if (lb) lb.style.display = 'none';
+  // load latest site rules (markdown) and render
+  if (typeof loadSiteRules === 'function') loadSiteRules();
   document.getElementById("rules-page").style.display = "block";
+}
+
+// Load the site rules (markdown) from Firestore and render into the rules modal
+async function loadSiteRules() {
+  try {
+    const doc = await db.collection('site').doc('rules').get();
+    const data = doc.exists ? doc.data() : { markdown: '' };
+    const raw = window.marked && marked.parse ? marked.parse(data.markdown || '') : (data.markdown || '');
+    const clean = window.DOMPurify ? DOMPurify.sanitize(raw) : raw;
+    const el = document.getElementById('rules-content');
+    if (el) el.innerHTML = clean;
+  } catch (err) {
+    console.error('Failed to load site rules:', err);
+  }
 }
 
 function closeRulesPage() {

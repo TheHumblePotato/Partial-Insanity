@@ -132,7 +132,13 @@ body.dark .issue-card .issue-meta { color: #9aa6bd; }
   text-align: center;
   margin-bottom: 28px;
   color: var(--text);
+  position: relative;
+  z-index: 3; /* keep header above auth-section */
+  width: 100%;
 }
+
+#auth-page { position: relative; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.auth-section { position: relative; z-index: 2; }
 .topbar {
   display: none; /* hidden until login */
   justify-content: space-between;
@@ -152,8 +158,10 @@ body.dark .nav-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(
 body.dark .nav-btn:hover { background: rgba(255,255,255,0.12); }
 
 .topbar .current-account { font-weight: 600; color: var(--text); margin-left: 8px; background: rgba(255,255,255,0.03); padding: 6px 8px; border-radius: 8px; }
-.nav-btn { background: transparent; border: 1px solid rgba(15,23,42,0.06); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
-.nav-btn:hover { background: rgba(37,99,235,0.06); }
+.nav-btn { background: transparent; border: 1px solid rgba(15,23,42,0.08); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+.nav-btn:hover { background: rgba(37,99,235,0.08); border-color: rgba(37,99,235,0.16); } 
+
+.btn-secondary { border: 1px solid rgba(2,6,23,0.06); }
 .nav-btn:focus { outline: 3px solid rgba(37,99,235,0.15); outline-offset: 2px; }
 
 .header h1 {
@@ -202,8 +210,12 @@ body.dark .nav-btn:hover { background: rgba(255,255,255,0.12); }
   margin-bottom: 20px;
 }
 
-.puzzle-item { display:flex; flex-direction:column; justify-content:center; align-items:center; background: var(--card-bg); border-radius: 10px; padding: 18px; box-shadow: 0 8px 22px rgba(2,6,23,0.06); cursor: pointer; transition: transform 0.3s ease; position: relative; min-height: 160px; text-align:center; }
-.puzzle-item:hover { transform: translateY(-6px); }
+.puzzle-item { display:flex; flex-direction:column; justify-content:center; align-items:center; background: var(--card-bg); border-radius: 10px; padding: 18px; box-shadow: 0 18px 48px rgba(2,6,23,0.10); cursor: pointer; transition: transform 0.3s ease; position: relative; min-height: 160px; text-align:center; border: 1px solid rgba(2,6,23,0.08); }
+.puzzle-item:hover { transform: translateY(-6px); box-shadow: 0 20px 60px rgba(2,6,23,0.12); }
+
+.btn { box-shadow: 0 8px 24px rgba(2,6,23,0.06); border: 1px solid rgba(2,6,23,0.06); }
+.btn-primary { border-color: rgba(13, 60, 135, 0.28); }
+
 .puzzle-title { font-size: 1.05rem; font-weight:700; }
 .puzzle-type { font-size: 0.9rem; color: var(--muted); }
 .puzzle-item.solved { background: linear-gradient(90deg, #e6ffef 0%, #bbf7d0 100%); border-left: 4px solid #10b981; color: #064e3b; }
@@ -303,13 +315,12 @@ body.dark .nav-btn:hover { background: rgba(255,255,255,0.12); }
 }
 
 /* In dark mode we want modal overlays to be slightly translucent (so outlines don't feel hard) */
-body.dark .modal { background-color: rgba(0,0,0,0.65) !important; }
+body.dark .modal { background-color: rgba(0,0,0,0.55) !important; }
 
-/* leaderboard tweaks */
-body.dark .leaderboard-modal { background: rgba(0,0,0,0.45); }
+/* Make leaderboard a popup without a full-screen dark overlay in dark mode */
+body.dark .leaderboard-modal { background: transparent !important; }
 body.dark .leaderboard-modal .modal-content { box-shadow: 0 30px 80px rgba(0,0,0,0.6); border-radius: 12px; border: 1px solid rgba(255,255,255,0.04); }
 body.dark #leaderboard-table thead th { background: rgba(255,255,255,0.02); }
-
 /* ranking colors more compatible with dark theme */
 body.dark .rank-1 { background: linear-gradient(135deg,#9a7a18 0%, #6f5812 100%) !important; color: var(--text) !important; }
 body.dark .rank-1 .medal-icon { background: #9a7a18; color: #071025; }
@@ -446,7 +457,7 @@ body.dark #leaderboard-table th, body.dark #leaderboard-table td { color: var(--
   background: #153e9a;
 }
 
-body.dark .submit-btn { background: #2563eb; border: 1px solid rgba(255,255,255,0.12); box-shadow: none; }
+body.dark .submit-btn { background: linear-gradient(90deg,#1d4ed8,#2563eb); border: 1px solid rgba(96,165,250,0.28); box-shadow: 0 10px 30px rgba(37,99,235,0.08); color: #fff; }
 
 
 .nav-buttons {
@@ -829,6 +840,14 @@ body.dark .hint-counter { background: rgba(255,255,255,0.03); color: var(--text)
 body.dark .issue-card { background: var(--panel-bg); border: 1px solid rgba(255,255,255,0.04); color: var(--text); box-shadow: none; }
 body.dark .issue-card .issue-reply { background: var(--panel-bg); border: 1px solid rgba(255,255,255,0.04); }
 
+/* Make text inputs / textareas in the issues page dark to avoid white-on-white */
+body.dark #issues-page input, body.dark #issues-page textarea, body.dark #issue-form input, body.dark #issue-form textarea {
+  background: #000; color: var(--text); border: 1px solid rgba(255,255,255,0.06); box-shadow: none; padding: 8px; border-radius: 6px;
+}
+body.dark #issues-page textarea, body.dark #issue-form textarea { min-height: 120px; }
+body.dark #issues-page input::placeholder, body.dark #issue-form input::placeholder, body.dark #issues-page textarea::placeholder { color: rgba(255,255,255,0.45); }
+
+
 .hint-problem {
   font-size: 15px;
   color: #2d3748;
@@ -1187,10 +1206,11 @@ body.dark .puzzle-viewer-image, body.dark .pdf-iframe { background: rgba(255,255
 body.dark .close-box { background: rgba(255,255,255,0.03); color: var(--text); box-shadow: none; }
 body.dark .puzzle-viewer-actions .btn { background: #071025; color: var(--text); border: 1px solid rgba(255,255,255,0.12); }
 
-/* make check answer/hint controls darker */
+/* make check answer/hint controls darker and higher contrast */
 .answer-box input, .answer-box button, .hint-box button { color: var(--text); }
-body.dark .answer-box input, body.dark .answer-box button { background: #071025; color: var(--text); border: 1px solid rgba(255,255,255,0.04); }
-body.dark .guess-counter { color: #cbd5e1; }
+body.dark .answer-box input, body.dark .answer-box button { background: #04121a; color: var(--text); border: 1px solid rgba(96,165,250,0.22); box-shadow: 0 6px 18px rgba(96,165,250,0.04); }
+body.dark .answer-box input:focus, body.dark .answer-box button:focus { outline: none; box-shadow: 0 0 0 4px rgba(96,165,250,0.12); border-color: rgba(96,165,250,0.36); }
+body.dark .guess-counter { color: #e6eef8; background: rgba(255,255,255,0.02); padding: 4px 8px; border-radius: 6px; }
 
 
 
@@ -1917,9 +1937,11 @@ body.dark .current-team { color: var(--text) !important; background-color: rgba(
 #issues-page { display: none; background: transparent; padding: 36px 8px 80px 8px; border-radius: 8px; max-width: 100%; min-height: calc(100vh - 140px); position: relative; box-shadow: none; }
 #issues-page h2, #issues-page h3 { text-align: center; color: var(--text); margin-bottom: 8px; font-size: 1.25rem; }
 /* Make issue form width consistent with the lists */
-#issue-form { max-width: 920px; width: 100%; box-sizing: border-box; margin: 6px auto 18px; display: block; padding: 0 12px; }
+#issue-form { max-width: 920px; width: 100%; box-sizing: border-box; margin: 6px auto 18px; display: block; }
 #issue-form input, #issue-form textarea { width: 100%; box-sizing: border-box; }
-#all-issues-list, #my-issues-list { max-width: 920px; margin: 18px auto; padding: 0 12px; box-sizing: border-box; }
+#all-issues-list, #my-issues-list { max-width: 920px; margin: 14px auto; display: grid; grid-template-columns: 1fr; gap: 12px; max-height: 44vh; overflow: auto; box-sizing: border-box; }
+
+#issue-form { max-width: 920px; margin: 6px auto 18px; display: block; box-sizing: border-box; }
 #close-issues-btn { position: absolute; right: 12px; top: 12px; }
 #all-issues-list, #my-issues-list { max-width: 920px; margin: 18px auto; }
 #issue-form input[type="text"], #issue-form textarea { width: 100%; box-sizing: border-box; }
@@ -1956,13 +1978,13 @@ body.dark .current-team { color: var(--text) !important; background-color: rgba(
 
 #issue-success {
   text-align: center;
-  background: rgba(16,185,129,0.12);
-  color: #064e3b;
+  background: rgba(37,99,235,0.10);
+  color: #06202b;
   padding: 8px 12px;
   border-radius: 8px;
   max-width: 540px;
   margin: 8px auto 0;
-  box-shadow: 0 4px 10px rgba(6,78,59,0.04);
+  box-shadow: 0 6px 18px rgba(37,99,235,0.06);
 }
 
 #all-issues-list, #my-issues-list {
@@ -1973,7 +1995,6 @@ body.dark .current-team { color: var(--text) !important; background-color: rgba(
   gap: 12px;
   max-height: 44vh;
   overflow: auto;
-  padding-right: 8px; /* keep space for scrollbar */
 }
 
 #all-issues-list p, #my-issues-list p { text-align: center; color: var(--muted); padding: 18px 10px; }

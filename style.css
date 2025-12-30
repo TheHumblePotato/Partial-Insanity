@@ -76,7 +76,7 @@ body.dark .modal-content {
 }
 
 body.dark .nav-room { color: #d1d9e6; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); }
-body.dark .nav-room.cleared { opacity: 0.5; color: #9aa6bd; }
+body.dark .nav-room.cleared { border-style: dotted !important; color: var(--text) !important; opacity: 0.95 !important; background: transparent !important; }
 body.dark .nav-room.current { border: 1px solid var(--accent); box-shadow: 0 8px 18px rgba(0,0,0,0.6); }
 
 body.dark .btn-primary { background: #1d4ed8; color: white; border: 1px solid rgba(255,255,255,0.12); box-shadow: none; }
@@ -768,7 +768,24 @@ body.dark .submit-btn { background-color: #1e40af; border: 1px solid rgba(96,165
 } 
 
 /* ensure event-alert messages also show properly */
-.notification-event-alert .notification-message { display: block; min-height: 1.2em; padding: 8px 10px; font-size: 15px; }
+.notification-event-alert .notification-message { display: block !important; min-height: 28px !important; padding: 8px 10px !important; font-size: 15px !important; }
+
+/* Extra safety: force notification and content to occupy space even if some inline styles interfere */
+.notification, .notification-event-alert { display: block !important; min-height: 36px !important; }
+.notification-content, .notification-content.notification-event { display: flex !important; align-items: center !important; min-height: 36px !important; }
+.notification-content .notification-message { display: block !important; min-height: 24px !important; padding: 8px 10px !important; }
+.notification .notification-close, .notification-event-alert .notification-close { display: inline-block !important; }
+
+/* Non-alert event-style notifications (e.g., success messages centered in page) */
+.notification.notification-success.notification-event .notification-message,
+.notification.notification-info.notification-event .notification-message,
+.notification.notification-error.notification-event .notification-message {
+  display: block !important;
+  min-height: 28px !important;
+  padding: 8px 10px !important;
+  font-size: 15px !important;
+}
+
 
 .notification-close {
   background: none;
@@ -807,6 +824,14 @@ body.dark .submit-btn { background-color: #1e40af; border: 1px solid rgba(96,165
 .room-inline-list { display:flex; gap:8px; align-items:center; flex-wrap:nowrap; }
 .nav-room { padding: 8px 12px; border-radius: 10px; background: var(--card-bg); border: 1px solid var(--nav-border); cursor: pointer; color: var(--text); font-weight: 600; }
 .nav-room.cleared { opacity: 0.95; background: transparent; border-style: dotted; border-width: 2px; }
+
+/* Dark mode: cleared rooms use dotted border and full contrast text */
+body.dark .nav-room.cleared {
+  border-style: dotted !important;
+  color: var(--text) !important;
+  opacity: 0.95 !important;
+  background: transparent !important;
+}
 .nav-room.current { outline: 2px solid var(--accent); outline-offset: 2px; font-weight:700; }
 .nav-room.locked { opacity: 0.5; cursor: default; }
 

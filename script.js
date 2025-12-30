@@ -766,17 +766,22 @@ async function renderCurrentRoom() {
   const clearedRooms = teamProgress.clearedRooms || [];
   const unlockedRooms = teamProgress.unlockedRooms || ["the_start"];
 
-  // inline list: show ALL rooms (cleared, unlocked, current) unless overflow
+  // inline list: show only rooms the user has reached (unlocked, cleared, or current)
   const inlineContainer = document.createElement('div');
   inlineContainer.className = 'room-inline-list';
 
-  const allRoomIds = Object.keys(roomData || {});
-  allRoomIds.forEach((rid) => {
+  const visibleRoomIds = Object.keys(roomData || {}).filter((rid) => {
+    const isCleared = (teamProgress.clearedRooms || []).includes(rid);
+    const isUnlocked = (teamProgress.unlockedRooms || []).includes(rid);
+    return isCleared || isUnlocked || rid === currentRoom;
+  });
+
+  visibleRoomIds.forEach((rid) => {
     const rb = document.createElement('button');
     rb.className = 'nav-room';
 
-    const isCleared = clearedRooms.includes(rid);
-    const isUnlocked = unlockedRooms.includes(rid);
+    const isCleared = (teamProgress.clearedRooms || []).includes(rid);
+    const isUnlocked = (teamProgress.unlockedRooms || []).includes(rid);
     const isCurrent = rid === currentRoom;
 
     if (isCleared) rb.classList.add('cleared');

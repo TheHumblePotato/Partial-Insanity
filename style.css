@@ -83,13 +83,19 @@ body.dark .btn-primary { background: #1d4ed8; color: white; border: 1px solid rg
 
 /* make general buttons more prominent in dark mode */
 body.dark .btn, body.dark .btn-secondary, body.dark .hint-reveal-btn, body.dark .nav-btn { background: rgba(255,255,255,0.04); border: 1px solid rgba(96,165,250,0.18); color: var(--text); box-shadow: 0 6px 18px rgba(96,165,250,0.04); }
-body.dark .btn:hover, body.dark .nav-btn:hover { background: rgba(96,165,250,0.06); border-color: rgba(96,165,250,0.28); }
+body.dark .btn:hover, body.dark .nav-btn:hover { background: rgba(96,165,250,0.08); border-color: rgba(96,165,250,0.36); }
 
 /* puzzles more contrast */
-body.dark .puzzle-item { border: 1px solid rgba(96,165,250,0.10); }
-body.dark .puzzle-item:hover { box-shadow: 0 10px 30px rgba(96,165,250,0.06); transform: translateY(-6px); }
+body.dark .puzzle-item { border: 1px solid rgba(96,165,250,0.18); box-shadow: 0 8px 24px rgba(96,165,250,0.04); }
+body.dark .puzzle-item:hover { box-shadow: 0 14px 40px rgba(96,165,250,0.08); transform: translateY(-6px); }
 body.dark .puzzle-title { color: var(--text); }
 body.dark .puzzle-type { color: #9fb8da; }
+
+body.dark .btn-primary { background: #1e3a8a; border: 1px solid rgba(96,165,250,0.3); box-shadow: 0 10px 30px rgba(37,99,235,0.06); color: #fff; }
+body.dark .btn-secondary { background: rgba(255,255,255,0.03); border: 1px solid rgba(96,165,250,0.12); color: var(--text); }
+body.dark .nav-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(96,165,250,0.12); }
+body.dark .nav-btn:hover { background: rgba(96,165,250,0.06); }
+
 
 body.dark .puzzle-item { background: var(--puzzle-bg); border: 1px solid rgba(255,255,255,0.12); color: #e6eef8; box-shadow: none; }
 body.dark .puzzle-title { color: #e6eef8; }
@@ -296,8 +302,19 @@ body.dark .nav-btn:hover { background: rgba(255,255,255,0.12); }
   background-color: rgba(0, 0, 0, 0.8);
 }
 
-/* In dark mode we want modal overlays to be fully solid (no translucency) for maximum contrast */
-body.dark .modal { background-color: #000 !important; }
+/* In dark mode we want modal overlays to be slightly translucent (so outlines don't feel hard) */
+body.dark .modal { background-color: rgba(0,0,0,0.65) !important; }
+
+/* leaderboard tweaks */
+body.dark .leaderboard-modal { background: rgba(0,0,0,0.45); }
+body.dark .leaderboard-modal .modal-content { box-shadow: 0 30px 80px rgba(0,0,0,0.6); border-radius: 12px; border: 1px solid rgba(255,255,255,0.04); }
+body.dark #leaderboard-table thead th { background: rgba(255,255,255,0.02); }
+
+/* ranking colors more compatible with dark theme */
+body.dark .rank-1 { background: linear-gradient(135deg,#9a7a18 0%, #6f5812 100%) !important; color: var(--text) !important; }
+body.dark .rank-1 .medal-icon { background: #9a7a18; color: #071025; }
+body.dark .rank-2 { background: linear-gradient(135deg,#7f7f7f 0%, #5f5f5f 100%) !important; color: var(--text) !important; }
+body.dark .rank-3 { background: linear-gradient(135deg,#7a4b27 0%, #5a3b21 100%) !important; color: var(--text) !important; }
 
 
 .modal-content {
@@ -818,6 +835,13 @@ body.dark .issue-card .issue-reply { background: var(--panel-bg); border: 1px so
   margin-bottom: 12px;
   font-weight: 600;
   display: flex;
+}
+
+/* dark mode hint marker */
+body.dark .hint-problem { color: var(--text); }
+body.dark .hint-item, body.dark .hint-text { color: var(--text); }
+body.dark .hint-text.visible { color: var(--text); }
+
   align-items: center;
   gap: 8px;
 }
@@ -971,27 +995,15 @@ body.dark .issue-card .issue-reply { background: var(--panel-bg); border: 1px so
   box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
 }
 
-.lock-answer-label {
-  width: 120px;
-  margin-right: 15px;
-  font-weight: 600;
-  color: #4a5568;
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  position: relative;
-}
+/* Dark mode: make lock answer row and inputs dark with higher contrast */
+body.dark .lock-answer-row { background: var(--panel-bg); border: 1px solid rgba(96,165,250,0.12); box-shadow: none; }
+body.dark .lock-answer-row:hover { box-shadow: 0 10px 30px rgba(96,165,250,0.06); transform: translateY(-2px); border-color: rgba(96,165,250,0.22); }
+body.dark .lock-answer-row:focus-within { border-color: rgba(96,165,250,0.28); box-shadow: 0 10px 30px rgba(96,165,250,0.08); }
 
-.lock-answer-label::after {
-  content: "";
-  position: absolute;
-  right: -8px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 2px;
-  height: 20px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border-radius: 2px;
+body.dark .lock-answer-label { color: var(--text); }
+body.dark .lock-answer-input { background: #06202b; color: var(--text); border: 1px solid rgba(255,255,255,0.06); box-shadow: none; }
+body.dark .lock-answer-input:focus { background: #04202a; border-color: rgba(96,165,250,0.36); box-shadow: 0 0 0 4px rgba(96,165,250,0.12); }
+body.dark .lock-answer-input::placeholder { color: rgba(255,255,255,0.45); }
 }
 
 .lock-answer-input {
@@ -1652,6 +1664,12 @@ body.dark #leaderboard-table tr:hover { background: rgba(255,255,255,0.03); }
   color: #000 !important;
 }
 
+/* Dark mode: current team text should be readable */
+body.dark .current-team.rank-1,
+body.dark .current-team.rank-2,
+body.dark .current-team.rank-3,
+body.dark .current-team { color: var(--text) !important; background-color: rgba(255,255,255,0.02) !important; border-color: rgba(96,165,250,0.18) !important; }
+
 .opt-out-team {
   opacity: 0.6;
   font-style: italic;
@@ -1899,8 +1917,9 @@ body.dark #leaderboard-table tr:hover { background: rgba(255,255,255,0.03); }
 #issues-page { display: none; background: transparent; padding: 36px 8px 80px 8px; border-radius: 8px; max-width: 100%; min-height: calc(100vh - 140px); position: relative; box-shadow: none; }
 #issues-page h2, #issues-page h3 { text-align: center; color: var(--text); margin-bottom: 8px; font-size: 1.25rem; }
 /* Make issue form width consistent with the lists */
-#issue-form { max-width: 920px; width: 100%; box-sizing: border-box; margin: 6px auto 18px; display: block; }
+#issue-form { max-width: 920px; width: 100%; box-sizing: border-box; margin: 6px auto 18px; display: block; padding: 0 12px; }
 #issue-form input, #issue-form textarea { width: 100%; box-sizing: border-box; }
+#all-issues-list, #my-issues-list { max-width: 920px; margin: 18px auto; padding: 0 12px; box-sizing: border-box; }
 #close-issues-btn { position: absolute; right: 12px; top: 12px; }
 #all-issues-list, #my-issues-list { max-width: 920px; margin: 18px auto; }
 #issue-form input[type="text"], #issue-form textarea { width: 100%; box-sizing: border-box; }

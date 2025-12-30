@@ -152,27 +152,7 @@
         <div id="image-room" class="image-puzzle-room hidden"></div>
       </div>
 
-      <div id="leaderboard-page" class="modal" style="display: none;">
-        <div class="modal-content leaderboard-modal">
-          <span class="close" onclick="closeLeaderboard()">&times;</span>
-          <h1>Leaderboard</h1>
-          <div id="leaderboard-content">
-            <div id="leaderboard-loading">Loading...</div>
-            <table id="leaderboard-table" style="display: none">
-              <thead>
-                <tr>
-                  <th>Rank</th>
-                  <th>Team</th>
-                  <th>Rooms Cleared</th>
-                  <th>Puzzles Solved</th>
-                  <th>Last Solve Time</th>
-                </tr>
-              </thead>
-              <tbody id="leaderboard-body"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+      <!-- Leaderboard (moved out to body for consistent overlay) -->
 
       <div id="rules-page" class="modal rules-modal" style="display:none;">
         <div class="modal-content rules-modal-content">
@@ -214,6 +194,29 @@
       </div>
 
       <!-- moved issues page inside container to ensure consistent layout -->
+
+    <!-- Leaderboard modal (placed here to ensure it overlays the entire page) -->
+    <div id="leaderboard-page" class="modal" style="display: none;">
+      <div class="modal-content leaderboard-modal">
+        <span class="close" onclick="closeLeaderboard()">&times;</span>
+        <h1>Leaderboard</h1>
+        <div id="leaderboard-content">
+          <div id="leaderboard-loading">Loading...</div>
+          <table id="leaderboard-table" style="display: none">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Team</th>
+                <th>Rooms Cleared</th>
+                <th>Puzzles Solved</th>
+                <th>Last Solve Time</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
       <div id="issues-page" class="rules-page" style="display: none;">
         <div style="text-align:right;">

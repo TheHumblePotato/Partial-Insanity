@@ -17,10 +17,40 @@ body {
   --text: #0f172a;
   --muted: #475569;
   --accent: #2563eb;
+  --card-bg: #ffffff;
+  --panel-bg: #ffffff;
+  --puzzle-bg: #f8fafc;
+  --puzzle-border: rgba(2,6,23,0.06);
   background: var(--bg);
   min-height: 100vh;
   color: var(--text);
   transition: background 0.35s ease, color 0.25s ease;
+}
+
+/* Improve puzzle item contrast and border */
+.puzzle-item {
+  border: 1px solid var(--puzzle-border);
+  background: var(--puzzle-bg);
+}
+
+/* Slight elevation */
+.puzzle-item { box-shadow: 0 6px 18px rgba(2,6,23,0.04); }
+
+/* Dark mode overrides for puzzles */
+body.dark {
+  --bg: linear-gradient(135deg, #0f172a 0%, #0b1220 100%);
+  --text: #e6eef8;
+  --muted: #94a3b8;
+  --accent: #60a5fa;
+  --card-bg: rgba(255,255,255,0.02);
+  --panel-bg: rgba(10,14,24,0.7);
+  --puzzle-bg: rgba(255,255,255,0.02);
+  --puzzle-border: rgba(255,255,255,0.06);
+}
+
+body.dark .puzzle-item {
+  border: 1px solid var(--puzzle-border);
+  background: var(--puzzle-bg);
 }
 
 .container { transition: background 0.35s ease, color 0.25s ease; }
@@ -91,6 +121,11 @@ body.dark .issue-card .issue-meta { color: #9aa6bd; }
   align-items: center;
 }
 .topbar .nav-right { display: flex; gap: 8px; align-items:center; }
+
+/* dark mode nav buttons */
+body.dark .nav-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); color: var(--text); }
+body.dark .nav-btn:hover { background: rgba(255,255,255,0.06); }
+
 .topbar .current-account { font-weight: 600; color: var(--text); margin-left: 8px; background: rgba(255,255,255,0.03); padding: 6px 8px; border-radius: 8px; }
 .nav-btn { background: transparent; border: 1px solid rgba(15,23,42,0.06); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
 .nav-btn:hover { background: rgba(37,99,235,0.06); }
@@ -270,12 +305,21 @@ body.dark .issue-card .issue-meta { color: #9aa6bd; }
 
 .close:hover { color: var(--text); }
 
-..rules-modal-content { background: #ffffff; box-shadow: none; border-radius: 10px; padding: 26px 28px; margin-top: 40px; line-height: 1.6; color: var(--text); }
+.rules-modal-content { background: #ffffff; box-shadow: none; border-radius: 10px; padding: 26px 28px; margin-top: 80px; line-height: 1.8; color: var(--text); }
 .rules-modal-content ul { padding-left: 34px; margin-left: 0; }
 .rules-modal-content ul li { margin-bottom: 10px; }
 
+/* make the modal overlay darker so the rules panel appears solid */
+.rules-modal { background: rgba(0,0,0,0.45); }
+
 /* In dark mode, rules panel should use the dark panel background */
 body.dark .rules-modal-content { background: var(--panel-bg); color: var(--text); }
+
+/* Give a subtle inner shadow in dark mode so it reads as a solid panel */
+body.dark .rules-modal-content { box-shadow: 0 18px 40px rgba(0,0,0,0.6); }
+
+/* ensure better line spacing across headings and paragraphs */
+.rules-modal-content p, .rules-modal-content li { line-height: 1.9; }
 
 /* Solve message modal (puzzle solved) adapts to dark mode */
 .solve-message-modal { display:none; position:fixed; left:0; top:0; width:100%; height:100%; background: rgba(0,0,0,0.45); z-index:1201; }
@@ -287,10 +331,15 @@ body.dark .rules-modal-content { background: var(--panel-bg); color: var(--text)
 .leaderboard-modal { background: var(--panel-bg); }
 .leaderboard-modal .modal-content { max-height: 72vh; padding: 18px 22px; }
 #leaderboard-content { max-height: calc(72vh - 120px); overflow: auto; }
-.rules-modal { background: transparent; }
+.rules-modal { background: rgba(0,0,0,0.45); }
 
 /* ensure modal panels adapt in dark mode */
-body.dark .modal-content { background: var(--panel-bg); box-shadow: 0 18px 40px rgba(0,0,0,0.6); }
+body.dark .modal-content { background: var(--panel-bg); box-shadow: 0 18px 40px rgba(0,0,0,0.6); color: var(--text); }
+body.dark .leaderboard-modal, body.dark .rules-modal-content { background: var(--panel-bg); color: var(--text); }
+
+/* ensure table rows and headings adapt */
+body.dark #leaderboard-table th, body.dark #leaderboard-table td { color: var(--text); border-bottom: 1px solid rgba(255,255,255,0.04); }
+
 
 
 .pdf-frame {
@@ -473,7 +522,7 @@ body.dark .modal-content { background: var(--panel-bg); box-shadow: 0 18px 40px 
   max-width: 920px;
 }
 
-.rules-modal { display: block; background: linear-gradient(180deg, rgba(10,10,15,0.02), rgba(255,255,255,0.02)); padding: 28px 0; }
+.rules-modal { display: block; background: rgba(0,0,0,0.45); padding: 28px 0; }
 
 .rules-page h1 {
   color: #333;
@@ -1085,6 +1134,19 @@ body.dark .modal-content { background: var(--panel-bg); box-shadow: 0 18px 40px 
   z-index: 1001;
 }
 
+/* Dark mode puzzle viewer */
+body.dark .puzzle-viewer { background: rgba(10,14,24,0.9); color: var(--text); }
+body.dark .puzzle-viewer-header { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); box-shadow: 0 2px 10px rgba(0,0,0,0.6); }
+body.dark .answer-box, body.dark .hint-box { background: var(--panel-bg); color: var(--text); box-shadow: 0 10px 30px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.04); }
+body.dark .puzzle-viewer-image, body.dark .pdf-iframe { background: rgba(255,255,255,0.02); box-shadow: none; }
+body.dark .close-box { background: rgba(255,255,255,0.03); color: var(--text); box-shadow: none; }
+body.dark .puzzle-viewer-actions .btn { background: linear-gradient(90deg,#0b1220,#071025); color: var(--btn-text); }
+
+/* make check answer/hint controls darker */
+.answer-box input, .answer-box button, .hint-box button { color: var(--text); }
+body.dark .answer-box input, body.dark .answer-box button { background: rgba(255,255,255,0.03); color: var(--text); border: 1px solid rgba(255,255,255,0.04); }
+
+
 .puzzle-viewer-content {
   max-width: 1000px;
   margin: 0 auto;
@@ -1460,20 +1522,52 @@ body.dark .notification-event-alert { background: rgba(10,14,24,0.85); color: va
 
 #leaderboard-page {
   position: fixed;
-  top: 6%;
+  top: 10%;
   left: 50%;
   transform: translateX(-50%);
   width: 90%;
   max-width: 1100px;
-  height: 84%;
-  background: white;
+  height: 76vh;
+  background: var(--card-bg);
   border-radius: 10px;
   box-shadow: 0 20px 60px rgba(2,6,23,0.12);
-  overflow: auto;
   z-index: 1000;
-  padding: 20px;
+  padding: 16px;
   display: none; /* still controlled by JS */
+  display: flex;
+  flex-direction: column;
 }
+
+#leaderboard-page .modal-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+#leaderboard-content {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding-top: 6px;
+}
+
+#leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+/* make header sticky so it's always visible */
+#leaderboard-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--card-bg);
+  z-index: 2;
+}
+
+/* Dark mode for leaderboard */
+body.dark #leaderboard-page { background: var(--panel-bg); color: var(--text); box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+body.dark #leaderboard-table thead th { background: rgba(255,255,255,0.02); color: var(--text); }
+body.dark #leaderboard-table tr:hover { background: rgba(255,255,255,0.03); }
 
 #leaderboard-table {
   width: 100%;
@@ -1757,10 +1851,17 @@ body.dark .notification-event-alert { background: rgba(10,14,24,0.85); color: va
 #issue-form { max-width: 920px; margin: 8px auto 18px; }
 #close-issues-btn { position: absolute; right: 12px; top: 12px; }
 #all-issues-list, #my-issues-list { max-width: 920px; margin: 18px auto; }
+#issue-form { max-width: 920px; margin: 0 auto 12px auto; display: block; }
+#issue-form input[type="text"], #issue-form textarea { width: 100%; box-sizing: border-box; }
+.issue-card .issue-meta { font-size: 0.95rem; color: var(--muted); }
+
+/* make timestamps show down to minutes more consistently */
+.issue-meta time { font-size: 0.95rem; color: var(--muted); }
+
 #issue-success { margin-top: 12px; }
 
 #issue-form {
-  max-width: 720px;
+  max-width: 920px;
   margin: 6px auto 18px;
   display: flex;
   flex-direction: column;

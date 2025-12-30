@@ -28,6 +28,15 @@
       <button class="btn btn-primary" id="admin-login-btn">Login</button>
       <div id="admin-error" class="error-message hidden"></div>
     </div>
+    <script>
+      // Backward-compatible shim: if anything still calls adminLogin before admin.js binds, proxy to the button click
+      if (typeof window.adminLogin === 'undefined') {
+        window.adminLogin = function() {
+          const btn = document.getElementById('admin-login-btn');
+          if (btn) btn.click();
+        };
+      }
+    </script>
 
     <div id="admin-panel" class="hidden">
       <div class="nav-buttons">

@@ -2415,7 +2415,7 @@ function loadAdminLeaderboard() {
         <td>${team.name}</td>
         <td>${team.roomsCleared}</td>
         <td>${team.puzzlesSolved}</td>
-        <td>${team.lastSolveTime ? (new Date(team.lastSolveTime)).toLocaleString() : "Never"}</td>
+        <td>${team.lastSolveTime ? (new Date(team.lastSolveTime)).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "Never"}</td>
       `;
       tbody.appendChild(row);
     });
@@ -2462,13 +2462,13 @@ function loadAdminIssues() {
 
       const adminInfo = issue.adminReply ? `
         <div class="admin-reply">Reply: <div class="reply-text">${issue.adminReply}</div>
-        <div class="reply-meta">By ${issue.adminReplyBy || "admin"} at ${issue.adminReplyAt ? new Date(issue.adminReplyAt).toLocaleString() : ""}</div>
+        <div class="reply-meta">By ${issue.adminReplyBy || "admin"} at ${issue.adminReplyAt ? new Date(issue.adminReplyAt).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ""}</div>
         </div>` : "";
 
       div.innerHTML = `
         <div class="admin-issue-header">
           <strong class="issue-title">${issue.title}</strong>
-          <div class="issue-meta">by <b>${issue.teamName || "anonymous"}</b> — ${new Date(issue.timestamp).toLocaleString()}</div>
+          <div class="issue-meta">by <b>${issue.teamName || "anonymous"}</b> — <time>${new Date(issue.timestamp).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time></div>
           <input type="checkbox" class="issue-resolved-toggle" title="Mark resolved" ${issue.status==='resolved'?'checked':''} onclick="(e=>{ e.stopPropagation(); updateIssueStatus('${id}', this.checked ? 'resolved' : 'open') })(event)">
         </div>
         <div class="issue-body">${issue.description}</div>
@@ -2566,7 +2566,7 @@ async function loadRules() {
     if (meta) {
       if (doc.exists && data.adminUpdatedAt) {
         const dt = data.adminUpdatedAt.toDate ? data.adminUpdatedAt.toDate() : new Date();
-        meta.textContent = `Last updated ${dt.toLocaleString()} by ${data.adminUpdatedBy || 'admin'}`;
+        meta.textContent = `Last updated ${dt.toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} by ${data.adminUpdatedBy || 'admin'}`;
       } else {
         meta.textContent = 'Not yet saved.';
       }
@@ -2613,8 +2613,8 @@ function setupRulesEditor() {
   });
 }
 
-// Bind UI elements on DOM ready
-document.addEventListener('DOMContentLoaded', () => {
+// Bind UI elements on DOM ready (handle already-fired DOMContentLoaded)
+function bindAdminUI() {
   const loginBtn = document.getElementById('admin-login-btn');
   if (loginBtn) loginBtn.addEventListener('click', adminLogin);
 
@@ -2625,4 +2625,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (revertBtn) revertBtn.addEventListener('click', loadRules);
 
   setupRulesEditor();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bindAdminUI);
+} else {
+  bindAdminUI();
+}

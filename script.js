@@ -2020,7 +2020,7 @@ function loadAllIssues() {
         const issue = doc.data();
         html += `<div class="issue-card">
           <div class="issue-title">${issue.title}</div>
-          <div class="issue-meta">By <b>${issue.teamName || "anonymous"}</b> at ${new Date(issue.timestamp).toLocaleString()}</div>
+          <div class="issue-meta">By <b>${issue.teamName || "anonymous"}</b> at <time>${new Date(issue.timestamp).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time></div>
           <div>${issue.description}</div>
           <div class="issue-status status-${issue.status}">Status: <b>${issue.status}</b></div>
           ${issue.adminReply ? `<div class="issue-reply">Admin reply: ${issue.adminReply}</div>` : ""}
@@ -2051,7 +2051,7 @@ function loadMyIssues() {
     all.forEach(issue => {
       html += `<div class="issue-card">
         <div class="issue-title">${issue.title}</div>
-        <div class="issue-meta">${new Date(issue.timestamp).toLocaleString()}</div>
+        <div class="issue-meta"><time>${new Date(issue.timestamp).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time></div>
         <div>${issue.description}</div>
         <div class="issue-status status-${issue.status}">Status: <b>${issue.status}</b></div>
         ${issue.adminReply ? `<div class="issue-reply">Admin reply: ${issue.adminReply}</div>` : ""}

@@ -2439,7 +2439,7 @@ function loadAdminIssues() {
       // keep recently-resolved issues visible for a short moment so admin sees the change
       if (issue.status === 'resolved') {
         const updatedAt = issue.adminUpdatedAt || issue.resolvedAt || 0;
-        if (Date.now() - updatedAt < 1200) active.push(entry);
+        if (Date.now() - updatedAt < 1000) active.push(entry);
         else resolved.push(entry);
       } else {
         active.push(entry);

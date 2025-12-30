@@ -19,9 +19,10 @@
 .puzzle-preview h5 { margin: 0 0 8px 0; font-size: 15px; }
 .puzzle-preview .meta-line { font-size: 13px; color: #475569; margin: 4px 0; }
 .rooms-box ul { list-style: none; padding-left: 0; margin:0; }
-.room-item { padding: 8px 0; border-bottom: 1px dashed rgba(2,6,23,0.04); }
+.room-item { padding: 8px 0; border-bottom: 1px dashed rgba(2,6,23,0.04); display:flex; flex-direction:column; }
+.room-item::marker { display: none; }
 .room-item .room-name { font-weight: 600; }
-.room-controls { margin-top: 6px; }
+.room-controls { margin-top: 8px; }
 
 .modal {
   display: none;
@@ -596,7 +597,7 @@
   height: 20px;
   transform: scale(1.05);
 }
-#admin-issues-list h4 { text-align:center; margin-bottom: 6px; }
+#admin-issues-list h4 { text-align:center; margin-top: 18px; margin-bottom: 18px; font-size: 1.25rem; }
 
 #admin-issues-list .admin-issue .admin-issue-header {
   display: flex;
@@ -610,8 +611,12 @@
 }
 #admin-issues-list .admin-issue .issue-meta {
   color: #6b7280;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
+
+/* Team progress detail unified font sizing */
+.property-editor h4, .property-editor h5, .rooms-box .room-name, .puzzle-preview .meta-line, .property-editor p, .property-editor .stat-card p { font-size: 0.95rem; }
+.property-editor h3 { font-size: 1.15rem; margin-bottom: 12px; }
 #admin-issues-list textarea {
   width: 100%;
   margin-top: 6px;
@@ -673,10 +678,13 @@
   padding-left: 28px;
   list-style: disc;
 }
-.puzzle-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* smaller puzzle boxes */
-  gap: 10px;
+.puzzle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+.puzzle-preview { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:12px; min-height:160px; text-align:center; }
+.puzzle-preview h5 { font-size: 1.05rem; margin-bottom:6px; font-weight:700; }
+.puzzle-preview .meta-line { font-size: 0.9rem; color: var(--muted); margin-top:6px; }
+.puzzle-preview .set-status { margin-top:8px; }
+.puzzle-preview.status-solved { border-color: #16a34a; background: linear-gradient(180deg, rgba(16,163,127,0.04), rgba(16,163,127,0.02)); }
+.puzzle-preview.status-unlocked { background: linear-gradient(180deg, rgba(59,130,246,0.03), rgba(37,99,235,0.02)); }
 }
 .puzzle-preview.status-solved {
   border: 3px solid #10b981;

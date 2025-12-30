@@ -137,6 +137,9 @@ async function loadTeamData() {
 
       await loadPuzzleData();
       showPuzzlePage();
+      // show topbar only after team data and UI are ready to avoid flicker
+      const topbar = document.querySelector('.topbar');
+      if (topbar) topbar.style.display = 'flex';
     } else {
       logout();
     }
@@ -2084,11 +2087,9 @@ function init() {
   auth.onAuthStateChanged((user) => {
     if (user) {
       currentUser = user;
+      // do not show topbar yet; wait until team data is loaded to prevent flicker
       loadTeamData();
       scheduleDailyGuessReset();
-      // show topbar when logged in
-      const topbar = document.querySelector('.topbar');
-      if (topbar) topbar.style.display = 'flex';
 
     } else {
       currentUser = null;

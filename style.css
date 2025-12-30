@@ -43,9 +43,25 @@ body.dark .modal-content {
   box-shadow: none;
 }
 
-body.dark .issue-card { background: linear-gradient(180deg, rgba(10,14,24,0.6), rgba(9,12,22,0.6)); box-shadow: 0 6px 18px rgba(0,0,0,0.6); }
-body.dark #issue-form input, body.dark #issue-form textarea { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); color: var(--text); }
-body.dark .issue-card .issue-reply { background: rgba(255,255,255,0.02); }
+body.dark .nav-room { color: #d1d9e6; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); }
+body.dark .nav-room.cleared { opacity: 0.5; color: #9aa6bd; }
+body.dark .nav-room.current { border: 1px solid var(--accent); box-shadow: 0 8px 18px rgba(0,0,0,0.6); }
+
+body.dark .btn-primary { background: linear-gradient(90deg,#0b1220,#071025); color: var(--btn-text); }
+
+body.dark .puzzle-item { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.04); color: #dbe9ff; }
+body.dark .puzzle-title { color: #e6eef8; }
+body.dark .puzzle-type { color: #94a3b8; }
+
+/* puzzle viewer and answer UI */
+body.dark .modal-content { background: var(--panel-bg); color: var(--text); }
+body.dark .answer-section { background: rgba(255,255,255,0.02); border-top: 1px solid rgba(255,255,255,0.03); }
+body.dark .answer-input { background: rgba(255,255,255,0.03); color: var(--text); border: 1px solid rgba(255,255,255,0.04); }
+
+/* Make issue cards darker in dark mode */
+body.dark .issue-card { background: linear-gradient(180deg, rgba(10,14,24,0.72), rgba(8,10,18,0.8)); border: 1px solid rgba(255,255,255,0.04); }
+body.dark .issue-card .issue-title { color: var(--text); }
+body.dark .issue-card .issue-meta { color: #9aa6bd; }
 
 .container {
   width: 100%;
@@ -126,19 +142,11 @@ body.dark .issue-card .issue-reply { background: rgba(255,255,255,0.02); }
   margin-bottom: 20px;
 }
 
-.puzzle-item {
-  background: white;
-  border-radius: 10px;
-  padding: 15px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: transform 0.3s ease;
-  position: relative;
-}
-
-.puzzle-item:hover {
-  transform: translateY(-5px);
-}
+.puzzle-item { display:flex; flex-direction:column; justify-content:center; align-items:center; background: var(--card-bg); border-radius: 10px; padding: 18px; box-shadow: 0 8px 22px rgba(2,6,23,0.06); cursor: pointer; transition: transform 0.3s ease; position: relative; min-height: 160px; text-align:center; }
+.puzzle-item:hover { transform: translateY(-6px); }
+.puzzle-title { font-size: 1.05rem; font-weight:700; }
+.puzzle-type { font-size: 0.9rem; color: var(--muted); }
+.puzzle-item.solved { background: linear-gradient(90deg, #e6ffef 0%, #bbf7d0 100%); border-left: 4px solid #10b981; color: #064e3b; }
 
 .puzzle-item.solved {
   background: linear-gradient(90deg, #ecfdf5 0%, #bbf7d0 100%);
@@ -262,11 +270,23 @@ body.dark .issue-card .issue-reply { background: rgba(255,255,255,0.02); }
 
 .close:hover { color: var(--text); }
 
-..rules-modal-content { background: var(--panel-bg); box-shadow: none; border-radius: 10px; padding: 20px; }
-.rules-modal-content ul { padding-left: 28px; margin-left: 8px; }
-.rules-modal-content ul li { margin-bottom: 8px; }
+..rules-modal-content { background: #ffffff; box-shadow: none; border-radius: 10px; padding: 26px 28px; margin-top: 40px; line-height: 1.6; color: var(--text); }
+.rules-modal-content ul { padding-left: 34px; margin-left: 0; }
+.rules-modal-content ul li { margin-bottom: 10px; }
+
+/* In dark mode, rules panel should use the dark panel background */
+body.dark .rules-modal-content { background: var(--panel-bg); color: var(--text); }
+
+/* Solve message modal (puzzle solved) adapts to dark mode */
+.solve-message-modal { display:none; position:fixed; left:0; top:0; width:100%; height:100%; background: rgba(0,0,0,0.45); z-index:1201; }
+.solve-message-content { background: var(--panel-bg); color: var(--text); padding: 22px; border-radius: 10px; width: 90%; max-width: 620px; margin: 8% auto; box-shadow: 0 18px 40px rgba(2,6,23,0.08); }
+.solve-message-content h3 { margin-top:0; }
+.solve-message-button { margin-top: 14px; }
+
 
 .leaderboard-modal { background: var(--panel-bg); }
+.leaderboard-modal .modal-content { max-height: 72vh; padding: 18px 22px; }
+#leaderboard-content { max-height: calc(72vh - 120px); overflow: auto; }
 .rules-modal { background: transparent; }
 
 /* ensure modal panels adapt in dark mode */
@@ -1719,7 +1739,7 @@ body.dark .notification-event-alert { background: rgba(10,14,24,0.85); color: va
   margin-top: 8px;
 }
 .issue-card .issue-status.status-open { color: #92400e; background: rgba(245,158,11,0.08); }
-.issue-card .issue-status.status-fixed { color: #0f5132; background: rgba(16,185,129,0.08); }
+.issue-card .issue-status.status-fixed, .issue-card .issue-status.status-resolved { color: #0f5132; background: rgba(16,185,129,0.08); }
 .issue-card .issue-status.status-intentional { color: #4b5563; background: rgba(107,114,128,0.06); }
 .issue-card .issue-reply {
   color: var(--text);
@@ -1732,21 +1752,12 @@ body.dark .notification-event-alert { background: rgba(10,14,24,0.85); color: va
 }
 
 /* Issues page specific tweaks (full-width and centered headers) */
-#issues-page {
-  display: none;
-  background: transparent;
-  padding: 36px 8px 80px 8px;
-  border-radius: 8px;
-  max-width: 100%;
-  min-height: calc(100vh - 140px); /* ensure it fills viewport under topbar */
-}
-
-#issues-page h2,
-#issues-page h3 {
-  text-align: center;
-  color: var(--text);
-  margin-bottom: 12px;
-}
+#issues-page { display: none; background: transparent; padding: 36px 8px 80px 8px; border-radius: 8px; max-width: 100%; min-height: calc(100vh - 140px); position: relative; }
+#issues-page h2, #issues-page h3 { text-align: center; color: var(--text); margin-bottom: 8px; font-size: 1.25rem; }
+#issue-form { max-width: 920px; margin: 8px auto 18px; }
+#close-issues-btn { position: absolute; right: 12px; top: 12px; }
+#all-issues-list, #my-issues-list { max-width: 920px; margin: 18px auto; }
+#issue-success { margin-top: 12px; }
 
 #issue-form {
   max-width: 720px;

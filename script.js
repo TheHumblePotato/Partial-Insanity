@@ -54,6 +54,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // keep puzzle page hidden until auth resolved
   const puzzle = document.getElementById('puzzle-page'); if (puzzle) puzzle.style.display = 'none';
   const topbar = document.querySelector('.topbar'); if (topbar) topbar.style.display = 'none';
+
+  // Close cleared rooms dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll('.cleared-rooms-dropdown.open').forEach((el) => {
+      if (!el.contains(e.target)) el.classList.remove('open');
+    });
+  });
 });
 
 auth.onAuthStateChanged((user) => {

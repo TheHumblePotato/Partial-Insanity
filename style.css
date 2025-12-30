@@ -238,13 +238,18 @@ body.dark .nav-btn:hover { background: rgba(255,255,255,0.12); }
 
 .puzzle-title { font-size: 1.05rem; font-weight:700; }
 .puzzle-type { font-size: 0.9rem; color: var(--muted); }
-.puzzle-item.solved { background: linear-gradient(90deg, #e6ffef 0%, #bbf7d0 100%); border-left: 4px solid #10b981; color: #064e3b; }
-
 .puzzle-item.solved {
-  background: linear-gradient(90deg, #ecfdf5 0%, #bbf7d0 100%);
-  border-left: 4px solid #10b981;
+  /* Light mode: flat green background, no left border */
+  background-color: #bbf7d0;
   color: #064e3b;
-  opacity: 1;
+  border-left: none;
+}
+
+/* Dark mode: subtle tinted background so solved is distinct from unsolved */
+body.dark .puzzle-item.solved {
+  background-color: rgba(16,185,129,0.12);
+  color: #bbf7d0;
+  border-left: none;
 }
 
 .puzzle-item.new-content {
@@ -595,7 +600,7 @@ body.dark .submit-btn { background: linear-gradient(90deg,#1d4ed8,#2563eb); bord
 }
 
 .rules-modal { display: block; background: rgba(0,0,0,0.45); padding: 28px 0; }
-.rules-modal .modal-content { max-height: 80vh; overflow-y: auto; padding: 24px; }
+.rules-modal .modal-content { max-height: 80vh; overflow-y: auto; padding: 24px; width: 80vw; max-width: 1200px; margin: 0 auto; border-radius: 12px; }
 .rules-loading { color: var(--muted); font-style: italic; padding: 8px 0; }
 
 .rules-page h1 {

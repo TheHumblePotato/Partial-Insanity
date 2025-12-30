@@ -2678,6 +2678,10 @@ function bindAdminUI() {
   const loginBtn = document.getElementById('admin-login-btn');
   if (loginBtn) loginBtn.addEventListener('click', adminLogin);
 
+  // allow pressing Enter from the password field to submit the login
+  const pwd = document.getElementById('admin-password');
+  if (pwd) pwd.addEventListener('keydown', (e) => { if (e.key === 'Enter') adminLogin(); });
+
   const saveBtn = document.getElementById('saveRulesBtn');
   if (saveBtn) saveBtn.addEventListener('click', saveRules);
 

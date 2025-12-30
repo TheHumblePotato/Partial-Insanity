@@ -73,7 +73,7 @@
             Add Puzzle/Meta/Lock
           </button>
           <button class="btn btn-sm" onclick="showRoomEditor()">
-            Add Room
+            Add Puzzle Group
           </button>
         </div>
         <div
@@ -188,9 +188,9 @@
             </button>
           </div>
           <div class="property-group">
-            <label>Room:</label>
+            <label>Puzzle Group:</label>
             <select id="puzzleRoom">
-              <option value="">-- Select Room --</option>
+              <option value="">-- Select Puzzle Group --</option>
             </select>
           </div>
 
@@ -321,7 +321,7 @@
       <div id="roomEditor" class="modal">
         <div class="modal-content" style="max-width: 700px">
           <span class="close" onclick="closeRoomEditor()">&times;</span>
-          <h3 id="roomEditorTitle">Room Editor</h3>
+          <h3 id="roomEditorTitle">Puzzle Group Editor</h3>
 
           <div class="form-row">
             <div class="property-group">
@@ -338,7 +338,7 @@
           </div>
 
           <div class="property-group">
-            <label>Background Image URL (for image rooms):</label>
+            <label>Background Image URL (for image puzzle groups):</label>
             <input
               type="text"
               id="roomBackground"
@@ -379,7 +379,7 @@
             ></select>
           </div>
           <div class="property-group" id="roomEventsGroup">
-            <label>Room Events:</label>
+            <label>Puzzle Group Events:</label>
             <div id="roomEventsContainer"></div>
             <button class="btn btn-sm" onclick="addRoomEvent()">
               Add Event
@@ -394,7 +394,7 @@
           </div>
 
           <div class="property-group">
-            <label>Puzzles in Room (comma separated IDs):</label>
+            <label>Puzzles in Puzzle Group (comma separated IDs):</label>
             <textarea
               id="roomPuzzles"
               placeholder="puzzle1, puzzle2, meta1"
@@ -403,7 +403,7 @@
 
           <div style="margin-top: 20px">
             <button class="btn btn-primary" onclick="saveRoom()">
-              Save Room
+              Save Puzzle Group
             </button>
             <button
               class="btn btn-danger"
@@ -411,7 +411,7 @@
               id="deleteRoomBtn"
               style="display: none"
             >
-              Delete Room
+              Delete Puzzle Group
             </button>
             <button class="btn btn-secondary" onclick="closeRoomEditor()">
               Cancel
@@ -458,9 +458,9 @@
               <th>Rank</th>
               <th>Team</th>
               <th>Email</th>
-              <th>Rooms Cleared</th>
+              <th>Puzzle Groups Cleared</th>
               <th>Puzzles Solved</th>
-              <th>Current Room</th>
+              <th>Current Puzzle Group</th>
               <th>Last Solve Time</th>
               <th>Status</th>
             </tr>

@@ -781,17 +781,21 @@ async function renderCurrentRoom() {
 
     if (isCleared) rb.classList.add('cleared');
 
+    // Only allow navigation to rooms that are unlocked or cleared (or the current room)
+    const accessible = isUnlocked || isCleared || isCurrent;
+
     if (isCurrent) {
       rb.classList.add('current');
       rb.textContent = roomData[rid]?.name || rid;
       rb.disabled = true;
-    } else if (!isUnlocked) {
-      rb.classList.add('locked');
-      rb.disabled = true;
-      rb.textContent = roomData[rid]?.name || rid;
     } else {
       rb.textContent = roomData[rid]?.name || rid;
-      rb.onclick = () => switchRoom(rid);
+      if (accessible) {
+        rb.onclick = () => switchRoom(rid);
+      } else {
+        rb.classList.add('locked');
+        rb.disabled = true;
+      }
     }
 
     inlineContainer.appendChild(rb);
@@ -799,38 +803,9 @@ async function renderCurrentRoom() {
 
   navGroup.appendChild(inlineContainer);
 
-  // populate dropdown (fallback for overflow) with all rooms for easy navigation
-  const dropdown = document.querySelector('.cleared-rooms-dropdown .dropdown-content');
-  dropdown.innerHTML = Object.keys(roomData || {})
-    .map((roomId) => {
-      const rd = roomData[roomId] || {};
-      const labels = [];
-      if (clearedRooms.includes(roomId)) labels.push('Cleared');
-      if (roomId === currentRoom) labels.push('Current');
-      return `<button onclick="switchRoom('${roomId}')">${rd.name || roomId}${labels.length ? ' — ' + labels.join(', ') : ''}</button>`;
-    })
-    .join('');
-
-  // detect overflow and switch to dropdown if needed (show dropdown only when nav overflows)
-  setTimeout(() => {
-    const clearedDropdown = document.querySelector('.cleared-rooms-dropdown');
-    const dropdownBtn = clearedDropdown ? clearedDropdown.querySelector('button') : null;
-    const dropdownWidth = dropdownBtn ? dropdownBtn.offsetWidth : 0;
-
-    // compute available width for inline container, reserving space for dropdown button
-    const navWidth = navGroup.clientWidth;
-    const available = navWidth - dropdownWidth - 24; // 24px buffer for padding/margins
-
-    const shouldOverflow = inlineContainer.scrollWidth > available;
-
-    if (shouldOverflow && Object.keys(roomData || {}).length > 0) {
-      inlineContainer.style.display = 'none';
-      if (clearedDropdown) clearedDropdown.style.display = 'inline-block';
-    } else {
-      if (clearedDropdown) clearedDropdown.style.display = 'none';
-      inlineContainer.style.display = '';
-    }
-  }, 40);
+  // Always keep inline nav visible; hide dropdown permanently
+  const clearedDropdown = document.querySelector('.cleared-rooms-dropdown');
+  if (clearedDropdown) clearedDropdown.style.display = 'none';
 
   if (room.type === "normal") {
     renderNormalRoom(room);

@@ -46,6 +46,8 @@ async function adminLogin() {
       document.getElementById("admin-panel").classList.remove("hidden");
       initializeDiagram();
       loadTeamProgress();
+      // preload rules for quick access
+      if (typeof loadRules === 'function') loadRules();
       if (
         !document.getElementById("admin-panel").classList.contains("hidden")
       ) {
@@ -97,6 +99,8 @@ function showAdminSection(section) {
     loadLeaderboard();
   } else if (section === "issues") {
     loadAdminIssues();
+  } else if (section === "rules") {
+    loadRules();
   }
 }
 
@@ -2548,3 +2552,77 @@ function replyToIssue(issueId, reply, btnEl = null) {
     }
   });
 }
+
+// --- Rules editor support ---
+async function loadRules() {
+  try {
+    const doc = await db.collection('site').doc('rules').get();
+    const data = doc.exists ? doc.data() : { markdown: '' };
+    const editor = document.getElementById('rulesEditor');
+    if (editor) editor.value = data.markdown || '';
+    renderRulesPreview(data.markdown || '');
+
+    const meta = document.getElementById('rulesMeta');
+    if (meta) {
+      if (doc.exists && data.adminUpdatedAt) {
+        const dt = data.adminUpdatedAt.toDate ? data.adminUpdatedAt.toDate() : new Date();
+        meta.textContent = `Last updated ${dt.toLocaleString()} by ${data.adminUpdatedBy || 'admin'}`;
+      } else {
+        meta.textContent = 'Not yet saved.';
+      }
+    }
+  } catch (err) {
+    console.error('Error loading rules:', err);
+    showAdminError('Failed to load rules');
+  }
+}
+
+async function saveRules() {
+  try {
+    const editor = document.getElementById('rulesEditor');
+    const data = {
+      markdown: editor ? editor.value : '',
+      adminUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      adminUpdatedBy: 'admin (password)'
+    };
+    await db.collection('site').doc('rules').set(data, { merge: true });
+    showAdminMessage('Rules saved');
+    // reload to show server timestamp
+    setTimeout(loadRules, 500);
+  } catch (err) {
+    console.error('Error saving rules:', err);
+    showAdminError('Failed to save rules');
+  }
+}
+
+function renderRulesPreview(md) {
+  const raw = window.marked && marked.parse ? marked.parse(md || '') : (md || '');
+  const clean = window.DOMPurify ? DOMPurify.sanitize(raw) : raw;
+  const preview = document.getElementById('rulesPreview');
+  if (preview) preview.innerHTML = clean;
+}
+
+function setupRulesEditor() {
+  const editor = document.getElementById('rulesEditor');
+  if (!editor) return;
+  // debounce preview updates
+  let t = null;
+  editor.addEventListener('input', () => {
+    clearTimeout(t);
+    t = setTimeout(() => renderRulesPreview(editor.value), 200);
+  });
+}
+
+// Bind UI elements on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  const loginBtn = document.getElementById('admin-login-btn');
+  if (loginBtn) loginBtn.addEventListener('click', adminLogin);
+
+  const saveBtn = document.getElementById('saveRulesBtn');
+  if (saveBtn) saveBtn.addEventListener('click', saveRules);
+
+  const revertBtn = document.getElementById('revertRulesBtn');
+  if (revertBtn) revertBtn.addEventListener('click', loadRules);
+
+  setupRulesEditor();
+});

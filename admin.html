@@ -25,7 +25,7 @@
           placeholder="Enter admin password"
         />
       </div>
-      <button class="btn btn-primary" onclick="adminLogin()">Login</button>
+      <button class="btn btn-primary" id="admin-login-btn">Login</button>
       <div id="admin-error" class="error-message hidden"></div>
     </div>
 
@@ -42,6 +42,9 @@
         </button>
         <button class="btn btn-primary" onclick="showAdminSection('issues')">
           Issues
+        </button>
+        <button class="btn btn-primary" onclick="showAdminSection('rules')">
+          Rules
         </button>
         <button
           class="btn btn-secondary"
@@ -463,8 +466,31 @@
     <div id="admin-issues-list"></div>
   </div>
 
+  <div id="admin-rules" class="admin-section hidden">
+    <h2>Site Rules (Markdown)</h2>
+    <div class="rules-editor-container">
+      <div class="rules-editor-pane">
+        <label for="rulesEditor">Edit Markdown</label>
+        <textarea id="rulesEditor" class="rules-editor" placeholder="Enter site rules..."></textarea>
+        <div class="rules-editor-actions">
+          <button class="btn btn-primary" id="saveRulesBtn">Save</button>
+          <button class="btn btn-secondary" id="revertRulesBtn">Revert</button>
+        </div>
+      </div>
+      <div class="rules-preview-pane">
+        <label>Preview</label>
+        <div id="rulesPreview" class="rules-preview"></div>
+        <div id="rulesMeta" class="rules-meta"></div>
+      </div>
+    </div>
+  </div>
+
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- Markdown preview (marked) + sanitization (DOMPurify) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js"></script>
 
     <script src="admin.js"></script>
   </body>

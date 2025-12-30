@@ -21,3 +21,8 @@
 ## Puzzle Stuff
 
 [Resolved]
+
+## Admin / Site
+
+- Added an admin **Rules editor** (Markdown) with live preview — stored in Firestore at `site/rules`.
+- Replaced inline `adminLogin()` onclick binding with a resilient DOM-bound handler to avoid the "adminLogin is not defined" runtime error.

@@ -346,6 +346,12 @@ body.dark .modal { background-color: rgba(0,0,0,0.55) !important; }
 body.dark .leaderboard-modal { background: transparent !important; }
 body.dark .leaderboard-modal .modal-content { box-shadow: 0 30px 80px rgba(0,0,0,0.6); border-radius: 12px; border: 1px solid rgba(255,255,255,0.04); }
 body.dark #leaderboard-table thead th { background: rgba(255,255,255,0.02); }
+
+/* Darken leaderboard table rows and panel background while keeping text readable */
+body.dark #leaderboard-table { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 8px; }
+body.dark #leaderboard-table tbody tr { background: rgba(255,255,255,0.01); }
+body.dark #leaderboard-table tbody tr:nth-child(odd) { background: rgba(255,255,255,0.015); }
+body.dark #leaderboard-table tbody tr.current-team { background: rgba(96,165,250,0.06); }
 /* ranking colors more compatible with dark theme */
 body.dark .rank-1 { background: linear-gradient(135deg,#9a7a18 0%, #6f5812 100%) !important; color: var(--text) !important; }
 body.dark .rank-1 .medal-icon { background: #9a7a18; color: #071025; }
@@ -478,7 +484,8 @@ body.dark #leaderboard-table th, body.dark #leaderboard-table td { color: var(--
   background: #153e9a;
 }
 
-body.dark .submit-btn { background: linear-gradient(90deg,#1d4ed8,#2563eb); border: 1px solid rgba(96,165,250,0.28); box-shadow: 0 10px 30px rgba(37,99,235,0.08); color: #fff; }
+/* Dark mode submit buttons use a flat accent with no gradient */
+body.dark .submit-btn { background-color: #1e40af; border: 1px solid rgba(96,165,250,0.18); box-shadow: none; color: #fff; }
 
 
 .nav-buttons {
@@ -795,6 +802,11 @@ body.dark .submit-btn { background: linear-gradient(90deg,#1d4ed8,#2563eb); bord
 
 .dropdown-content { display: none; position: absolute; right: 0; background: var(--panel-bg); min-width: 200px; box-shadow: 0 8px 16px rgba(2,6,23,0.08); z-index: 1200; border-radius: 8px; }
 
+/* Dark mode dropdown tweaks: darker background, subtle border and no white hover */
+body.dark .dropdown-content { background: #071025; border: 1px solid rgba(255,255,255,0.04); box-shadow: 0 12px 30px rgba(0,0,0,0.6); }
+body.dark .dropdown-content button { color: var(--text); }
+body.dark .dropdown-content button:hover { background: rgba(96,165,250,0.06); }
+
 .cleared-rooms-dropdown.open .dropdown-content { display: block; }
 
 .dropdown-content button { width: 100%; text-align: left; padding: 10px 12px; border: none; background: transparent; cursor: pointer; color: var(--text); }
@@ -1068,51 +1080,28 @@ body.dark .lock-answer-input::placeholder { color: rgba(255,255,255,0.45); }
 
 .submit-btn {
   padding: 15px 30px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-color: #2563eb; /* flat accent color */
   color: white;
-  border: none;
+  border: 1px solid rgba(2,6,23,0.06);
   border-radius: 12px;
   cursor: pointer;
   font-size: 16px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
-  transition: all 0.3s ease;
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
-  position: relative;
-  overflow: hidden;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
   margin-top: 20px;
   min-width: 150px;
-}
-
-.submit-btn::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
-  transition: left 0.5s;
-}
-
-.submit-btn:hover::before {
-  left: 100%;
+  box-shadow: none; /* flat appearance */
 }
 
 .submit-btn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+  background-color: #1e40af;
 }
 
 .submit-btn:active {
   transform: translateY(-1px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
 }
 
 .submit-btn:disabled {
@@ -1622,7 +1611,7 @@ body.dark .notification-event-alert { background: rgba(10,14,24,0.85); color: va
 }
 
 /* Use the inner modal-content as the visible panel */
-.leaderboard-modal .modal-content { background: var(--card-bg); border-radius: 10px; box-shadow: 0 20px 60px rgba(2,6,23,0.12); }
+.leaderboard-modal .modal-content { background: var(--card-bg); border-radius: 10px;}
 
 /* Dark mode: keep overlay transparent and panel in dark bg */
 body.dark .leaderboard-modal { background: rgba(0,0,0,0.6); }

@@ -800,9 +800,7 @@ body.dark .rules-preview-pane { background: rgba(255,255,255,0.02); border: 1px 
 }
 
 .admin-leaderboard-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+  display: flex;
   margin-bottom: 30px;
 }
 

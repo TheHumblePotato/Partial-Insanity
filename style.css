@@ -330,10 +330,6 @@ body.dark .rank-3 { background: linear-gradient(135deg,#7a4b27 0%, #5a3b21 100%)
 
 .modal-content {
   position: relative;
-  margin: 2% auto;
-  width: 90%;
-  max-width: 1100px;
-  max-height: 86vh;
   background: var(--panel-bg);
   border-radius: 10px;
   overflow: auto;
@@ -1591,7 +1587,6 @@ body.dark .notification-event-alert { background: rgba(10,14,24,0.85); color: va
   border-radius: 10px;
   box-shadow: none;
   z-index: 1000;
-  padding: 16px;
   display: none; /* still controlled by JS */
   display: flex;
   flex-direction: column;

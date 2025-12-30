@@ -2598,21 +2598,65 @@ async function saveRules() {
 }
 
 function renderRulesPreview(md) {
-  const raw = window.marked && marked.parse ? marked.parse(md || '') : (md || '');
-  const clean = window.DOMPurify ? DOMPurify.sanitize(raw) : raw;
+  // Use marked to parse markdown with GFM and single-line breaks enabled if available
+  let rawHtml = md || '';
+  if (window.marked) {
+    // prefer marked.parse but fallback to marked(fn)
+    const parser = typeof marked.parse === 'function' ? marked.parse : marked;
+    try {
+      rawHtml = parser(md || '', {
+        gfm: true,
+        breaks: true, // preserve single newlines
+        smartLists: true,
+        smartypants: true
+      });
+    } catch (e) {
+      // fallback parse without options
+      rawHtml = parser(md || '');
+    }
+  }
+
+  // sanitize but allow common formatting plus <u> for underline
+  const allowedTags = [
+    'b','i','em','strong','a','p','ul','ol','li','br',
+    'h1','h2','h3','h4','h5','h6','code','pre','u','blockquote'
+  ];
+  const allowedAttrs = ['href','target','rel','title'];
+
+  const clean = window.DOMPurify
+    ? DOMPurify.sanitize(rawHtml, { ALLOWED_TAGS: allowedTags, ALLOWED_ATTR: allowedAttrs })
+    : rawHtml;
+
   const preview = document.getElementById('rulesPreview');
-  if (preview) preview.innerHTML = clean;
+  if (!preview) return;
+
+  preview.innerHTML = clean;
+
+  // Ensure links open safely in a new tab
+  preview.querySelectorAll('a').forEach((a) => {
+    a.setAttribute('target', '_blank');
+    a.setAttribute('rel', 'noopener noreferrer');
+  });
 }
 
 function setupRulesEditor() {
   const editor = document.getElementById('rulesEditor');
   if (!editor) return;
+
+  // Configure marked globally if available
+  if (window.marked && typeof marked.setOptions === 'function') {
+    marked.setOptions({ gfm: true, breaks: true, smartLists: true, smartypants: true });
+  }
+
   // debounce preview updates
   let t = null;
   editor.addEventListener('input', () => {
     clearTimeout(t);
     t = setTimeout(() => renderRulesPreview(editor.value), 200);
   });
+
+  // initial render
+  renderRulesPreview(editor.value || '');
 }
 
 // Bind UI elements on DOM ready (handle already-fired DOMContentLoaded)

@@ -527,12 +527,21 @@ function showPuzzlePage() {
   renderCurrentRoom();
 }
 
-function showRulesPage() {
+async function showRulesPage() {
   // close leaderboard if open
   const lb = document.getElementById('leaderboard-modal') || document.querySelector('.leaderboard-modal'); if (lb) lb.style.display = 'none';
-  // load latest site rules (markdown) and render
-  if (typeof loadSiteRules === 'function') loadSiteRules();
-  document.getElementById("rules-page").style.display = "block";
+  const rulesPage = document.getElementById("rules-page");
+  if (!rulesPage) return;
+
+  // Load rules first, then reveal the modal to avoid flashing a "Loading" placeholder
+  try {
+    if (typeof loadSiteRules === 'function') await loadSiteRules();
+    rulesPage.style.display = "block";
+  } catch (err) {
+    console.error('Error loading rules for display:', err);
+    // still show the modal (loadSiteRules will set an error message)
+    rulesPage.style.display = "block";
+  }
 }
 
 // Load the site rules (markdown) from Firestore and render into the rules modal
@@ -583,14 +592,22 @@ function showForgotKeyForm() {
   document.getElementById("forgot-key-form").classList.remove("hidden");
 }
 
-function showIssuesPage() {
+async function showIssuesPage() {
   document.getElementById("auth-page").style.display = "none";
   document.getElementById("puzzle-page").style.display = "none";
   document.getElementById("rules-page").style.display = "none";
   const lb = document.getElementById('leaderboard-modal') || document.querySelector('.leaderboard-modal'); if (lb) lb.style.display = 'none';
-  document.getElementById("issues-page").style.display = "block";
-  loadAllIssues();
-  loadMyIssues();
+  const issuesPage = document.getElementById("issues-page");
+  if (!issuesPage) return;
+
+  try {
+    // Wait for the initial snapshot and any initial user-specific load to complete before revealing the page
+    await Promise.all([loadAllIssues(), loadMyIssues()]);
+  } catch (err) {
+    console.error('Error loading issues for display:', err);
+  }
+
+  issuesPage.style.display = "block";
 }
 
 async function registerTeam() {
@@ -1882,13 +1899,19 @@ function switchRoom(roomId) {
   renderCurrentRoom();
 }
 
-function showLeaderboard() {
+async function showLeaderboard() {
   // close rules panel if open
   const rules = document.getElementById("rules-page");
   if (rules) rules.style.display = "none";
   const el = document.getElementById("leaderboard-modal") || document.querySelector('.leaderboard-modal');
-  if (el) el.style.display = "block";
-  loadLeaderboard();
+  try {
+    await loadLeaderboard();
+    if (el) el.style.display = "block";
+  } catch (err) {
+    console.error('Error loading leaderboard for display:', err);
+    // show modal with error state if load failed
+    if (el) el.style.display = "block";
+  }
 }
 
 function closeLeaderboard() {
@@ -2073,78 +2096,94 @@ function submitIssue(e) {
 
 function loadAllIssues() {
   const list = document.getElementById("all-issues-list");
-  db.collection("issues").orderBy("timestamp", "desc")
-    .onSnapshot((snapshot) => {
-      if (snapshot.empty) {
-        list.innerHTML = "<p>No issues reported yet.</p>";
+  return new Promise((resolve) => {
+    const unsub = db.collection("issues").orderBy("timestamp", "desc")
+      .onSnapshot((snapshot) => {
+        if (snapshot.empty) {
+          list.innerHTML = "<p>No issues reported yet.</p>";
+          resolve();
+          return;
+        }
+        let html = "";
+        snapshot.forEach(doc => {
+          const issue = doc.data();
+          html += `<div class="issue-card">
+            <div class="issue-title">${issue.title}</div>
+            <div class="issue-meta">By <b>${issue.teamName || "anonymous"}</b> at <time>${new Date(issue.timestamp).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time></div>
+            <div>${issue.description}</div>
+            <div class="issue-status status-${issue.status}">Status: <b>${issue.status}</b></div>
+            ${issue.adminReply ? `<div class="issue-reply">Admin reply: ${issue.adminReply}</div>` : ""}
+          </div>`;
+        });
+        list.innerHTML = html;
+        resolve();
+      }, (err) => {
+        console.error('Issue listener error:', err);
+        showNotification('Failed to load issues: ' + (err.message || err), 'error', 4000, true);
+        list.innerHTML = '<p class="no-items">Unable to load issues.</p>';
+        resolve();
+      });
+
+    // keep unsubscribe function available if needed
+    if (window) window._issuesUnsubAll = unsub;
+  });
+}
+
+function loadMyIssues() {
+  const list = document.getElementById("my-issues-list");
+  if (!currentUser) return Promise.resolve();
+
+  return new Promise((resolve) => {
+    // We combine issues where teamId == currentUser.uid and any legacy ones that used teamEmail
+    const issuesMap = new Map();
+
+    const render = () => {
+      if (issuesMap.size === 0) {
+        list.innerHTML = "<p>No issues submitted yet.</p>";
         return;
       }
+      const all = Array.from(issuesMap.values()).sort((a,b) => b.timestamp - a.timestamp);
       let html = "";
-      snapshot.forEach(doc => {
-        const issue = doc.data();
+      all.forEach(issue => {
         html += `<div class="issue-card">
           <div class="issue-title">${issue.title}</div>
-          <div class="issue-meta">By <b>${issue.teamName || "anonymous"}</b> at <time>${new Date(issue.timestamp).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time></div>
+          <div class="issue-meta"><time>${new Date(issue.timestamp).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time></div>
           <div>${issue.description}</div>
           <div class="issue-status status-${issue.status}">Status: <b>${issue.status}</b></div>
           ${issue.adminReply ? `<div class="issue-reply">Admin reply: ${issue.adminReply}</div>` : ""}
         </div>`;
       });
       list.innerHTML = html;
-    }, (err) => {
-      console.error('Issue listener error:', err);
-      showNotification('Failed to load issues: ' + (err.message || err), 'error', 4000, true);
-      list.innerHTML = '<p class="no-items">Unable to load issues.</p>';
-    });
-}
+    };
 
-function loadMyIssues() {
-  const list = document.getElementById("my-issues-list");
-  if (!currentUser) return;
+    // live listener for teamId
+    const unsub = db.collection("issues").where("teamId", "==", currentUser.uid)
+      .onSnapshot((snapshot) => {
+        snapshot.forEach(doc => {
+          issuesMap.set(doc.id, doc.data());
+        });
+        render();
+        resolve();
+      }, (err) => {
+        console.error('My issues listener error:', err);
+        showNotification('Failed to load your issues: ' + (err.message || err), 'error', 4000, true);
+        list.innerHTML = '<p class="no-items">Unable to load your issues.</p>';
+        resolve();
+      });
 
-  // We combine issues where teamId == currentUser.uid and any legacy ones that used teamEmail
-  const issuesMap = new Map();
+    // keep unsubscribe available
+    if (window) window._issuesUnsubMine = unsub;
 
-  const render = () => {
-    if (issuesMap.size === 0) {
-      list.innerHTML = "<p>No issues submitted yet.</p>";
-      return;
+    // fetch any legacy issues identified by email (one-time)
+    if (currentUser.email) {
+      db.collection("issues").where("teamEmail", "==", currentUser.email).get().then(snapshot => {
+        snapshot.forEach(doc => {
+          issuesMap.set(doc.id, doc.data());
+        });
+        render();
+      }).catch(err => console.error("Error fetching legacy issues:", err));
     }
-    const all = Array.from(issuesMap.values()).sort((a,b) => b.timestamp - a.timestamp);
-    let html = "";
-    all.forEach(issue => {
-      html += `<div class="issue-card">
-        <div class="issue-title">${issue.title}</div>
-        <div class="issue-meta"><time>${new Date(issue.timestamp).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time></div>
-        <div>${issue.description}</div>
-        <div class="issue-status status-${issue.status}">Status: <b>${issue.status}</b></div>
-        ${issue.adminReply ? `<div class="issue-reply">Admin reply: ${issue.adminReply}</div>` : ""}
-      </div>`;
-    });
-    list.innerHTML = html;
-  };
-
-  // live listener for teamId
-  db.collection("issues").where("teamId", "==", currentUser.uid)
-    .onSnapshot((snapshot) => {
-      snapshot.forEach(doc => {
-        issuesMap.set(doc.id, doc.data());
-      });
-      render();
-    }, (err) => {
-      console.error('My issues listener error:', err);
-      showNotification('Failed to load your issues: ' + (err.message || err), 'error', 4000, true);
-    });
-
-  // fetch any legacy issues identified by email (one-time)
-  if (currentUser.email) {
-    db.collection("issues").where("teamEmail", "==", currentUser.email).get().then(snapshot => {
-      snapshot.forEach(doc => {
-        issuesMap.set(doc.id, doc.data());
-      });
-      render();
-    }).catch(err => console.error("Error fetching legacy issues:", err));
-  }
+  });
 }
 
 function init() {

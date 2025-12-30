@@ -66,10 +66,15 @@ async function loadTeamData() {
     if (teamDoc.exists) {
       currentTeam = teamDoc.data();
       currentTeam.id = teamDoc.id;
-      document.getElementById("team-info").textContent =
-        `Team: ${currentTeam.name}`;
-      const acct = document.getElementById('current-account');
-      if (acct) acct.textContent = currentTeam.name || '';
+
+      // update visible account/team labels if elements exist
+      const teamInfoEl = document.getElementById('team-info');
+      if (teamInfoEl) {
+        teamInfoEl.textContent = `Team: ${currentTeam.name}`;
+      } else {
+        const acct = document.getElementById('current-account');
+        if (acct) acct.textContent = currentTeam.name || '';
+      }
       // apply saved theme from team settings
       if (currentTeam.theme === 'dark') document.body.classList.add('dark');
       else document.body.classList.remove('dark');
@@ -2019,6 +2024,10 @@ function loadAllIssues() {
         </div>`;
       });
       list.innerHTML = html;
+    }, (err) => {
+      console.error('Issue listener error:', err);
+      showNotification('Failed to load issues: ' + (err.message || err), 'error', 4000, true);
+      list.innerHTML = '<p class="no-items">Unable to load issues.</p>';
     });
 }
 
@@ -2055,6 +2064,9 @@ function loadMyIssues() {
         issuesMap.set(doc.id, doc.data());
       });
       render();
+    }, (err) => {
+      console.error('My issues listener error:', err);
+      showNotification('Failed to load your issues: ' + (err.message || err), 'error', 4000, true);
     });
 
   // fetch any legacy issues identified by email (one-time)

@@ -2445,7 +2445,10 @@ function loadAdminIssues() {
         active.push(entry);
       }
     });
-
+  }, (err) => {
+    console.error('Admin issues listener error:', err);
+    list.innerHTML = '<p class="no-items">Unable to load admin issues.</p>';
+  });
     list.innerHTML = "";
 
     const appendIssue = (entry) => {

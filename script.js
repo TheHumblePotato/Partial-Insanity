@@ -498,6 +498,8 @@ function showPuzzlePage() {
 }
 
 function showRulesPage() {
+  // close leaderboard if open
+  const lb = document.getElementById('leaderboard-modal') || document.querySelector('.leaderboard-modal'); if (lb) lb.style.display = 'none';
   document.getElementById("rules-page").style.display = "block";
 }
 
@@ -1824,6 +1826,9 @@ function switchRoom(roomId) {
 }
 
 function showLeaderboard() {
+  // close rules panel if open
+  const rules = document.getElementById("rules-page");
+  if (rules) rules.style.display = "none";
   const el = document.getElementById("leaderboard-modal") || document.querySelector('.leaderboard-modal');
   if (el) el.style.display = "block";
   loadLeaderboard();

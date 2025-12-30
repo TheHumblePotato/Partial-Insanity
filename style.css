@@ -773,7 +773,7 @@ body.dark .submit-btn { background: linear-gradient(90deg,#1d4ed8,#2563eb); bord
 .cleared-rooms-dropdown.open .dropdown-content { display: block; }
 
 .dropdown-content button { width: 100%; text-align: left; padding: 10px 12px; border: none; background: transparent; cursor: pointer; color: var(--text); }
-}
+
 
 .dropdown-content button:hover {
   background: #f0f0f0;
@@ -832,10 +832,6 @@ body.dark .hint-item { background: linear-gradient(180deg,#081827,#071025); colo
 body.dark .hint-text { background: transparent; color: var(--text); border-left: 3px solid rgba(96,165,250,0.18); padding-left: 10px; }
 body.dark .hint-counter { background: rgba(255,255,255,0.03); color: var(--text); padding: 6px 8px; border-radius: 6px; }
 
-/* ensure problem marker is non-emoji for both modes */
-.hint-problem::before { content: "?"; }
-
-
 /* Dark mode issue card */
 body.dark .issue-card { background: var(--panel-bg); border: 1px solid rgba(255,255,255,0.04); color: var(--text); box-shadow: none; }
 body.dark .issue-card .issue-reply { background: var(--panel-bg); border: 1px solid rgba(255,255,255,0.04); }
@@ -860,10 +856,6 @@ body.dark #issues-page input::placeholder, body.dark #issue-form input::placehol
 body.dark .hint-problem { color: var(--text); }
 body.dark .hint-item, body.dark .hint-text { color: var(--text); }
 body.dark .hint-text.visible { color: var(--text); }
-
-  align-items: center;
-  gap: 8px;
-}
 
 .hint-problem::before {
   content: "?";
@@ -1023,7 +1015,7 @@ body.dark .lock-answer-label { color: var(--text); }
 body.dark .lock-answer-input { background: #06202b; color: var(--text); border: 1px solid rgba(255,255,255,0.06); box-shadow: none; }
 body.dark .lock-answer-input:focus { background: #04202a; border-color: rgba(96,165,250,0.36); box-shadow: 0 0 0 4px rgba(96,165,250,0.12); }
 body.dark .lock-answer-input::placeholder { color: rgba(255,255,255,0.45); }
-}
+
 
 .lock-answer-input {
   flex: 1;
@@ -1819,7 +1811,7 @@ body.dark .current-team { color: var(--text) !important; background-color: rgba(
   border-radius: 0;
   box-shadow: none; /* remove box shadow */
   padding: 0;
-  max-width: 100%;
+  max-width: 920px;
   margin: 0 auto 8px auto;
   border-bottom: 1px solid rgba(15,23,42,0.06); /* separator */
   padding-bottom: 12px;

@@ -537,15 +537,26 @@ function showRulesPage() {
 
 // Load the site rules (markdown) from Firestore and render into the rules modal
 async function loadSiteRules() {
+  const el = document.getElementById('rules-content');
+  if (!el) return;
+  // show a quick loading placeholder
+  el.innerHTML = '<div class="rules-loading">Loading rules…</div>';
+
   try {
     const doc = await db.collection('site').doc('rules').get();
     const data = doc.exists ? doc.data() : { markdown: '' };
+
+    if (!data || !data.markdown) {
+      el.innerHTML = '<p>No rules have been published yet.</p>';
+      return;
+    }
+
     const raw = window.marked && marked.parse ? marked.parse(data.markdown || '') : (data.markdown || '');
     const clean = window.DOMPurify ? DOMPurify.sanitize(raw) : raw;
-    const el = document.getElementById('rules-content');
-    if (el) el.innerHTML = clean;
+    el.innerHTML = clean;
   } catch (err) {
     console.error('Failed to load site rules:', err);
+    el.innerHTML = '<p>Failed to load rules. Please try again later.</p>';
   }
 }
 

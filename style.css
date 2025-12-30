@@ -593,6 +593,8 @@ body.dark .submit-btn { background: linear-gradient(90deg,#1d4ed8,#2563eb); bord
 }
 
 .rules-modal { display: block; background: rgba(0,0,0,0.45); padding: 28px 0; }
+.rules-modal .modal-content { max-height: 80vh; overflow-y: auto; padding: 24px; }
+.rules-loading { color: var(--muted); font-style: italic; padding: 8px 0; }
 
 .rules-page h1 {
   color: #333;

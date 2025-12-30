@@ -540,13 +540,15 @@ body.dark .submit-btn { background: linear-gradient(90deg,#1d4ed8,#2563eb); bord
 }
 
 .btn-primary {
-  background: #2563eb;
+  background-color: #2563eb; /* flat brand color */
+  background-image: none; /* ensure no gradient */
   color: white;
+  box-shadow: none; /* flat appearance */
+  border: 1px solid rgba(2,6,23,0.06);
 }
 
 .btn-primary:hover {
-  background: #1e40af;
-  transform: translateY(-1px);
+  background-color: #1e40af;
 }
 
 .btn-secondary {

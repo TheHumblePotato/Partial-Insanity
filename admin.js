@@ -1356,11 +1356,17 @@ async function savePuzzle() {
   }
 
   const media = Array.from(document.querySelectorAll(".media-item")).map(
-    (item) => ({
-      type: item.dataset.type,
-      url: item.dataset.url,
-      order: Array.from(item.parentNode.children).indexOf(item),
-    }),
+    (item) => {
+      let url = item.dataset.url || "";
+      if (!/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(url)) {
+        url = `https://thehumblepotato.github.io/Partial-Insanity/${url.replace(/^\/+/, "")}`;
+      }
+      return {
+        type: item.dataset.type,
+        url,
+        order: Array.from(item.parentNode.children).indexOf(item),
+      };
+    },
   );
 
   puzzle.media = media;
@@ -1675,8 +1681,16 @@ function addMedia() {
     return;
   }
 
+  // If the user provided a relative path (no scheme), auto-prefix the public hosting base
+  let finalUrl = url;
+  if (!/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(url)) {
+    const trimmed = url.replace(/^\/+/, "");
+    finalUrl = `https://thehumblepotato.github.io/Partial-Insanity/${trimmed}`;
+    showAdminMessage("Auto-prefixed media URL: " + finalUrl);
+  }
+
   try {
-    new URL(url);
+    new URL(finalUrl);
   } catch (e) {
     showAdminError("Please enter a valid URL");
     return;
@@ -1689,7 +1703,7 @@ function addMedia() {
   mediaItem.className = "media-item";
   mediaItem.id = mediaId;
   mediaItem.dataset.type = type;
-  mediaItem.dataset.url = url;
+  mediaItem.dataset.url = finalUrl;
 
   let previewContent = "";
   if (type === "pdf") {
@@ -1697,7 +1711,7 @@ function addMedia() {
   } else if (type === "sheet") {
     previewContent = `<i class="fas fa-table" style="font-size: 40px; color: #2ecc71; display: block; text-align: center;"></i>`;
   } else {
-    previewContent = `<img src="${url}" onerror="this.parentNode.remove()" style="max-width: 100px; max-height: 80px;">`;
+    previewContent = `<img src="${finalUrl}" onerror="this.parentNode.remove()" style="max-width: 100px; max-height: 80px;">`;
   }
 
   mediaItem.innerHTML = `

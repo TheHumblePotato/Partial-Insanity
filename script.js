@@ -15,6 +15,18 @@ const rtdb = firebase.database();
 
 const SECURITY_SALT = "partial-insanity-salt";
 let currentUser = null;
+
+// Decrypt answers (mirrors admin.js). Keep this here so puzzle pages can decrypt stored answers.
+function decryptAnswer(encryptedAnswer) {
+  try {
+    return CryptoJS.AES.decrypt(encryptedAnswer, SECURITY_SALT).toString(
+      CryptoJS.enc.Utf8,
+    );
+  } catch (e) {
+    console.error("Decryption error:", e);
+    return "";
+  }
+}
 let currentTeam = null;
 let currentRoom = "the_start";
 let currentPuzzle = null;

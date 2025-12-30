@@ -2469,7 +2469,7 @@ function loadAdminIssues() {
         <div class="admin-issue-header">
           <strong class="issue-title">${issue.title}</strong>
           <div class="issue-meta">by <b>${issue.teamName || "anonymous"}</b> — <time>${new Date(issue.timestamp).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time></div>
-          <input type="checkbox" class="issue-resolved-toggle" title="Mark resolved" ${issue.status==='resolved'?'checked':''} onclick="(e=>{ e.stopPropagation(); updateIssueStatus('${id}', this.checked ? 'resolved' : 'open') })(event)">
+          <input type="checkbox" class="issue-resolved-toggle" title="Mark resolved" ${issue.status==='resolved'?'checked':''} onclick="event.stopPropagation(); updateIssueStatus('${id}', this.checked ? 'resolved' : 'open')">
         </div>
         <div class="issue-body">${issue.description}</div>
         <div class="issue-controls">

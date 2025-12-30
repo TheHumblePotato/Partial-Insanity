@@ -42,17 +42,18 @@ body.dark {
   --text: #e6eef8;
   --muted: #94a3b8;
   --accent: #60a5fa;
-  --card-bg: rgba(255,255,255,0.02);
-  --panel-bg: rgba(10,14,24,0.7);
-  --puzzle-bg: rgba(255,255,255,0.02);
-  --puzzle-border: rgba(255,255,255,0.06);
-}
+  --card-bg: #071025; /* solid dark card */
+  --panel-bg: #071025; /* solid panel for full contrast */
+  --puzzle-bg: #071025; /* solid puzzle background */
+  --puzzle-border: rgba(255,255,255,0.12);
+} 
 
 body.dark .puzzle-item {
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.04);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
-}
+  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--puzzle-bg);
+  box-shadow: none; /* cleaner, higher contrast */
+  color: #e6eef8;
+} 
 
 .container { transition: background 0.35s ease, color 0.25s ease; }
 
@@ -78,16 +79,20 @@ body.dark .nav-room { color: #d1d9e6; background: rgba(255,255,255,0.02); border
 body.dark .nav-room.cleared { opacity: 0.5; color: #9aa6bd; }
 body.dark .nav-room.current { border: 1px solid var(--accent); box-shadow: 0 8px 18px rgba(0,0,0,0.6); }
 
-body.dark .btn-primary { background: #2563eb; color: white; border: 1px solid rgba(255,255,255,0.08); }
+body.dark .btn-primary { background: #1d4ed8; color: white; border: 1px solid rgba(255,255,255,0.12); box-shadow: none; }
 
-body.dark .puzzle-item { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.04); color: #dbe9ff; }
+/* make general buttons more prominent in dark mode */
+body.dark .btn, body.dark .btn-secondary, body.dark .hint-reveal-btn, body.dark .nav-btn { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.10); color: var(--text); }
+
+body.dark .puzzle-item { background: var(--puzzle-bg); border: 1px solid rgba(255,255,255,0.12); color: #e6eef8; box-shadow: none; }
 body.dark .puzzle-title { color: #e6eef8; }
 body.dark .puzzle-type { color: #94a3b8; }
 
 /* puzzle viewer and answer UI */
 body.dark .modal-content { background: var(--panel-bg); color: var(--text); }
-body.dark .answer-section { background: rgba(255,255,255,0.02); border-top: 1px solid rgba(255,255,255,0.03); }
-body.dark .answer-input { background: rgba(255,255,255,0.03); color: var(--text); border: 1px solid rgba(255,255,255,0.04); }
+body.dark .answer-section { background: var(--panel-bg); border-top: 1px solid rgba(255,255,255,0.08); }
+body.dark .answer-input { background: #05101a; color: var(--text); border: 1px solid rgba(255,255,255,0.12); }
+body.dark .guess-counter { color: var(--text); }
 
 /* Make issue cards darker in dark mode */
 body.dark .issue-card { background: linear-gradient(180deg, rgba(10,14,24,0.72), rgba(8,10,18,0.8)); border: 1px solid rgba(255,255,255,0.04); }
@@ -124,8 +129,8 @@ body.dark .issue-card .issue-meta { color: #9aa6bd; }
 .topbar .nav-right { display: flex; gap: 8px; align-items:center; }
 
 /* dark mode nav buttons */
-body.dark .nav-btn { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); color: var(--text); }
-body.dark .nav-btn:hover { background: rgba(255,255,255,0.06); }
+body.dark .nav-btn { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: var(--text); }
+body.dark .nav-btn:hover { background: rgba(255,255,255,0.12); }
 
 .topbar .current-account { font-weight: 600; color: var(--text); margin-left: 8px; background: rgba(255,255,255,0.03); padding: 6px 8px; border-radius: 8px; }
 .nav-btn { background: transparent; border: 1px solid rgba(15,23,42,0.06); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
@@ -278,6 +283,10 @@ body.dark .nav-btn:hover { background: rgba(255,255,255,0.06); }
   background-color: rgba(0, 0, 0, 0.8);
 }
 
+/* In dark mode we want modal overlays to be fully solid (no translucency) for maximum contrast */
+body.dark .modal { background-color: #000 !important; }
+
+
 .modal-content {
   position: relative;
   margin: 2% auto;
@@ -396,7 +405,7 @@ body.dark #leaderboard-table th, body.dark #leaderboard-table td { color: var(--
 
 .submit-btn {
   padding: 10px 20px;
-  background: #007bff;
+  background: #1d4ed8; /* solid, no gradient */
   color: white;
   border: none;
   border-radius: 5px;
@@ -404,8 +413,11 @@ body.dark #leaderboard-table th, body.dark #leaderboard-table td { color: var(--
 }
 
 .submit-btn:hover {
-  background: #0056b3;
+  background: #153e9a;
 }
+
+body.dark .submit-btn { background: #2563eb; border: 1px solid rgba(255,255,255,0.12); box-shadow: none; }
+
 
 .nav-buttons {
   margin-bottom: 20px;
@@ -775,9 +787,13 @@ body.dark #leaderboard-table th, body.dark #leaderboard-table td { color: var(--
 }
 
 /* Dark mode hints: solid dark backgrounds and darker text */
-body.dark .hint-item { background: var(--panel-bg); color: var(--text); border: 1px solid rgba(255,255,255,0.04); }
-body.dark .hint-text { background: var(--panel-bg); color: var(--text); border-left: 3px solid rgba(255,255,255,0.06); }
-body.dark .hint-counter { background: rgba(255,255,255,0.02); color: var(--text); }
+body.dark .hint-item { background: #071025; color: var(--text); border: 1px solid rgba(255,255,255,0.06); }
+body.dark .hint-text { background: #071025; color: var(--text); border-left: 3px solid rgba(255,255,255,0.08); }
+body.dark .hint-counter { background: #071025; color: var(--text); }
+
+/* ensure problem marker is non-emoji for both modes */
+.hint-problem::before { content: "?"; }
+
 
 /* Dark mode issue card */
 body.dark .issue-card { background: var(--panel-bg); border: 1px solid rgba(255,255,255,0.04); color: var(--text); box-shadow: none; }
@@ -1144,7 +1160,7 @@ body.dark .puzzle-viewer-header { background: #071022; box-shadow: 0 2px 10px rg
 body.dark .answer-box, body.dark .hint-box { background: #071025; color: var(--text); box-shadow: none; border: 1px solid rgba(255,255,255,0.04); }
 body.dark .puzzle-viewer-image, body.dark .pdf-iframe { background: rgba(255,255,255,0.02); box-shadow: none; }
 body.dark .close-box { background: rgba(255,255,255,0.03); color: var(--text); box-shadow: none; }
-body.dark .puzzle-viewer-actions .btn { background: #0b1220; color: var(--text); border: 1px solid rgba(255,255,255,0.06); }
+body.dark .puzzle-viewer-actions .btn { background: #071025; color: var(--text); border: 1px solid rgba(255,255,255,0.12); }
 
 /* make check answer/hint controls darker */
 .answer-box input, .answer-box button, .hint-box button { color: var(--text); }
@@ -1534,15 +1550,22 @@ body.dark .notification-event-alert { background: rgba(10,14,24,0.85); color: va
   width: 90%;
   max-width: 1100px;
   height: 76vh;
-  background: var(--card-bg);
+  background: transparent; /* remove page-like overlay - keep inner content visible */
   border-radius: 10px;
-  box-shadow: 0 20px 60px rgba(2,6,23,0.12);
+  box-shadow: none;
   z-index: 1000;
   padding: 16px;
   display: none; /* still controlled by JS */
   display: flex;
   flex-direction: column;
 }
+
+/* Use the inner modal-content as the visible panel */
+.leaderboard-modal .modal-content { background: var(--card-bg); border-radius: 10px; box-shadow: 0 20px 60px rgba(2,6,23,0.12); }
+
+/* Dark mode: keep overlay transparent and panel in dark bg */
+body.dark .leaderboard-modal { background: transparent; }
+body.dark .leaderboard-modal .modal-content { background: var(--panel-bg); color: var(--text); box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
 
 .leaderboard-modal .modal-content {
   height: 100%;
@@ -1853,12 +1876,12 @@ body.dark #leaderboard-table tr:hover { background: rgba(255,255,255,0.03); }
 }
 
 /* Issues page specific tweaks (full-width and centered headers) */
-#issues-page { display: none; background: transparent; padding: 36px 8px 80px 8px; border-radius: 8px; max-width: 100%; min-height: calc(100vh - 140px); position: relative; }
+#issues-page { display: none; background: transparent; padding: 36px 8px 80px 8px; border-radius: 8px; max-width: 100%; min-height: calc(100vh - 140px); position: relative; box-shadow: none; }
 #issues-page h2, #issues-page h3 { text-align: center; color: var(--text); margin-bottom: 8px; font-size: 1.25rem; }
-#issue-form { max-width: 920px; margin: 8px auto 18px; }
+/* Make issue form width consistent with the lists */
+#issue-form { max-width: 920px; margin: 6px auto 18px; display: block; }
 #close-issues-btn { position: absolute; right: 12px; top: 12px; }
 #all-issues-list, #my-issues-list { max-width: 920px; margin: 18px auto; }
-#issue-form { max-width: 920px; margin: 0 auto 12px auto; display: block; }
 #issue-form input[type="text"], #issue-form textarea { width: 100%; box-sizing: border-box; }
 .issue-card .issue-meta { font-size: 0.95rem; color: var(--muted); }
 
@@ -1866,6 +1889,10 @@ body.dark #leaderboard-table tr:hover { background: rgba(255,255,255,0.03); }
 .issue-meta time { font-size: 0.95rem; color: var(--muted); }
 
 #issue-success { margin-top: 12px; }
+
+/* Brighter status badges */
+.issue-card .issue-status.status-open { color: #92400e; background: rgba(245,158,11,0.28); font-weight: 800; padding: 6px 10px; border-radius: 6px; }
+.issue-card .issue-status.status-fixed, .issue-card .issue-status.status-resolved { color: #065f46; background: rgba(16,185,129,0.28); font-weight: 800; padding: 6px 10px; border-radius: 6px; }
 
 #issue-form {
   max-width: 920px;

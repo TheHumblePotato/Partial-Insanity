@@ -757,6 +757,9 @@ body.dark .submit-btn { background-color: #1e40af; border: 1px solid rgba(96,165
 
 .notification-message {
   flex: 1;
+  display: block; /* ensure block height rather than collapsed inline */
+  line-height: 1.4; /* make text readable and prevent zero-height spans */
+  min-height: 1.2em; /* small minimum height so empty spans still occupy space */
 }
 
 .notification-close {

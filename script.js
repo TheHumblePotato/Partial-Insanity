@@ -813,7 +813,9 @@ async function renderCurrentRoom() {
 
   // detect overflow and switch to dropdown if needed (show dropdown only when nav overflows)
   setTimeout(() => {
-    const shouldOverflow = navGroup.scrollWidth > navGroup.clientWidth - 80;
+    // measure the inline container itself and allow a small breathing room before switching
+    const availableWidth = navGroup.clientWidth - 40; // 40px buffer for buttons/margins
+    const shouldOverflow = inlineContainer.scrollWidth > availableWidth;
     const clearedDropdown = document.querySelector('.cleared-rooms-dropdown');
     if (shouldOverflow && Object.keys(roomData || {}).length > 0) {
       inlineContainer.style.display = 'none';

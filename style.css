@@ -344,7 +344,7 @@ body.dark .modal { background-color: rgba(0,0,0,0.55) !important; }
 
 /* Make leaderboard a popup without a full-screen dark overlay in dark mode */
 body.dark .leaderboard-modal { background: transparent !important; }
-body.dark .leaderboard-modal .modal-content { box-shadow: 0 30px 80px rgba(0,0,0,0.6); border-radius: 12px; border: 1px solid rgba(255,255,255,0.04); }
+body.dark .leaderboard-modal .modal-content { border-radius: 12px; border: 1px solid rgba(255,255,255,0.04); }
 body.dark #leaderboard-table thead th { background: rgba(255,255,255,0.02); }
 
 /* Darken leaderboard table rows and panel background while keeping text readable */
@@ -413,7 +413,7 @@ body.dark .rules-modal-content { box-shadow: 0 18px 40px rgba(0,0,0,0.6); }
 
 /* ensure modal panels adapt in dark mode */
 body.dark .modal-content { background: var(--panel-bg); box-shadow: 0 18px 40px rgba(0,0,0,0.6); color: var(--text); }
-body.dark .leaderboard-modal, body.dark .rules-modal-content { background: var(--panel-bg); color: var(--text); }
+body.dark .leaderboard-modal, body.dark .rules-modal-content { background: var(--panel-bg); color: var(--text); top: 10%;}
 
 /* ensure table rows and headings adapt */
 body.dark #leaderboard-table th, body.dark #leaderboard-table td { color: var(--text); border-bottom: 1px solid rgba(255,255,255,0.04); }
@@ -1615,14 +1615,13 @@ body.dark .notification-event-alert { background: rgba(10,14,24,0.85); color: va
 
 /* Dark mode: keep overlay transparent and panel in dark bg */
 body.dark .leaderboard-modal { background: rgba(0,0,0,0.6); }
-body.dark .leaderboard-modal .modal-content { box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
 
 /* Dark mode ranking adjustments (muted, more compatible) */
 body.dark .rank-1 { background: linear-gradient(135deg,#b8860b 0%, #8c6b14 100%) !important; color: var(--text) !important; }
 body.dark .rank-1 .medal-icon { background: #b8860b; color: #071025; }
 body.dark .rank-2 { background: linear-gradient(135deg,#8f8f8f 0%, #6f6f6f 100%) !important; color: var(--text) !important; }
 body.dark .rank-3 { background: linear-gradient(135deg,#8c5b31 0%, #6f4a2a 100%) !important; color: var(--text) !important; }
-body.dark .leaderboard-modal .modal-content { background: var(--panel-bg); color: var(--text); box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+body.dark .leaderboard-modal .modal-content { background: var(--panel-bg); color: var(--text); }
 
 .leaderboard-modal .modal-content {
   height: 100%;
@@ -1651,7 +1650,7 @@ body.dark .leaderboard-modal .modal-content { background: var(--panel-bg); color
 }
 
 /* Dark mode for leaderboard */
-body.dark .leaderboard-modal { background: var(--panel-bg); color: var(--text); box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+body.dark .leaderboard-modal { background: var(--panel-bg); color: var(--text); }
 body.dark #leaderboard-table thead th { background: rgba(255,255,255,0.02); color: var(--text); }
 body.dark #leaderboard-table tr:hover { background: rgba(255,255,255,0.03); }
 

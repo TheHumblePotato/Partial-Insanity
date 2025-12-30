@@ -2021,10 +2021,13 @@ async function loadLeaderboard() {
       if (b.roomsCleared !== a.roomsCleared) {
         return b.roomsCleared - a.roomsCleared;
       }
-      if (b.puzzlesSolved !== a.puzzlesSolved) {
-        return b.puzzlesSolved - a.puzzlesSolved;
+      // earlier lastSolveTime is better. Treat missing/zero as Infinity so 'Never' sorts last.
+      const aTime = (typeof a.lastSolveTime === 'number' && a.lastSolveTime > 0) ? a.lastSolveTime : Number.POSITIVE_INFINITY;
+      const bTime = (typeof b.lastSolveTime === 'number' && b.lastSolveTime > 0) ? b.lastSolveTime : Number.POSITIVE_INFINITY;
+      if (aTime !== bTime) {
+        return aTime - bTime;
       }
-      return (b.lastSolveTime || 0) - (a.lastSolveTime || 0);
+      return 0;
     });
 
     // Calculate and display stats

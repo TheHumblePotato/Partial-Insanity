@@ -766,44 +766,56 @@ async function renderCurrentRoom() {
   const clearedRooms = teamProgress.clearedRooms || [];
   const unlockedRooms = teamProgress.unlockedRooms || ["the_start"];
 
-  // inline cleared rooms (grayed) followed by the current room (highlighted)
+  // inline list: show ALL rooms (cleared, unlocked, current) unless overflow
   const inlineContainer = document.createElement('div');
   inlineContainer.className = 'room-inline-list';
 
-  clearedRooms.forEach((rid) => {
+  const allRoomIds = Object.keys(roomData || {});
+  allRoomIds.forEach((rid) => {
     const rb = document.createElement('button');
-    rb.className = 'nav-room cleared';
-    rb.textContent = roomData[rid]?.name || rid;
-    rb.onclick = () => switchRoom(rid);
+    rb.className = 'nav-room';
+
+    const isCleared = clearedRooms.includes(rid);
+    const isUnlocked = unlockedRooms.includes(rid);
+    const isCurrent = rid === currentRoom;
+
+    if (isCleared) rb.classList.add('cleared');
+
+    if (isCurrent) {
+      rb.classList.add('current');
+      rb.textContent = roomData[rid]?.name || rid;
+      rb.disabled = true;
+    } else if (!isUnlocked) {
+      rb.classList.add('locked');
+      rb.disabled = true;
+      rb.textContent = roomData[rid]?.name || rid;
+    } else {
+      rb.textContent = roomData[rid]?.name || rid;
+      rb.onclick = () => switchRoom(rid);
+    }
+
     inlineContainer.appendChild(rb);
   });
 
-  const curBtn = document.createElement('button');
-  curBtn.className = 'nav-room current';
-  curBtn.textContent = room.name || currentRoom;
-  curBtn.disabled = true;
-  inlineContainer.appendChild(curBtn);
-
-  unlockedRooms
-    .filter((roomId) => roomId !== currentRoom && !clearedRooms.includes(roomId))
-    .forEach((roomId) => inlineContainer.appendChild(createRoomButton(roomId)));
-
   navGroup.appendChild(inlineContainer);
 
-  // populate dropdown (fallback for overflow)
+  // populate dropdown (fallback for overflow) with all rooms for easy navigation
   const dropdown = document.querySelector('.cleared-rooms-dropdown .dropdown-content');
-  dropdown.innerHTML = clearedRooms
+  dropdown.innerHTML = Object.keys(roomData || {})
     .map((roomId) => {
-      const room = roomData[roomId];
-      return `<button onclick="switchRoom('${roomId}')">${room?.name || roomId}</button>`;
+      const rd = roomData[roomId] || {};
+      const labels = [];
+      if (clearedRooms.includes(roomId)) labels.push('Cleared');
+      if (roomId === currentRoom) labels.push('Current');
+      return `<button onclick="switchRoom('${roomId}')">${rd.name || roomId}${labels.length ? ' — ' + labels.join(', ') : ''}</button>`;
     })
     .join('');
 
-  // detect overflow and switch to dropdown if needed
+  // detect overflow and switch to dropdown if needed (show dropdown only when nav overflows)
   setTimeout(() => {
     const shouldOverflow = navGroup.scrollWidth > navGroup.clientWidth - 80;
     const clearedDropdown = document.querySelector('.cleared-rooms-dropdown');
-    if (shouldOverflow && clearedRooms.length > 0) {
+    if (shouldOverflow && Object.keys(roomData || {}).length > 0) {
       inlineContainer.style.display = 'none';
       if (clearedDropdown) clearedDropdown.style.display = 'inline-block';
     } else {
@@ -1400,6 +1412,15 @@ async function revealHint(hintIndex) {
     }
 
     teamProgress.viewedHints = teamProgress.viewedHints || [];
+    // Enforce daily limit for teams competing on the leaderboard
+    const isCompeting = currentTeam ? !currentTeam.leaderboardOptOut : true;
+    const todayKey = new Date().toISOString().split('T')[0];
+    teamProgress.hintDaily = teamProgress.hintDaily || {};
+    const todaysCount = teamProgress.hintDaily[todayKey] || 0;
+    if (isCompeting && todaysCount >= 1) {
+      showNotification("Teams competing on the leaderboard are limited to 1 hint per day.", "error");
+      return;
+    }
 
     if (teamProgress.viewedHints.length >= 10) {
       showNotification("You have reached the maximum of 10 hints!", "error");
@@ -1408,6 +1429,13 @@ async function revealHint(hintIndex) {
 
     if (!teamProgress.viewedHints.includes(hint.text)) {
       teamProgress.viewedHints.push(hint.text);
+      // Track daily usage count under a separate structure to preserve admin per-puzzle hint data
+      teamProgress.hintDaily = teamProgress.hintDaily || {};
+      teamProgress.hintDaily[todayKey] = (teamProgress.hintDaily[todayKey] || 0) + 1;
+      // Also keep per-puzzle hint records for admin reporting (maintains backwards compatibility)
+      teamProgress.hintUsage = teamProgress.hintUsage || {};
+      teamProgress.hintUsage[currentPuzzle] = teamProgress.hintUsage[currentPuzzle] || [];
+      teamProgress.hintUsage[currentPuzzle].push({ text: hint.text, time: Date.now() });
       await db.collection("progress").doc(currentUser.uid).set(teamProgress);
 
       const hintItems = document.querySelectorAll(".hint-item");
@@ -1639,26 +1667,35 @@ async function handleCorrectAnswer(puzzleId) {
 
     const room = roomData[roomId];
     if (room.clearUnlock) {
-      const unlockType = room.clearUnlock.type;
-      const unlockId = room.clearUnlock.id;
+      // support either a string like "room:roomId" or an object {type, id}
+      let unlockType = "";
+      let unlockId = "";
+      if (typeof room.clearUnlock === "string") {
+        [unlockType, unlockId] = room.clearUnlock.split(":");
+      } else {
+        unlockType = room.clearUnlock?.type || "";
+        unlockId = room.clearUnlock?.id || "";
+      }
 
-      if (
-        unlockType === "room" &&
-        !teamProgress.unlockedRooms.includes(unlockId)
-      ) {
-        teamProgress.unlockedRooms.push(unlockId);
-        unlockedNewContent[unlockId] = roomId;
-      } else if (
-        unlockType === "puzzle" &&
-        !teamProgress.solvedPuzzles.includes(unlockId)
-      ) {
-        teamProgress.solvedPuzzles.push(unlockId);
-        showNotification(
-          `Puzzle "${
-            puzzleData[unlockId]?.name || unlockId
-          }" automatically solved!`,
-          "success",
-        );
+      if (!unlockType || !unlockId) {
+        console.warn("Invalid clearUnlock configuration for room", roomId, room.clearUnlock);
+      } else {
+        if (unlockType === "room") {
+          if (!teamProgress.unlockedRooms.includes(unlockId)) {
+            teamProgress.unlockedRooms.push(unlockId);
+            unlockedNewContent[unlockId] = roomId;
+            showNotification(`Room "${roomData[unlockId]?.name || unlockId}" unlocked!`, "success");
+          }
+        } else if (unlockType === "puzzle") {
+          if (!teamProgress.solvedPuzzles.includes(unlockId)) {
+            teamProgress.solvedPuzzles.push(unlockId);
+            teamProgress.lastSolveTime = Date.now();
+            unlockedNewContent[unlockId] = roomId;
+            showNotification(`Puzzle "${puzzleData[unlockId]?.name || unlockId}" automatically solved!`, "success");
+          }
+        } else {
+          console.warn("Unknown clearUnlock type", unlockType, room.clearUnlock);
+        }
       }
     }
 
@@ -1958,19 +1995,25 @@ async function loadLeaderboard() {
       if (progressDoc.exists) {
         const progressData = progressDoc.data();
 
-        teams.push({
-          id: teamDoc.id,
-          name: teamData.name,
-          leaderboardOptOut: teamData.leaderboardOptOut || false,
-          roomsCleared: progressData.clearedRooms
-            ? progressData.clearedRooms.length
-            : 0,
-          puzzlesSolved: progressData.solvedPuzzles
-            ? progressData.solvedPuzzles.length
-            : 0,
-          lastSolveTime: progressData.lastSolveTime || 0,
-          progress: progressData,
-        });
+        // determine a current room for this team (first unlocked but not cleared, or last unlocked)
+      const currentRoomForTeam = getLastUnclearedRoom(progressData) || (progressData.unlockedRooms && progressData.unlockedRooms.length ? progressData.unlockedRooms[progressData.unlockedRooms.length - 1] : null);
+      const puzzlesInCurrentRoom = countPuzzlesSolvedInRoom(progressData, currentRoomForTeam);
+
+      teams.push({
+        id: teamDoc.id,
+        name: teamData.name,
+        leaderboardOptOut: teamData.leaderboardOptOut || false,
+        roomsCleared: progressData.clearedRooms
+          ? progressData.clearedRooms.length
+          : 0,
+        puzzlesSolved: progressData.solvedPuzzles
+          ? progressData.solvedPuzzles.length
+          : 0,
+        puzzlesInCurrentRoom: puzzlesInCurrentRoom || 0,
+        currentRoom: currentRoomForTeam,
+        lastSolveTime: progressData.lastSolveTime || 0,
+        progress: progressData,
+      });
       }
     }
 
@@ -1989,30 +2032,14 @@ function sortTeamsForLeaderboard(teams) {
       return b.roomsCleared - a.roomsCleared;
     }
 
-    const allRoomsCleared =
-      a.roomsCleared === (roomData ? Object.keys(roomData).length : 0);
-
-    if (!allRoomsCleared) {
-      const aLastUnclearedRoom = getLastUnclearedRoom(a.progress);
-      const bLastUnclearedRoom = getLastUnclearedRoom(b.progress);
-
-      if (aLastUnclearedRoom === bLastUnclearedRoom) {
-        const aPuzzlesInRoom = countPuzzlesSolvedInRoom(
-          a.progress,
-          aLastUnclearedRoom,
-        );
-        const bPuzzlesInRoom = countPuzzlesSolvedInRoom(
-          b.progress,
-          bLastUnclearedRoom,
-        );
-
-        if (aPuzzlesInRoom !== bPuzzlesInRoom) {
-          return bPuzzlesInRoom - aPuzzlesInRoom;
-        }
-      }
+    if ((b.puzzlesInCurrentRoom || 0) !== (a.puzzlesInCurrentRoom || 0)) {
+      return (b.puzzlesInCurrentRoom || 0) - (a.puzzlesInCurrentRoom || 0);
     }
 
-    return a.lastSolveTime - b.lastSolveTime;
+    // earlier lastSolveTime is better; treat missing/zero as Infinity so 'Never' sorts last
+    const aTime = (typeof a.lastSolveTime === 'number' && a.lastSolveTime > 0) ? a.lastSolveTime : Number.POSITIVE_INFINITY;
+    const bTime = (typeof b.lastSolveTime === 'number' && b.lastSolveTime > 0) ? b.lastSolveTime : Number.POSITIVE_INFINITY;
+    return aTime - bTime;
   });
 }
 
@@ -2076,6 +2103,7 @@ function displayLeaderboard(teams) {
       <td>${rank <= 3 ? ["🥇", "🥈", "🥉"][rank - 1] : rank}</td>
       <td>${team.name}</td>
       <td>${team.roomsCleared}</td>
+      <td>${team.puzzlesInCurrentRoom || 0}</td>
       <td>${team.puzzlesSolved}</td>
       <td>${lastSolveTimeFormatted}</td>
     `;

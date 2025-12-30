@@ -1994,6 +1994,10 @@ async function loadLeaderboard() {
       const currentRoom = progressData.currentRoom || "starting-room";
       const currentRoomName = roomData[currentRoom]?.name || currentRoom;
 
+      // puzzles solved in current room
+      const teamSolved = progressData.solvedPuzzles || [];
+      const puzzlesInCurrentRoom = (roomData[currentRoom]?.puzzles || []).filter(pId => teamSolved.includes(pId)).length;
+
       const isActive = puzzlesSolved > 0 || roomsCleared > 0;
       
       if (!showInactive && !isActive) {
@@ -2007,6 +2011,7 @@ async function loadLeaderboard() {
         leaderboardOptOut: teamData.leaderboardOptOut || false,
         roomsCleared,
         puzzlesSolved,
+        puzzlesInCurrentRoom,
         unlockedRooms,
         currentRoom,
         currentRoomName,
@@ -2020,6 +2025,9 @@ async function loadLeaderboard() {
     teams.sort((a, b) => {
       if (b.roomsCleared !== a.roomsCleared) {
         return b.roomsCleared - a.roomsCleared;
+      }
+      if ((b.puzzlesInCurrentRoom || 0) !== (a.puzzlesInCurrentRoom || 0)) {
+        return (b.puzzlesInCurrentRoom || 0) - (a.puzzlesInCurrentRoom || 0);
       }
       // earlier lastSolveTime is better. Treat missing/zero as Infinity so 'Never' sorts last.
       const aTime = (typeof a.lastSolveTime === 'number' && a.lastSolveTime > 0) ? a.lastSolveTime : Number.POSITIVE_INFINITY;
@@ -2097,6 +2105,7 @@ async function loadLeaderboard() {
           <div>${team.email}</div>
         </td>
         <td>${team.roomsCleared}</td>
+        <td>${team.puzzlesInCurrentRoom || 0}</td>
         <td>${team.puzzlesSolved}</td>
         <td>
           <div>${team.currentRoomName}</div>
@@ -2130,7 +2139,7 @@ function exportLeaderboard() {
       return;
     }
 
-    let csv = "Rank,Team Name,Team Email,Rooms Cleared,Puzzles Solved,Current Room,Last Solve Time,Status\n";
+    let csv = "Rank,Team Name,Team Email,Rooms Cleared,Puzzles Solved In Current Room,Puzzles Solved,Current Room,Last Solve Time,Status\n";
     
     const rows = table.querySelectorAll("tbody tr");
     rows.forEach(row => {
@@ -2143,7 +2152,8 @@ function exportLeaderboard() {
         cells[4].textContent.trim(),
         cells[5].textContent.trim().split('\n')[0], // Current room name only
         cells[6].textContent.trim(),
-        cells[7].textContent.trim()
+        cells[7].textContent.trim(),
+        cells[8].textContent.trim()
       ];
       csv += rowData.map(cell => `"${cell.replace(/"/g, '""')}"`).join(",") + "\n";
     });

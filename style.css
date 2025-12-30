@@ -795,8 +795,9 @@ body.dark .submit-btn { background-color: #1e40af; border: 1px solid rgba(96,165
 /* Navigation rooms inline */
 .room-inline-list { display:flex; gap:8px; align-items:center; flex-wrap:nowrap; }
 .nav-room { padding: 8px 12px; border-radius: 10px; background: var(--card-bg); border: 1px solid var(--nav-border); cursor: pointer; color: var(--text); font-weight: 600; }
-.nav-room.cleared { opacity: 0.64; background: transparent; border-style: dashed; }
-.nav-room.current { background: linear-gradient(90deg, rgba(37,99,235,0.12), rgba(37,99,235,0.06)); font-weight:700; }
+.nav-room.cleared { opacity: 0.95; background: transparent; border-style: dotted; border-width: 2px; }
+.nav-room.current { outline: 2px solid var(--accent); outline-offset: 2px; font-weight:700; }
+.nav-room.locked { opacity: 0.5; cursor: default; }
 
 .cleared-rooms-dropdown { position: relative; display: none; margin-left: auto; }
 

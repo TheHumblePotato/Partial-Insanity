@@ -585,8 +585,8 @@
   flex-direction: column;
   gap: 10px;
   position: relative;
-  box-shadow: 0 8px 20px rgba(11,20,42,0.06);
-  transition: transform 0.16s ease, box-shadow 0.16s ease;
+  box-shadow: none;
+  transition: transform 0.12s ease;
 }
 #admin-issues-list .admin-issue:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(11,20,42,0.09); }
 #admin-issues-list .admin-issue .issue-resolved-toggle {

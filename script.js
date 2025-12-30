@@ -493,7 +493,7 @@ function showPuzzlePage() {
   document.getElementById("auth-page").style.display = "none";
   document.getElementById("puzzle-page").style.display = "block";
   document.getElementById("rules-page").style.display = "none";
-  document.getElementById("leaderboard-page").style.display = "none";
+  const lb = document.getElementById('leaderboard-modal') || document.querySelector('.leaderboard-modal'); if (lb) lb.style.display = 'none';
   renderCurrentRoom();
 }
 
@@ -528,7 +528,7 @@ function showIssuesPage() {
   document.getElementById("auth-page").style.display = "none";
   document.getElementById("puzzle-page").style.display = "none";
   document.getElementById("rules-page").style.display = "none";
-  document.getElementById("leaderboard-page").style.display = "none";
+  const lb = document.getElementById('leaderboard-modal') || document.querySelector('.leaderboard-modal'); if (lb) lb.style.display = 'none';
   document.getElementById("issues-page").style.display = "block";
   loadAllIssues();
   loadMyIssues();
@@ -1824,12 +1824,14 @@ function switchRoom(roomId) {
 }
 
 function showLeaderboard() {
-  document.getElementById("leaderboard-page").style.display = "block";
+  const el = document.getElementById("leaderboard-modal") || document.querySelector('.leaderboard-modal');
+  if (el) el.style.display = "block";
   loadLeaderboard();
 }
 
 function closeLeaderboard() {
-  document.getElementById("leaderboard-page").style.display = "none";
+  const el = document.getElementById("leaderboard-modal") || document.querySelector('.leaderboard-modal');
+  if (el) el.style.display = "none";
 }
 
 async function loadLeaderboard() {

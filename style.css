@@ -49,8 +49,9 @@ body.dark {
 }
 
 body.dark .puzzle-item {
-  border: 1px solid var(--puzzle-border);
-  background: var(--puzzle-bg);
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
 }
 
 .container { transition: background 0.35s ease, color 0.25s ease; }
@@ -77,7 +78,7 @@ body.dark .nav-room { color: #d1d9e6; background: rgba(255,255,255,0.02); border
 body.dark .nav-room.cleared { opacity: 0.5; color: #9aa6bd; }
 body.dark .nav-room.current { border: 1px solid var(--accent); box-shadow: 0 8px 18px rgba(0,0,0,0.6); }
 
-body.dark .btn-primary { background: linear-gradient(90deg,#0b1220,#071025); color: var(--btn-text); }
+body.dark .btn-primary { background: #2563eb; color: white; border: 1px solid rgba(255,255,255,0.08); }
 
 body.dark .puzzle-item { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.04); color: #dbe9ff; }
 body.dark .puzzle-title { color: #e6eef8; }
@@ -773,6 +774,15 @@ body.dark #leaderboard-table th, body.dark #leaderboard-table td { color: var(--
   background: white;
 }
 
+/* Dark mode hints: solid dark backgrounds and darker text */
+body.dark .hint-item { background: var(--panel-bg); color: var(--text); border: 1px solid rgba(255,255,255,0.04); }
+body.dark .hint-text { background: var(--panel-bg); color: var(--text); border-left: 3px solid rgba(255,255,255,0.06); }
+body.dark .hint-counter { background: rgba(255,255,255,0.02); color: var(--text); }
+
+/* Dark mode issue card */
+body.dark .issue-card { background: var(--panel-bg); border: 1px solid rgba(255,255,255,0.04); color: var(--text); box-shadow: none; }
+body.dark .issue-card .issue-reply { background: var(--panel-bg); border: 1px solid rgba(255,255,255,0.04); }
+
 .hint-problem {
   font-size: 15px;
   color: #2d3748;
@@ -854,9 +864,8 @@ body.dark #leaderboard-table th, body.dark #leaderboard-table td { color: var(--
 }
 
 .hint-reveal-btn::before {
-  content: "🔍";
-  display: inline-block;
-  font-size: 12px;
+  content: "";
+  display: none;
 }
 
 #lock-description {
@@ -1099,13 +1108,8 @@ body.dark #leaderboard-table th, body.dark #leaderboard-table td { color: var(--
 }
 
 #lock-description.with-icon::before {
-  content: "🔒";
-  position: absolute;
-  top: -5px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 30px;
-  background: rgba(255, 255, 255, 0.9);
+  content: "";
+  display: none;
 }
 
 .puzzle-viewer {
@@ -1135,16 +1139,18 @@ body.dark #leaderboard-table th, body.dark #leaderboard-table td { color: var(--
 }
 
 /* Dark mode puzzle viewer */
-body.dark .puzzle-viewer { background: rgba(10,14,24,0.9); color: var(--text); }
-body.dark .puzzle-viewer-header { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); box-shadow: 0 2px 10px rgba(0,0,0,0.6); }
-body.dark .answer-box, body.dark .hint-box { background: var(--panel-bg); color: var(--text); box-shadow: 0 10px 30px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.04); }
+body.dark .puzzle-viewer { background: #071025; color: var(--text); }
+body.dark .puzzle-viewer-header { background: #071022; box-shadow: 0 2px 10px rgba(0,0,0,0.6); }
+body.dark .answer-box, body.dark .hint-box { background: #071025; color: var(--text); box-shadow: none; border: 1px solid rgba(255,255,255,0.04); }
 body.dark .puzzle-viewer-image, body.dark .pdf-iframe { background: rgba(255,255,255,0.02); box-shadow: none; }
 body.dark .close-box { background: rgba(255,255,255,0.03); color: var(--text); box-shadow: none; }
-body.dark .puzzle-viewer-actions .btn { background: linear-gradient(90deg,#0b1220,#071025); color: var(--btn-text); }
+body.dark .puzzle-viewer-actions .btn { background: #0b1220; color: var(--text); border: 1px solid rgba(255,255,255,0.06); }
 
 /* make check answer/hint controls darker */
 .answer-box input, .answer-box button, .hint-box button { color: var(--text); }
-body.dark .answer-box input, body.dark .answer-box button { background: rgba(255,255,255,0.03); color: var(--text); border: 1px solid rgba(255,255,255,0.04); }
+body.dark .answer-box input, body.dark .answer-box button { background: #071025; color: var(--text); border: 1px solid rgba(255,255,255,0.04); }
+body.dark .guess-counter { color: #cbd5e1; }
+
 
 
 .puzzle-viewer-content {
@@ -1520,7 +1526,7 @@ body.dark .answer-box input, body.dark .answer-box button { background: rgba(255
 
 body.dark .notification-event-alert { background: rgba(10,14,24,0.85); color: var(--text); }
 
-#leaderboard-page {
+.leaderboard-modal {
   position: fixed;
   top: 10%;
   left: 50%;
@@ -1538,7 +1544,7 @@ body.dark .notification-event-alert { background: rgba(10,14,24,0.85); color: va
   flex-direction: column;
 }
 
-#leaderboard-page .modal-content {
+.leaderboard-modal .modal-content {
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -1565,7 +1571,7 @@ body.dark .notification-event-alert { background: rgba(10,14,24,0.85); color: va
 }
 
 /* Dark mode for leaderboard */
-body.dark #leaderboard-page { background: var(--panel-bg); color: var(--text); box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+body.dark .leaderboard-modal { background: var(--panel-bg); color: var(--text); box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
 body.dark #leaderboard-table thead th { background: rgba(255,255,255,0.02); color: var(--text); }
 body.dark #leaderboard-table tr:hover { background: rgba(255,255,255,0.03); }
 
@@ -1799,20 +1805,20 @@ body.dark #leaderboard-table tr:hover { background: rgba(255,255,255,0.03); }
 #close-issues-btn:focus, #issues-page button[type="submit"]:focus { outline: 3px solid rgba(37,99,235,0.12); outline-offset: 2px; }
 
 #all-issues-list, #my-issues-list {
-  max-width: 600px;
+  max-width: 920px;
   margin: 18px auto;
 }
 
 .issue-card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(245,248,250,0.9));
+  background: var(--card-bg);
   border-radius: 10px;
-  border: none;
+  border: 1px solid rgba(2,6,23,0.06);
   margin-bottom: 12px;
   padding: 14px 18px;
-  box-shadow: 0 6px 18px rgba(11,20,42,0.06);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: none;
+  transition: transform 0.12s ease;
 }
-.issue-card:hover { transform: translateY(-4px); box-shadow: 0 10px 26px rgba(11,20,42,0.09); }
+.issue-card:hover { transform: none; box-shadow: none; }
 .issue-card .issue-title {
   font-weight: 700;
   font-size: 1.05em;
@@ -1832,17 +1838,18 @@ body.dark #leaderboard-table tr:hover { background: rgba(255,255,255,0.03); }
   background: rgba(2,6,23,0.03);
   margin-top: 8px;
 }
-.issue-card .issue-status.status-open { color: #92400e; background: rgba(245,158,11,0.08); }
-.issue-card .issue-status.status-fixed, .issue-card .issue-status.status-resolved { color: #0f5132; background: rgba(16,185,129,0.08); }
+.issue-card .issue-status.status-open { color: #b45309; background: rgba(245,158,11,0.18); font-weight: 700; padding: 6px 10px; border-radius: 6px; }
+.issue-card .issue-status.status-fixed, .issue-card .issue-status.status-resolved { color: #047857; background: rgba(16,185,129,0.16); font-weight: 700; padding: 6px 10px; border-radius: 6px; }
 .issue-card .issue-status.status-intentional { color: #4b5563; background: rgba(107,114,128,0.06); }
 .issue-card .issue-reply {
   color: var(--text);
   margin-top: 10px;
   font-size: 0.96em;
-  background: rgba(240,246,255,0.8);
+  background: var(--card-bg);
   padding: 10px;
   border-radius: 8px;
   white-space: pre-wrap;
+  border: 1px solid rgba(2,6,23,0.04);
 }
 
 /* Issues page specific tweaks (full-width and centered headers) */

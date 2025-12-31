@@ -188,6 +188,13 @@ async function loadTeamData() {
       const topbar = document.querySelector('.topbar');
       if (topbar) topbar.style.display = 'flex';
 
+      // configure topbar hide button visibility
+      const hideTopBtn = document.getElementById('hideLeaderboardTopBtn');
+      if (hideTopBtn) {
+        const canHide = !(currentTeam && (currentTeam.leaderboardOptOut || currentTeam.leaderboardPermanentlyOptOut));
+        hideTopBtn.style.display = canHide ? 'inline-block' : 'none';
+      }
+
 
     } else {
       logout();
@@ -2193,7 +2200,9 @@ async function performHideFromLeaderboard(teamId, btnEl) {
 
     showNotification("You have been permanently removed from the leaderboard.", "success");
 
-
+    // hide topbar button
+    const hideTopBtn = document.getElementById('hideLeaderboardTopBtn');
+    if (hideTopBtn) hideTopBtn.style.display = 'none';
 
     // reload leaderboard to reflect change
     await loadLeaderboard();

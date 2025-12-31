@@ -188,12 +188,7 @@ async function loadTeamData() {
       const topbar = document.querySelector('.topbar');
       if (topbar) topbar.style.display = 'flex';
 
-      // configure topbar hide button visibility
-      const hideTopBtn = document.getElementById('hideLeaderboardTopBtn');
-      if (hideTopBtn) {
-        const canHide = !(currentTeam && (currentTeam.leaderboardOptOut || currentTeam.leaderboardPermanentlyOptOut));
-        hideTopBtn.style.display = canHide ? 'inline-block' : 'none';
-      }
+
     } else {
       logout();
     }
@@ -2094,14 +2089,9 @@ function displayLeaderboard(teams) {
       });
     }
 
-    // Insert hide button inline with team name (left of name) for the current user's row
-    const hideButtonHtml = currentUser && team.id === currentUser.uid && !team.leaderboardOptOut && !(currentTeam && currentTeam.leaderboardPermanentlyOptOut)
-      ? `<button class="btn btn-sm btn-danger hide-leaderboard-btn-inline" onclick="confirmHideFromLeaderboard('${team.id}', this)">Hide</button> `
-      : "";
-
     row.innerHTML = `
       <td>${rank <= 3 ? ["🥇", "🥈", "🥉"][rank - 1] : rank}</td>
-      <td>${hideButtonHtml}<span class="team-name">${team.name}</span></td>
+      <td><span class="team-name">${team.name}</span></td>
       <td>${team.roomsCleared}</td>
       <td>${team.puzzlesInCurrentRoom || 0}</td>
       <td>${team.puzzlesSolved}</td>
@@ -2128,9 +2118,9 @@ function confirmHideFromLeaderboard(teamId, btnEl) {
   if (!document.getElementById('permanent-optout-modal')) {
     const modal = document.createElement('div');
     modal.id = 'permanent-optout-modal';
-    modal.className = 'modal';
+    modal.className = 'modal rules-modal';
     modal.innerHTML = `
-      <div class="modal-content">
+      <div class="modal-content rules-modal-content">
         <span class="close" onclick="closePermanentOptOutModal()">&times;</span>
         <h2>Permanent Opt-out</h2>
         <p style="font-weight:600;color:var(--muted);">Are you sure you want to permanently hide from the leaderboard?</p>
@@ -2203,9 +2193,7 @@ async function performHideFromLeaderboard(teamId, btnEl) {
 
     showNotification("You have been permanently removed from the leaderboard.", "success");
 
-    // hide topbar button
-    const hideTopBtn = document.getElementById('hideLeaderboardTopBtn');
-    if (hideTopBtn) hideTopBtn.style.display = 'none';
+
 
     // reload leaderboard to reflect change
     await loadLeaderboard();

@@ -2094,6 +2094,7 @@ function displayLeaderboard(teams) {
       <td>${team.puzzlesInCurrentRoom || 0}</td>
       <td>${team.puzzlesSolved}</td>
       <td>${lastSolveTimeFormatted}</td>
+      <td class="leaderboard-action-cell">${currentUser && team.id === currentUser.uid && !team.leaderboardOptOut && !(currentTeam && currentTeam.leaderboardPermanentlyOptOut) ? `<button class="btn btn-sm btn-danger hide-leaderboard-btn" onclick="hideFromLeaderboard('${team.id}', this)">Hide myself</button>` : ''}</td>
     `;
 
     leaderboardBody.appendChild(row);
@@ -2101,6 +2102,43 @@ function displayLeaderboard(teams) {
 
   document.getElementById("leaderboard-loading").style.display = "none";
   document.getElementById("leaderboard-table").style.display = "table";
+}
+
+async function hideFromLeaderboard(teamId, btnEl) {
+  try {
+    if (!currentUser || currentUser.uid !== teamId) {
+      showNotification("You can only hide your own team from the leaderboard.", "error");
+      return;
+    }
+
+    const proceed = confirm(
+      "Are you sure? This action is PERMANENT and cannot be undone. If you proceed, your team will be removed from the public leaderboard and will NOT be eligible for any prizes. Do you want to proceed?",
+    );
+
+    if (!proceed) return;
+
+    if (btnEl) btnEl.disabled = true;
+
+    await db.collection("teams").doc(teamId).update({
+      leaderboardOptOut: true,
+      leaderboardPermanentlyOptOut: true,
+    });
+
+    // update local state
+    if (currentTeam && currentTeam.id === teamId) {
+      currentTeam.leaderboardOptOut = true;
+      currentTeam.leaderboardPermanentlyOptOut = true;
+    }
+
+    showNotification("You have been permanently removed from the leaderboard.", "success");
+
+    // reload leaderboard to reflect change
+    await loadLeaderboard();
+  } catch (error) {
+    console.error("Error hiding from leaderboard:", error);
+    showNotification("Error removing from leaderboard.", "error");
+    if (btnEl) btnEl.disabled = false;
+  }
 }
 
 function submitIssue(e) {

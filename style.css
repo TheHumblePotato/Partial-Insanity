@@ -836,6 +836,13 @@ body.dark .nav-room.cleared {
 .nav-room.current { outline: 2px solid var(--accent); outline-offset: 2px; font-weight:700; }
 .nav-room.locked { opacity: 0.5; cursor: default; }
 
+/* Hide leaderboard button */
+.hide-leaderboard-btn { background: #dc3545; color: #fff; border: 1px solid rgba(0,0,0,0.08); padding: 6px 8px; border-radius: 6px; font-size: 13px; }
+.hide-leaderboard-btn:hover { opacity: 0.95; }
+body.dark .hide-leaderboard-btn { background: #991b1b; border: 1px solid rgba(255,255,255,0.06); color: #fff; }
+
+.leaderboard-action-cell { text-align: center; }
+
 .cleared-rooms-dropdown { position: relative; display: none; margin-left: auto; }
 
 .dropdown-content { display: none; position: absolute; right: 0; background: var(--panel-bg); min-width: 200px; box-shadow: 0 8px 16px rgba(2,6,23,0.08); z-index: 1200; border-radius: 8px; }

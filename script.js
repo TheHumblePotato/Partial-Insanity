@@ -187,6 +187,13 @@ async function loadTeamData() {
       // show topbar only after team data and UI are ready to avoid flicker
       const topbar = document.querySelector('.topbar');
       if (topbar) topbar.style.display = 'flex';
+
+      // configure topbar hide button visibility
+      const hideTopBtn = document.getElementById('hideLeaderboardTopBtn');
+      if (hideTopBtn) {
+        const canHide = !(currentTeam && (currentTeam.leaderboardOptOut || currentTeam.leaderboardPermanentlyOptOut));
+        hideTopBtn.style.display = canHide ? 'inline-block' : 'none';
+      }
     } else {
       logout();
     }
@@ -2087,14 +2094,18 @@ function displayLeaderboard(teams) {
       });
     }
 
+    // Insert hide button inline with team name (left of name) for the current user's row
+    const hideButtonHtml = currentUser && team.id === currentUser.uid && !team.leaderboardOptOut && !(currentTeam && currentTeam.leaderboardPermanentlyOptOut)
+      ? `<button class="btn btn-sm btn-danger hide-leaderboard-btn-inline" onclick="confirmHideFromLeaderboard('${team.id}', this)">Hide</button> `
+      : "";
+
     row.innerHTML = `
       <td>${rank <= 3 ? ["🥇", "🥈", "🥉"][rank - 1] : rank}</td>
-      <td>${team.name}</td>
+      <td>${hideButtonHtml}<span class="team-name">${team.name}</span></td>
       <td>${team.roomsCleared}</td>
       <td>${team.puzzlesInCurrentRoom || 0}</td>
       <td>${team.puzzlesSolved}</td>
       <td>${lastSolveTimeFormatted}</td>
-      <td class="leaderboard-action-cell">${currentUser && team.id === currentUser.uid && !team.leaderboardOptOut && !(currentTeam && currentTeam.leaderboardPermanentlyOptOut) ? `<button class="btn btn-sm btn-danger hide-leaderboard-btn" onclick="hideFromLeaderboard('${team.id}', this)">Hide myself</button>` : ''}</td>
     `;
 
     leaderboardBody.appendChild(row);
@@ -2104,18 +2115,78 @@ function displayLeaderboard(teams) {
   document.getElementById("leaderboard-table").style.display = "table";
 }
 
-async function hideFromLeaderboard(teamId, btnEl) {
+// show modal to confirm permanent hide; btnEl is optional element reference to disable during operation
+function confirmHideFromLeaderboard(teamId, btnEl) {
+  // if teamId not provided, use currentUser
+  const tId = teamId || (currentUser && currentUser.uid);
+  if (!tId) {
+    showNotification("You must be logged in to do this.", "error");
+    return;
+  }
+
+  // create modal if not present
+  if (!document.getElementById('permanent-optout-modal')) {
+    const modal = document.createElement('div');
+    modal.id = 'permanent-optout-modal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+      <div class="modal-content">
+        <span class="close" onclick="closePermanentOptOutModal()">&times;</span>
+        <h2>Permanent Opt-out</h2>
+        <p style="font-weight:600;color:var(--muted);">Are you sure you want to permanently hide from the leaderboard?</p>
+        <p>This action is <strong>PERMANENT</strong> and cannot be undone. If you proceed you will be removed from the public leaderboard and will NOT be eligible for any prizes.</p>
+        <div style="text-align:right;margin-top:16px;">
+          <button class="btn btn-secondary" onclick="closePermanentOptOutModal()">Cancel</button>
+          <button id="confirmPermanentOptOutBtn" class="btn btn-danger">Permanently Hide</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+
+    // attach handler
+    document.getElementById('confirmPermanentOptOutBtn').addEventListener('click', async () => {
+      await performHideFromLeaderboard(tId, btnEl);
+      closePermanentOptOutModal();
+    });
+  } else {
+    // update handler to use this teamId
+    const handler = async () => {
+      await performHideFromLeaderboard(tId, btnEl);
+      closePermanentOptOutModal();
+    };
+
+    const confirmBtn = document.getElementById('confirmPermanentOptOutBtn');
+    // remove previous listeners: replace by clone
+    if (confirmBtn) {
+      const newBtn = confirmBtn.cloneNode(true);
+      confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+      newBtn.addEventListener('click', handler);
+    }
+  }
+
+  const modalEl = document.getElementById('permanent-optout-modal');
+  if (modalEl) {
+    modalEl.style.display = 'block';
+    // focus confirm for keyboard users
+    const confirmBtn = document.getElementById('confirmPermanentOptOutBtn');
+    if (confirmBtn) confirmBtn.focus();
+    // close when clicking outside content
+    modalEl.addEventListener('click', function (e) {
+      if (e.target === modalEl) closePermanentOptOutModal();
+    });
+  }
+}
+
+function closePermanentOptOutModal() {
+  const modalEl = document.getElementById('permanent-optout-modal');
+  if (modalEl) modalEl.style.display = 'none';
+}
+
+async function performHideFromLeaderboard(teamId, btnEl) {
   try {
     if (!currentUser || currentUser.uid !== teamId) {
       showNotification("You can only hide your own team from the leaderboard.", "error");
       return;
     }
-
-    const proceed = confirm(
-      "Are you sure? This action is PERMANENT and cannot be undone. If you proceed, your team will be removed from the public leaderboard and will NOT be eligible for any prizes. Do you want to proceed?",
-    );
-
-    if (!proceed) return;
 
     if (btnEl) btnEl.disabled = true;
 
@@ -2131,6 +2202,10 @@ async function hideFromLeaderboard(teamId, btnEl) {
     }
 
     showNotification("You have been permanently removed from the leaderboard.", "success");
+
+    // hide topbar button
+    const hideTopBtn = document.getElementById('hideLeaderboardTopBtn');
+    if (hideTopBtn) hideTopBtn.style.display = 'none';
 
     // reload leaderboard to reflect change
     await loadLeaderboard();

@@ -22,6 +22,7 @@
         </div>
         <div class="nav-right">
           <button id="themeToggle" class="btn btn-secondary" onclick="toggleTheme()">Toggle Theme</button>
+          <button id="hideLeaderboardTopBtn" class="btn hide-leaderboard-btn" style="display:none;margin-left:8px;" onclick="confirmHideFromLeaderboard()">Hide myself</button>
           <span id="current-account" class="current-account"></span>
           <button class="nav-btn" onclick="logout()">Logout</button>
         </div>
@@ -185,7 +186,6 @@
                 <th>Puzzles Solved in Current Group</th>
                 <th>Puzzles Solved</th>
                 <th>Last Solve Time</th>
-                <th>Action</th>
               </tr>
             </thead>
             <tbody id="leaderboard-body"></tbody>

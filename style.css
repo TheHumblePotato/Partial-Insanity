@@ -841,6 +841,11 @@ body.dark .nav-room.cleared {
 .hide-leaderboard-btn:hover { opacity: 0.95; }
 body.dark .hide-leaderboard-btn { background: #991b1b; border: 1px solid rgba(255,255,255,0.06); color: #fff; }
 
+/* inline small hide button placed next to team name */
+.hide-leaderboard-btn-inline { background: #dc3545; color: #fff; border: none; padding: 4px 6px; border-radius: 4px; font-size: 12px; margin-right: 8px; }
+.hide-leaderboard-btn-inline:hover { opacity: 0.95; }
+body.dark .hide-leaderboard-btn-inline { background: #991b1b; color: #fff; }
+
 .leaderboard-action-cell { text-align: center; }
 
 .cleared-rooms-dropdown { position: relative; display: none; margin-left: auto; }

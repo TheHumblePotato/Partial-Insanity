@@ -1770,6 +1770,9 @@ async function checkTeamFinished() {
     teamProgress.finishedAt = Date.now();
     teamProgress.finishedPlace = place || null;
 
+    // Set visible current room to FINISHED so both admin and user leaderboards show it
+    teamProgress.currentRoom = "FINISHED";
+
     await db.collection("progress").doc(currentUser.uid).set(teamProgress);
 
     // Use event-style notification so it stands out and is dismissible
@@ -2099,9 +2102,14 @@ async function loadLeaderboard() {
       if (progressDoc.exists) {
         const progressData = progressDoc.data();
 
-        // determine a current room for this team (first unlocked but not cleared, or last unlocked)
-      const currentRoomForTeam = getLastUnclearedRoom(progressData) || (progressData.unlockedRooms && progressData.unlockedRooms.length ? progressData.unlockedRooms[progressData.unlockedRooms.length - 1] : null);
-      const puzzlesInCurrentRoom = countPuzzlesSolvedInRoom(progressData, currentRoomForTeam);
+        // determine a current room for this team (FINISHED if finished, otherwise first unlocked but not cleared, or last unlocked)
+      let currentRoomForTeam;
+      if (progressData.finishedAt || progressData.currentRoom === 'FINISHED') {
+        currentRoomForTeam = 'FINISHED';
+      } else {
+        currentRoomForTeam = getLastUnclearedRoom(progressData) || (progressData.unlockedRooms && progressData.unlockedRooms.length ? progressData.unlockedRooms[progressData.unlockedRooms.length - 1] : null);
+      }
+      const puzzlesInCurrentRoom = currentRoomForTeam === 'FINISHED' ? 0 : countPuzzlesSolvedInRoom(progressData, currentRoomForTeam);
 
       teams.push({
         id: teamDoc.id,

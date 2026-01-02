@@ -1720,6 +1720,113 @@ async function handleCorrectAnswer(puzzleId) {
 
   closePuzzleViewer();
   renderCurrentRoom();
+
+  // After a solve, check whether the team has finished ALL puzzles and notify once
+  try {
+    checkTeamFinished().catch((err) => console.error('Error checking finished status:', err));
+  } catch (err) {
+    console.error('Error kicking off finish check:', err);
+  }
+}
+
+// Check if the current team has solved all puzzles; if so, compute place and show an event notification once
+async function checkTeamFinished() {
+  try {
+    if (!currentUser || !teamProgress || !puzzleData) return;
+
+    // If we've already notified the team of finishing, skip
+    if (teamProgress.finishNotified) return;
+
+    const allPuzzleIds = Object.keys(puzzleData || {});
+    if (allPuzzleIds.length === 0) return;
+
+    // Ensure every puzzle id is in the solved list
+    const solved = teamProgress.solvedPuzzles || [];
+    const allSolved = allPuzzleIds.every((pid) => solved.includes(pid));
+    if (!allSolved) return;
+
+    // Compute time since team creation (prefer progress.startTime, then team.createdAt, then auth metadata)
+    let creationMs = teamProgress.startTime || 0;
+    if (!creationMs && currentTeam && currentTeam.createdAt && currentTeam.createdAt.toMillis) {
+      creationMs = currentTeam.createdAt.toMillis();
+    }
+    if (!creationMs && currentUser && currentUser.metadata && currentUser.metadata.creationTime) {
+      const parsed = Date.parse(currentUser.metadata.creationTime);
+      if (!Number.isNaN(parsed)) creationMs = parsed;
+    }
+    if (!creationMs) creationMs = Date.now();
+
+    const durationMs = Date.now() - creationMs;
+    const durationText = formatDuration(durationMs);
+
+    // Compute placement among teams (respecting leaderboard opt-out policy)
+    const place = await computePlacementForCurrentTeam();
+    const placeText = place ? String(place) : "N/A";
+
+    const message = `YOU FINISHED! Time: ${durationText}. Place: ${placeText}. Feel free to keep solving (will not affect leaderboard ranking)!`;
+
+    // Persist finished info and that we've notified so we don't spam
+    teamProgress.finishNotified = true;
+    teamProgress.finishedAt = Date.now();
+    teamProgress.finishedPlace = place || null;
+
+    await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+
+    // Use event-style notification so it stands out and is dismissible
+    showNotification(message, "success", 20000, true);
+  } catch (error) {
+    console.error('Error in checkTeamFinished:', error);
+  }
+}
+
+// Format a millisecond duration as "_ Days, _ Hours, _ Minutes"
+function formatDuration(ms) {
+  const days = Math.floor(ms / (24 * 60 * 60 * 1000));
+  ms -= days * 24 * 60 * 60 * 1000;
+  const hours = Math.floor(ms / (60 * 60 * 1000));
+  ms -= hours * 60 * 60 * 1000;
+  const minutes = Math.floor(ms / (60 * 1000));
+  return `${days} Days, ${hours} Hours, ${minutes} Minutes`;
+}
+
+// Compute current team's placement (1-based) among teams visible on the leaderboard; returns null if not found
+async function computePlacementForCurrentTeam() {
+  try {
+    const teamsSnapshot = await db.collection("teams").get();
+    const teams = [];
+
+    for (const teamDoc of teamsSnapshot.docs) {
+      const tData = teamDoc.data();
+      // honor leaderboard opt-out
+      if (tData.leaderboardOptOut) continue;
+
+      const progressDoc = await db.collection("progress").doc(teamDoc.id).get();
+      if (!progressDoc.exists) continue;
+      const p = progressDoc.data();
+
+      const currentRoomForTeam = getLastUnclearedRoom(p) || (p.unlockedRooms && p.unlockedRooms.length ? p.unlockedRooms[p.unlockedRooms.length - 1] : null);
+      const puzzlesInCurrentRoom = countPuzzlesSolvedInRoom(p, currentRoomForTeam);
+
+      teams.push({
+        id: teamDoc.id,
+        name: tData.name,
+        leaderboardOptOut: tData.leaderboardOptOut || false,
+        roomsCleared: p.clearedRooms ? p.clearedRooms.length : 0,
+        puzzlesSolved: p.solvedPuzzles ? p.solvedPuzzles.length : 0,
+        puzzlesInCurrentRoom: puzzlesInCurrentRoom || 0,
+        currentRoom: currentRoomForTeam,
+        lastSolveTime: p.lastSolveTime || 0,
+        progress: p,
+      });
+    }
+
+    const sorted = sortTeamsForLeaderboard(teams);
+    const idx = sorted.findIndex((t) => t.id === currentUser.uid);
+    return idx === -1 ? null : idx + 1;
+  } catch (err) {
+    console.error('Error computing placement:', err);
+    return null;
+  }
 }
 
 function getRoomEventKey(roomId, eventIndex, event) {

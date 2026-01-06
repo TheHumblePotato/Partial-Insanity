@@ -167,7 +167,7 @@ async function loadTeamData() {
           await db
             .collection("progress")
             .doc(currentUser.uid)
-            .set(teamProgress);
+            .set(teamProgress, { merge: true });
         }
       } else {
         teamProgress = {
@@ -179,7 +179,7 @@ async function loadTeamData() {
           clearedRooms: [],
           triggeredEvents: {},
         };
-        await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+        await db.collection("progress").doc(currentUser.uid).set(teamProgress, { merge: true });
       }
 
       await loadPuzzleData();
@@ -193,6 +193,62 @@ async function loadTeamData() {
       if (hideTopBtn) {
         const canHide = !(currentTeam && (currentTeam.leaderboardOptOut || currentTeam.leaderboardPermanentlyOptOut));
         hideTopBtn.style.display = canHide ? 'inline-block' : 'none';
+      }
+
+      // Set up realtime listener for this team's progress so multiple clients stay in sync
+      try {
+        if (window._progressUnsub) window._progressUnsub();
+        window._progressUnsub = db
+          .collection("progress")
+          .doc(currentUser.uid)
+          .onSnapshot((snap) => {
+            if (!snap.exists) return;
+            const server = snap.data();
+
+            // Merge relevant fields from server into local `teamProgress` without clobbering transient UI state
+            const keys = [
+              "solvedPuzzles",
+              "unlockedRooms",
+              "clearedRooms",
+              "guessCount",
+              "viewedUnlocks",
+              "triggeredEvents",
+              "currentRoom",
+              "lastSolveTime",
+              "finishedAt",
+              "finishNotified",
+              "finishedPlace",
+              "unlockedPuzzlesInRoom",
+              "hintUsage",
+              "viewedHints",
+            ];
+
+            teamProgress = teamProgress || {};
+            keys.forEach((k) => {
+              if (server[k] !== undefined) teamProgress[k] = server[k];
+            });
+
+            // Ensure structures exist
+            teamProgress.solvedPuzzles = teamProgress.solvedPuzzles || [];
+            teamProgress.unlockedRooms = teamProgress.unlockedRooms || ["the_start"];
+            teamProgress.clearedRooms = teamProgress.clearedRooms || [];
+            teamProgress.unlockedPuzzlesInRoom = teamProgress.unlockedPuzzlesInRoom || {};
+            unlockedPuzzlesInRoom = teamProgress.unlockedPuzzlesInRoom;
+
+            // Update currentRoom if server changed it
+            if (server.currentRoom && server.currentRoom !== currentRoom) {
+              currentRoom = server.currentRoom;
+            }
+
+            // Re-render UI to reflect server-side changes
+            try {
+              renderCurrentRoom();
+            } catch (e) {
+              console.error('Error rendering after progress snapshot:', e);
+            }
+          });
+      } catch (e) {
+        console.warn('Could not attach realtime progress listener:', e);
       }
 
 
@@ -390,7 +446,7 @@ async function checkAndTriggerRoomEvents(roomId) {
         }
 
         teamProgress.triggeredEvents[eventKey] = true;
-        await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+        await db.collection("progress").doc(currentUser.uid).set(teamProgress, { merge: true });
 
         await handleEventAction(event, roomId, index);
       }
@@ -416,7 +472,7 @@ async function handleEventAction(event, roomId, eventIndex) {
           await db
             .collection("progress")
             .doc(currentUser.uid)
-            .set(teamProgress);
+            .set(teamProgress, { merge: true });
         }
       } else if (roomData[event.actionValue]) {
         if (!teamProgress.unlockedRooms.includes(event.actionValue)) {
@@ -436,7 +492,7 @@ async function handleEventAction(event, roomId, eventIndex) {
       break;
   }
 
-  await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+  await db.collection("progress").doc(currentUser.uid).set(teamProgress, { merge: true });
 
   renderCurrentRoom();
 }
@@ -1433,7 +1489,7 @@ async function revealHint(hintIndex) {
       teamProgress.hintUsage = teamProgress.hintUsage || {};
       teamProgress.hintUsage[currentPuzzle] = teamProgress.hintUsage[currentPuzzle] || [];
       teamProgress.hintUsage[currentPuzzle].push({ text: hint.text, time: Date.now() });
-      await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+      await db.collection("progress").doc(currentUser.uid).set(teamProgress, { merge: true });
 
       const hintItems = document.querySelectorAll(".hint-item");
       if (hintItems[hintIndex]) {
@@ -1610,7 +1666,7 @@ async function checkRoomPersistentUnlocks(roomId) {
     }
 
     if (updated) {
-      await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+      await db.collection("progress").doc(currentUser.uid).set(teamProgress, { merge: true });
     }
   } catch (error) {
     console.error("Error checking persistent room unlocks:", error);
@@ -1711,7 +1767,7 @@ async function handleCorrectAnswer(puzzleId) {
     }
   }
 
-  await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+  await db.collection("progress").doc(currentUser.uid).set(teamProgress, { merge: true });
   showNotification("Correct answer! Puzzle marked as solved.", "success");
 
   if (puzzle.solveMessage) {
@@ -1773,7 +1829,7 @@ async function checkTeamFinished() {
     // Set visible current room to FINISHED so both admin and user leaderboards show it
     teamProgress.currentRoom = "FINISHED";
 
-    await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+    await db.collection("progress").doc(currentUser.uid).set(teamProgress, { merge: true });
 
     // Use event-style notification so it stands out and is dismissible
     showNotification(message, "success", 20000, true);
@@ -1870,7 +1926,7 @@ async function handlePuzzleEvent(event) {
       showNotification(event.actionValue, "info");
       break;
   }
-  await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+  await db.collection("progress").doc(currentUser.uid).set(teamProgress, { merge: true });
 }
 
 async function handleRoomEvent(event, roomId, eventIndex) {
@@ -1943,7 +1999,7 @@ async function handleRoomEvent(event, roomId, eventIndex) {
       break;
   }
 
-  await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+  await db.collection("progress").doc(currentUser.uid).set(teamProgress, { merge: true });
 
   renderCurrentRoom();
 }
@@ -1953,7 +2009,7 @@ async function handleIncorrectAnswer(puzzleId) {
   teamProgress.guessCount[puzzleId] =
     (teamProgress.guessCount[puzzleId] || 0) + 1;
 
-  await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+  await db.collection("progress").doc(currentUser.uid).set(teamProgress, { merge: true });
 
   updateGuessCounter(puzzleId, puzzleData[puzzleId].type === "lock");
 
@@ -2029,7 +2085,7 @@ function scheduleDailyGuessReset() {
   setTimeout(async () => {
     if (currentUser) {
       teamProgress.guessCount = {};
-      await db.collection("progress").doc(currentUser.uid).set(teamProgress);
+      await db.collection("progress").doc(currentUser.uid).set(teamProgress, { merge: true });
 
       if (currentPuzzle && document.getElementById("guess-counter")) {
         updateGuessCounter(currentPuzzle, true);
@@ -2055,7 +2111,7 @@ function switchRoom(roomId) {
     if (!teamProgress.viewedUnlocks) teamProgress.viewedUnlocks = [];
     if (!teamProgress.viewedUnlocks.includes(roomId)) {
       teamProgress.viewedUnlocks.push(roomId);
-      db.collection("progress").doc(currentUser.uid).set(teamProgress);
+      db.collection("progress").doc(currentUser.uid).set(teamProgress, { merge: true });
     }
   }
 

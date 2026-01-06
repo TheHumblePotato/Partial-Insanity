@@ -1721,7 +1721,7 @@ async function handleCorrectAnswer(puzzleId) {
   closePuzzleViewer();
   renderCurrentRoom();
 
-  // After a solve, check whether the team has finished ALL puzzles and notify once
+  // After a solve, check whether the team has cleared ALL rooms and notify once
   try {
     checkTeamFinished().catch((err) => console.error('Error checking finished status:', err));
   } catch (err) {
@@ -1737,13 +1737,13 @@ async function checkTeamFinished() {
     // If we've already notified the team of finishing, skip
     if (teamProgress.finishNotified) return;
 
-    const allPuzzleIds = Object.keys(puzzleData || {});
-    if (allPuzzleIds.length === 0) return;
+    // Determine finished by whether the team has cleared every room
+    const allRoomIds = Object.keys(roomData || {});
+    if (allRoomIds.length === 0) return;
 
-    // Ensure every puzzle id is in the solved list
-    const solved = teamProgress.solvedPuzzles || [];
-    const allSolved = allPuzzleIds.every((pid) => solved.includes(pid));
-    if (!allSolved) return;
+    const cleared = teamProgress.clearedRooms || [];
+    const allCleared = allRoomIds.every((rid) => cleared.includes(rid));
+    if (!allCleared) return;
 
     // Compute time since team creation (prefer progress.startTime, then team.createdAt, then auth metadata)
     let creationMs = teamProgress.startTime || 0;

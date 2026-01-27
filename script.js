@@ -697,50 +697,54 @@ async function showIssuesPage() {
 async function registerTeam() {
   const teamName = document.getElementById("new-team-name").value.trim();
   const email = document.getElementById("team-email").value.trim();
-  const password = document
-    .getElementById("team-password-register")
-    .value.trim();
-  const leaderboardOptOut = document.getElementById(
-    "leaderboard-opt-out",
-  ).checked;
-
-  if (!teamName || !email || !password) {
-    showNotification("Please fill in all fields", "error");
-    return;
-  }
-
-  try {
-    const userCredential = await auth.createUserWithEmailAndPassword(
-      email,
-      password,
-    );
-    const user = userCredential.user;
-
-    await db.collection("teams").doc(user.uid).set({
-      name: teamName,
-      email: email,
-      leaderboardOptOut: leaderboardOptOut,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
-
-    await db
-      .collection("progress")
-      .doc(user.uid)
-      .set({
-        startTime: Date.now(),
-        solvedPuzzles: [],
-        currentRoom: "the_start",
-        unlockedRooms: ["the_start"],
-        guessCount: {},
-        viewedUnlocks: [],
-        clearedRooms: [],
-        lastSolveTime: 0,
+  if (email.endsWith("lakesideschool.org")){
+    const password = document
+      .getElementById("team-password-register")
+      .value.trim();
+    const leaderboardOptOut = document.getElementById(
+      "leaderboard-opt-out",
+    ).checked;
+  
+    if (!teamName || !email || !password) {
+      showNotification("Please fill in all fields", "error");
+      return;
+    }
+  
+    try {
+      const userCredential = await auth.createUserWithEmailAndPassword(
+        email,
+        password,
+      );
+      const user = userCredential.user;
+  
+      await db.collection("teams").doc(user.uid).set({
+        name: teamName,
+        email: email,
+        leaderboardOptOut: leaderboardOptOut,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
-
-    await auth.signInWithEmailAndPassword(email, password);
-  } catch (error) {
-    console.error("Error creating team:", error);
-    showNotification("Error creating team: " + error.message, "error");
+  
+      await db
+        .collection("progress")
+        .doc(user.uid)
+        .set({
+          startTime: Date.now(),
+          solvedPuzzles: [],
+          currentRoom: "the_start",
+          unlockedRooms: ["the_start"],
+          guessCount: {},
+          viewedUnlocks: [],
+          clearedRooms: [],
+          lastSolveTime: 0,
+        });
+  
+      await auth.signInWithEmailAndPassword(email, password);
+    } catch (error) {
+      console.error("Error creating team:", error);
+      showNotification("Error creating team: " + error.message, "error");
+    }
+  } else {
+    alert("Lakeside School Only");
   }
 }
 

@@ -1471,16 +1471,20 @@ async function revealHint(hintIndex) {
     teamProgress.viewedHints = teamProgress.viewedHints || [];
     // Enforce daily limit for teams competing on the leaderboard
     const isCompeting = currentTeam ? !currentTeam.leaderboardOptOut : true;
-    const todayKey = new Date().toISOString().split('T')[0];
+    
+    // Calculate today's date in PST/PDT timezone
+    const now = new Date();
+    const pstOffset = -7 * 60 * 60 * 1000;
+    const pdtOffset = -8 * 60 * 60 * 1000;
+    const isDST = new Date().getTimezoneOffset() < Math.abs(new Date(2023, 0).getTimezoneOffset());
+    const offset = isDST ? pdtOffset : pstOffset;
+    const pstDate = new Date(now.getTime() + offset);
+    const todayKey = pstDate.toISOString().split('T')[0];
+    
     teamProgress.hintDaily = teamProgress.hintDaily || {};
     const todaysCount = teamProgress.hintDaily[todayKey] || 0;
     if (isCompeting && todaysCount >= 1) {
       showNotification("Teams competing on the leaderboard are limited to 1 hint per day.", "error");
-      return;
-    }
-
-    if (teamProgress.viewedHints.length >= 10) {
-      showNotification("You have reached the maximum of 10 hints!", "error");
       return;
     }
 

@@ -23,6 +23,8 @@ const ADMIN_COLLECTION = "adminCredentials";
 let lastDataHash = null;
 let autoRefreshInterval = null;
 let isUserEditing = false;
+let showPuzzleHeatmap = false;
+let puzzleSolveStats = {};
 
 async function adminLogin() {
   const password = document.getElementById("admin-password").value;
@@ -180,7 +182,12 @@ function initializeDiagram() {
         strokeWidth: 1.5,
         stroke: "#333",
       },
-      new go.Binding("fill", "type", function (type) {
+      new go.Binding("fill", "key", function (key) {
+        if (showPuzzleHeatmap && puzzleSolveStats[key]) {
+          return getHeatmapColor(puzzleSolveStats[key].solvePercentage);
+        }
+        const nodeData = diagram.model.nodeDataArray.find(n => n.key === key);
+        const type = nodeData ? nodeData.type : "puzzle";
         switch (type) {
           case "meta":
             return "#D8BFD8";
@@ -343,6 +350,133 @@ async function loadDiagramData() {
     }, 500);
   } catch (error) {
     console.error("Error loading diagram data:", error);
+  }
+}
+
+function calculatePuzzleSolveStats() {
+  puzzleSolveStats = {};
+  const teamDocs = Object.values(document.getElementById('teamList')?.querySelectorAll('[data-team-id]') || []);
+  
+  // First pass: count total teams and solved counts per puzzle
+  const puzzleStats = {};
+  Object.keys(puzzleData).forEach(puzzleId => {
+    puzzleStats[puzzleId] = { solved: 0, total: 0 };
+  });
+
+  // Count solves from all team data we can access
+  // We'll use the data that was loaded in loadTeamProgress
+  const teamList = document.getElementById('teamList');
+  if (teamList) {
+    const teams = teamList.querySelectorAll('.team-card');
+    teams.forEach(card => {
+      const teamId = card.getAttribute('data-team-id');
+      if (teamId && selectedTeam && selectedTeam.id === teamId) {
+        // Use the currently selected team's data
+        const progress = selectedTeam.progress || {};
+        const solvedPuzzles = progress.solvedPuzzles || [];
+        Object.keys(puzzleData).forEach(puzzleId => {
+          puzzleStats[puzzleId].total++;
+          if (solvedPuzzles.includes(puzzleId)) {
+            puzzleStats[puzzleId].solved++;
+          }
+        });
+      }
+    });
+  }
+
+  // If we don't have team data yet, we need to get it from the database
+  // For now, calculate from what's available in the diagram
+  Object.keys(puzzleData).forEach(puzzleId => {
+    if (puzzleStats[puzzleId].total === 0) {
+      puzzleStats[puzzleId].total = 1; // Prevent division by zero
+    }
+    const solvePercentage = (puzzleStats[puzzleId].solved / puzzleStats[puzzleId].total) * 100;
+    puzzleSolveStats[puzzleId] = {
+      solved: puzzleStats[puzzleId].solved,
+      total: puzzleStats[puzzleId].total,
+      solvePercentage: solvePercentage
+    };
+  });
+}
+
+async function calculatePuzzleSolveStatsFromDB() {
+  puzzleSolveStats = {};
+  const puzzleStats = {};
+  
+  // Initialize all puzzles
+  Object.keys(puzzleData).forEach(puzzleId => {
+    puzzleStats[puzzleId] = { solved: 0, total: 0 };
+  });
+
+  try {
+    // Get all teams from Firestore
+    const teamsSnapshot = await db.collection('teams').get();
+    
+    teamsSnapshot.forEach(teamDoc => {
+      const progress = teamDoc.data().progress || {};
+      const solvedPuzzles = progress.solvedPuzzles || [];
+      
+      Object.keys(puzzleData).forEach(puzzleId => {
+        puzzleStats[puzzleId].total++;
+        if (solvedPuzzles.includes(puzzleId)) {
+          puzzleStats[puzzleId].solved++;
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error calculating puzzle stats:', error);
+  }
+
+  // Convert to percentages
+  Object.keys(puzzleData).forEach(puzzleId => {
+    const total = puzzleStats[puzzleId].total || 1;
+    const solvePercentage = (puzzleStats[puzzleId].solved / total) * 100;
+    puzzleSolveStats[puzzleId] = {
+      solved: puzzleStats[puzzleId].solved,
+      total: total,
+      solvePercentage: solvePercentage
+    };
+  });
+}
+
+function getHeatmapColor(percentage) {
+  // Convert percentage (0-100) to a color gradient
+  // 0% = Red (#FF0000), 50% = Yellow (#FFFF00), 100% = Green (#00FF00)
+  let r, g, b;
+  
+  if (percentage <= 50) {
+    // Red to Yellow: increase green
+    r = 255;
+    g = Math.round((percentage / 50) * 255);
+    b = 0;
+  } else {
+    // Yellow to Green: decrease red
+    r = Math.round(255 - ((percentage - 50) / 50) * 255);
+    g = 255;
+    b = 0;
+  }
+  
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function togglePuzzleHeatmap() {
+  showPuzzleHeatmap = !showPuzzleHeatmap;
+  const btn = document.getElementById('heatmapToggleBtn');
+  
+  if (showPuzzleHeatmap) {
+    btn.textContent = '🌡️ Heatmap (On)';
+    btn.style.background = '#28a745';
+    calculatePuzzleSolveStatsFromDB().then(() => {
+      if (diagram) {
+        diagram.updateAllTargetBindings();
+      }
+    });
+  } else {
+    btn.textContent = '🌡️ Heatmap (Off)';
+    btn.style.background = '';
+    if (diagram) {
+      diagram.updateAllTargetBindings();
+    }
   }
 }
 

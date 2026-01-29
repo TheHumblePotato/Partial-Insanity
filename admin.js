@@ -161,7 +161,7 @@ function initializeDiagram() {
       }),
       new go.Binding("stroke", "key", function (key) {
         if (showPuzzleHeatmap && puzzleSolveStats[key]) {
-          return getHeatmapColor(puzzleSolveStats[key].solvePercentage);
+          return getHeatmapColorWithData(puzzleSolveStats[key].solvePercentage, puzzleSolveStats[key].hasData);
         }
         return "#D2691E";
       }),
@@ -189,7 +189,7 @@ function initializeDiagram() {
       },
       new go.Binding("fill", "key", function (key) {
         if (showPuzzleHeatmap && puzzleSolveStats[key]) {
-          return getHeatmapColor(puzzleSolveStats[key].solvePercentage);
+          return getHeatmapColorWithData(puzzleSolveStats[key].solvePercentage, puzzleSolveStats[key].hasData);
         }
         const nodeData = diagram.model.nodeDataArray.find(n => n.key === key);
         const type = nodeData ? nodeData.type : "puzzle";
@@ -419,11 +419,12 @@ async function calculatePuzzleSolveStatsFromDB() {
   });
 
   try {
-    // Get all teams from Firestore
-    const teamsSnapshot = await db.collection('teams').get();
+    // First try the 'progress' collection (where progress is stored separately)
+    const progressSnapshot = await db.collection('progress').get();
+    console.log(`Found ${progressSnapshot.size} progress documents in 'progress' collection`);
     
-    teamsSnapshot.forEach(teamDoc => {
-      const progress = teamDoc.data().progress || {};
+    progressSnapshot.forEach(progressDoc => {
+      const progress = progressDoc.data() || {};
       const solvedPuzzles = progress.solvedPuzzles || [];
       const clearedRooms = progress.clearedRooms || [];
       
@@ -441,47 +442,87 @@ async function calculatePuzzleSolveStatsFromDB() {
         }
       });
     });
+
+    // If progress collection is empty, try the 'teams' collection for embedded progress
+    if (progressSnapshot.size === 0) {
+      console.log('No progress docs found, checking teams collection...');
+      const teamsSnapshot = await db.collection('teams').get();
+      console.log(`Found ${teamsSnapshot.size} teams`);
+      
+      teamsSnapshot.forEach(teamDoc => {
+        const teamData = teamDoc.data() || {};
+        const progress = teamData.progress || {};
+        const solvedPuzzles = progress.solvedPuzzles || [];
+        const clearedRooms = progress.clearedRooms || [];
+        
+        Object.keys(puzzleData).forEach(puzzleId => {
+          puzzleStats[puzzleId].total++;
+          if (solvedPuzzles.includes(puzzleId)) {
+            puzzleStats[puzzleId].solved++;
+          }
+        });
+        
+        Object.keys(roomData).forEach(roomId => {
+          roomStats[roomId].total++;
+          if (clearedRooms.includes(roomId)) {
+            roomStats[roomId].cleared++;
+          }
+        });
+      });
+    }
+    
   } catch (error) {
-    console.error('Error calculating puzzle stats:', error);
+    console.error('Error calculating puzzle stats from DB:', error);
   }
 
   // Convert to percentages for puzzles
   Object.keys(puzzleData).forEach(puzzleId => {
-    const total = puzzleStats[puzzleId].total || 1;
-    const solvePercentage = (puzzleStats[puzzleId].solved / total) * 100;
+    const total = puzzleStats[puzzleId].total;
+    const solvePercentage = total > 0 ? (puzzleStats[puzzleId].solved / total) * 100 : 0;
     puzzleSolveStats[puzzleId] = {
       solved: puzzleStats[puzzleId].solved,
       total: total,
-      solvePercentage: solvePercentage
+      solvePercentage: solvePercentage,
+      hasData: total > 0
     };
   });
   
   // Convert to percentages for rooms
   Object.keys(roomData).forEach(roomId => {
-    const total = roomStats[roomId].total || 1;
-    const clearPercentage = (roomStats[roomId].cleared / total) * 100;
+    const total = roomStats[roomId].total;
+    const clearPercentage = total > 0 ? (roomStats[roomId].cleared / total) * 100 : 0;
     puzzleSolveStats[roomId] = {
       cleared: roomStats[roomId].cleared,
       total: total,
-      solvePercentage: clearPercentage
+      solvePercentage: clearPercentage,
+      hasData: total > 0
     };
   });
+  
+  console.log('Final heatmap stats:', puzzleSolveStats);
 }
 
 function getHeatmapColor(percentage) {
   // Convert percentage (0-100) to HSL color gradient
   // Uses hue spectrum from red (0°) through yellow (60°) to green (120°)
-  // This provides more dramatic color transitions
   let hue, saturation, lightness;
   
   // Map percentage to hue: 0% = red (0°), 100% = green (120°)
   hue = Math.round((percentage / 100) * 120);
   
-  // High saturation and medium lightness for vibrant colors
+  // Use variable saturation and lightness for better color spread
   saturation = 100;
-  lightness = 45;
+  lightness = Math.max(35, 55 - (percentage * 0.1)); // 55% at 0%, 45% at 100%
   
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
+
+function getHeatmapColorWithData(percentage, hasData) {
+  // If no team data exists yet, show gray instead
+  if (!hasData) {
+    return `hsl(0, 0%, 70%)`;  // Light gray for no data
+  }
+  return getHeatmapColor(percentage);
 }
 
 function togglePuzzleHeatmap() {
@@ -493,17 +534,39 @@ function togglePuzzleHeatmap() {
     btn.style.background = '#28a745';
     calculatePuzzleSolveStatsFromDB().then(() => {
       if (diagram) {
-        diagram.updateAllTargetBindings();
+        // Force re-binding by rebuilding the diagram model
+        diagram.nodes.each(node => {
+          node.updateTargetBindings();
+        });
       }
     });
   } else {
     btn.textContent = '🌡️ Heatmap (Off)';
     btn.style.background = '';
     if (diagram) {
-      diagram.updateAllTargetBindings();
+      diagram.nodes.each(node => {
+        node.updateTargetBindings();
+      });
     }
   }
 }
+
+// Debug function - call from console to see what's happening
+window.debugHeatmap = async function() {
+  console.log('=== HEATMAP DEBUG ===');
+  console.log('Puzzle Data:', puzzleData);
+  console.log('Room Data:', roomData);
+  console.log('Current Heatmap Stats:', puzzleSolveStats);
+  
+  const progressSnapshot = await db.collection('progress').get();
+  console.log(`Found ${progressSnapshot.size} progress documents`);
+  progressSnapshot.forEach(doc => {
+    console.log(`Team ${doc.id}:`, {
+      solvedPuzzles: doc.data().solvedPuzzles?.length || 0,
+      clearedRooms: doc.data().clearedRooms?.length || 0
+    });
+  });
+};
 
 function addHint() {
   const container = document.getElementById("hintsContainer");

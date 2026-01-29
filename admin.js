@@ -161,9 +161,17 @@ function initializeDiagram() {
       }),
       new go.Binding("stroke", "key", function (key) {
         if (showPuzzleHeatmap && puzzleSolveStats[key]) {
-          return getHeatmapColorWithData(puzzleSolveStats[key].solvePercentage, puzzleSolveStats[key].hasData);
+          const stats = puzzleSolveStats[key];
+          return getHeatmapColorWithData(stats.solvePercentage, stats.hasData, stats.neverUnlocked);
         }
         return "#D2691E";
+      }),
+      new go.Binding("fill", "key", function (key) {
+        if (showPuzzleHeatmap && puzzleSolveStats[key]) {
+          const stats = puzzleSolveStats[key];
+          return getHeatmapColorLight(stats.solvePercentage, stats.hasData, stats.neverUnlocked);
+        }
+        return "transparent";
       }),
       $(go.Placeholder, { padding: 8 }),
     ),
@@ -189,7 +197,8 @@ function initializeDiagram() {
       },
       new go.Binding("fill", "key", function (key) {
         if (showPuzzleHeatmap && puzzleSolveStats[key]) {
-          return getHeatmapColorWithData(puzzleSolveStats[key].solvePercentage, puzzleSolveStats[key].hasData);
+          const stats = puzzleSolveStats[key];
+          return getHeatmapColorWithData(stats.solvePercentage, stats.hasData, stats.neverUnlocked);
         }
         const nodeData = diagram.model.nodeDataArray.find(n => n.key === key);
         const type = nodeData ? nodeData.type : "puzzle";
@@ -408,6 +417,8 @@ async function calculatePuzzleSolveStatsFromDB() {
   puzzleSolveStats = {};
   const puzzleStats = {};
   const roomStats = {};
+  const unlockedPuzzles = new Set();
+  const unlockedRooms = new Set();
   
   // Initialize all puzzles and rooms
   Object.keys(puzzleData).forEach(puzzleId => {
@@ -426,7 +437,15 @@ async function calculatePuzzleSolveStatsFromDB() {
     progressSnapshot.forEach(progressDoc => {
       const progress = progressDoc.data() || {};
       const solvedPuzzles = progress.solvedPuzzles || [];
+      const unlockedPuzzlesList = progress.unlockedPuzzles || [];
       const clearedRooms = progress.clearedRooms || [];
+      const unlockedRoomsList = progress.unlockedRooms || [];
+      
+      // Track which puzzles/rooms have ever been unlocked
+      solvedPuzzles.forEach(p => unlockedPuzzles.add(p));
+      unlockedPuzzlesList.forEach(p => unlockedPuzzles.add(p));
+      clearedRooms.forEach(r => unlockedRooms.add(r));
+      unlockedRoomsList.forEach(r => unlockedRooms.add(r));
       
       Object.keys(puzzleData).forEach(puzzleId => {
         puzzleStats[puzzleId].total++;
@@ -453,7 +472,15 @@ async function calculatePuzzleSolveStatsFromDB() {
         const teamData = teamDoc.data() || {};
         const progress = teamData.progress || {};
         const solvedPuzzles = progress.solvedPuzzles || [];
+        const unlockedPuzzlesList = progress.unlockedPuzzles || [];
         const clearedRooms = progress.clearedRooms || [];
+        const unlockedRoomsList = progress.unlockedRooms || [];
+        
+        // Track which puzzles/rooms have ever been unlocked
+        solvedPuzzles.forEach(p => unlockedPuzzles.add(p));
+        unlockedPuzzlesList.forEach(p => unlockedPuzzles.add(p));
+        clearedRooms.forEach(r => unlockedRooms.add(r));
+        unlockedRoomsList.forEach(r => unlockedRooms.add(r));
         
         Object.keys(puzzleData).forEach(puzzleId => {
           puzzleStats[puzzleId].total++;
@@ -483,7 +510,8 @@ async function calculatePuzzleSolveStatsFromDB() {
       solved: puzzleStats[puzzleId].solved,
       total: total,
       solvePercentage: solvePercentage,
-      hasData: total > 0
+      hasData: total > 0,
+      neverUnlocked: !unlockedPuzzles.has(puzzleId)
     };
   });
   
@@ -495,7 +523,8 @@ async function calculatePuzzleSolveStatsFromDB() {
       cleared: roomStats[roomId].cleared,
       total: total,
       solvePercentage: clearPercentage,
-      hasData: total > 0
+      hasData: total > 0,
+      neverUnlocked: !unlockedRooms.has(roomId)
     };
   });
   
@@ -517,12 +546,33 @@ function getHeatmapColor(percentage) {
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
-function getHeatmapColorWithData(percentage, hasData) {
-  // If no team data exists yet, show gray instead
+function getHeatmapColorWithData(percentage, hasData, neverUnlocked) {
+  // If never unlocked by any team, show dark gray/black
+  if (neverUnlocked) {
+    return `hsl(0, 0%, 25%)`;  // Dark gray for never unlocked
+  }
+  // If no team data exists yet, show light gray
   if (!hasData) {
     return `hsl(0, 0%, 70%)`;  // Light gray for no data
   }
   return getHeatmapColor(percentage);
+}
+
+function getHeatmapColorLight(percentage, hasData, neverUnlocked) {
+  // Lighter version for backgrounds/fills
+  if (neverUnlocked) {
+    return `hsl(0, 0%, 40%)`;  // Darker gray for never unlocked backgrounds
+  }
+  if (!hasData) {
+    return `hsl(0, 0%, 85%)`;  // Very light gray for no data backgrounds
+  }
+  
+  // Make the background version lighter by increasing lightness
+  let hue = Math.round((percentage / 100) * 120);
+  let saturation = 60;  // Lower saturation for backgrounds
+  let lightness = Math.max(75, 85 - (percentage * 0.1)); // Much lighter
+  
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
 function togglePuzzleHeatmap() {

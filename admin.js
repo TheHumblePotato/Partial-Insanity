@@ -157,8 +157,13 @@ function initializeDiagram() {
       "Auto",
       $(go.Shape, "Rectangle", {
         fill: "transparent",
-        stroke: "#D2691E",
         strokeWidth: 2,
+      }),
+      new go.Binding("stroke", "key", function (key) {
+        if (showPuzzleHeatmap && puzzleSolveStats[key]) {
+          return getHeatmapColor(puzzleSolveStats[key].solvePercentage);
+        }
+        return "#D2691E";
       }),
       $(go.Placeholder, { padding: 8 }),
     ),
@@ -402,10 +407,15 @@ function calculatePuzzleSolveStats() {
 async function calculatePuzzleSolveStatsFromDB() {
   puzzleSolveStats = {};
   const puzzleStats = {};
+  const roomStats = {};
   
-  // Initialize all puzzles
+  // Initialize all puzzles and rooms
   Object.keys(puzzleData).forEach(puzzleId => {
     puzzleStats[puzzleId] = { solved: 0, total: 0 };
+  });
+  
+  Object.keys(roomData).forEach(roomId => {
+    roomStats[roomId] = { cleared: 0, total: 0 };
   });
 
   try {
@@ -415,6 +425,7 @@ async function calculatePuzzleSolveStatsFromDB() {
     teamsSnapshot.forEach(teamDoc => {
       const progress = teamDoc.data().progress || {};
       const solvedPuzzles = progress.solvedPuzzles || [];
+      const clearedRooms = progress.clearedRooms || [];
       
       Object.keys(puzzleData).forEach(puzzleId => {
         puzzleStats[puzzleId].total++;
@@ -422,12 +433,19 @@ async function calculatePuzzleSolveStatsFromDB() {
           puzzleStats[puzzleId].solved++;
         }
       });
+      
+      Object.keys(roomData).forEach(roomId => {
+        roomStats[roomId].total++;
+        if (clearedRooms.includes(roomId)) {
+          roomStats[roomId].cleared++;
+        }
+      });
     });
   } catch (error) {
     console.error('Error calculating puzzle stats:', error);
   }
 
-  // Convert to percentages
+  // Convert to percentages for puzzles
   Object.keys(puzzleData).forEach(puzzleId => {
     const total = puzzleStats[puzzleId].total || 1;
     const solvePercentage = (puzzleStats[puzzleId].solved / total) * 100;
@@ -437,26 +455,33 @@ async function calculatePuzzleSolveStatsFromDB() {
       solvePercentage: solvePercentage
     };
   });
+  
+  // Convert to percentages for rooms
+  Object.keys(roomData).forEach(roomId => {
+    const total = roomStats[roomId].total || 1;
+    const clearPercentage = (roomStats[roomId].cleared / total) * 100;
+    puzzleSolveStats[roomId] = {
+      cleared: roomStats[roomId].cleared,
+      total: total,
+      solvePercentage: clearPercentage
+    };
+  });
 }
 
 function getHeatmapColor(percentage) {
-  // Convert percentage (0-100) to a color gradient
-  // 0% = Red (#FF0000), 50% = Yellow (#FFFF00), 100% = Green (#00FF00)
-  let r, g, b;
+  // Convert percentage (0-100) to HSL color gradient
+  // Uses hue spectrum from red (0°) through yellow (60°) to green (120°)
+  // This provides more dramatic color transitions
+  let hue, saturation, lightness;
   
-  if (percentage <= 50) {
-    // Red to Yellow: increase green
-    r = 255;
-    g = Math.round((percentage / 50) * 255);
-    b = 0;
-  } else {
-    // Yellow to Green: decrease red
-    r = Math.round(255 - ((percentage - 50) / 50) * 255);
-    g = 255;
-    b = 0;
-  }
+  // Map percentage to hue: 0% = red (0°), 100% = green (120°)
+  hue = Math.round((percentage / 100) * 120);
   
-  return `rgb(${r}, ${g}, ${b})`;
+  // High saturation and medium lightness for vibrant colors
+  saturation = 100;
+  lightness = 45;
+  
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
 function togglePuzzleHeatmap() {

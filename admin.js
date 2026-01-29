@@ -25,6 +25,7 @@ let autoRefreshInterval = null;
 let isUserEditing = false;
 let showPuzzleHeatmap = false;
 let puzzleSolveStats = {};
+let conditionalHeatmap = false;
 
 async function adminLogin() {
   const password = document.getElementById("admin-password").value;
@@ -162,14 +163,16 @@ function initializeDiagram() {
       new go.Binding("stroke", "key", function (key) {
         if (showPuzzleHeatmap && puzzleSolveStats[key]) {
           const stats = puzzleSolveStats[key];
-          return getHeatmapColorWithData(stats.solvePercentage, stats.hasData, stats.neverUnlocked);
+          const percentage = getActivePercentage(stats);
+          return getHeatmapColorWithData(percentage, stats.hasData, stats.neverUnlocked);
         }
         return "#D2691E";
       }),
       new go.Binding("fill", "key", function (key) {
         if (showPuzzleHeatmap && puzzleSolveStats[key]) {
           const stats = puzzleSolveStats[key];
-          return getHeatmapColorLight(stats.solvePercentage, stats.hasData, stats.neverUnlocked);
+          const percentage = getActivePercentage(stats);
+          return getHeatmapColorLight(percentage, stats.hasData, stats.neverUnlocked);
         }
         return "transparent";
       }),
@@ -198,7 +201,8 @@ function initializeDiagram() {
       new go.Binding("fill", "key", function (key) {
         if (showPuzzleHeatmap && puzzleSolveStats[key]) {
           const stats = puzzleSolveStats[key];
-          return getHeatmapColorWithData(stats.solvePercentage, stats.hasData, stats.neverUnlocked);
+          const percentage = getActivePercentage(stats);
+          return getHeatmapColorWithData(percentage, stats.hasData, stats.neverUnlocked);
         }
         const nodeData = diagram.model.nodeDataArray.find(n => n.key === key);
         const type = nodeData ? nodeData.type : "puzzle";
@@ -422,11 +426,11 @@ async function calculatePuzzleSolveStatsFromDB() {
   
   // Initialize all puzzles and rooms
   Object.keys(puzzleData).forEach(puzzleId => {
-    puzzleStats[puzzleId] = { solved: 0, total: 0 };
+    puzzleStats[puzzleId] = { solved: 0, total: 0, unlocked: 0 };
   });
   
   Object.keys(roomData).forEach(roomId => {
-    roomStats[roomId] = { cleared: 0, total: 0 };
+    roomStats[roomId] = { cleared: 0, total: 0, unlocked: 0 };
   });
 
   try {
@@ -449,6 +453,9 @@ async function calculatePuzzleSolveStatsFromDB() {
       
       Object.keys(puzzleData).forEach(puzzleId => {
         puzzleStats[puzzleId].total++;
+        if (unlockedPuzzlesList.includes(puzzleId) || solvedPuzzles.includes(puzzleId)) {
+          puzzleStats[puzzleId].unlocked++;
+        }
         if (solvedPuzzles.includes(puzzleId)) {
           puzzleStats[puzzleId].solved++;
         }
@@ -456,6 +463,9 @@ async function calculatePuzzleSolveStatsFromDB() {
       
       Object.keys(roomData).forEach(roomId => {
         roomStats[roomId].total++;
+        if (unlockedRoomsList.includes(roomId) || clearedRooms.includes(roomId)) {
+          roomStats[roomId].unlocked++;
+        }
         if (clearedRooms.includes(roomId)) {
           roomStats[roomId].cleared++;
         }
@@ -484,6 +494,9 @@ async function calculatePuzzleSolveStatsFromDB() {
         
         Object.keys(puzzleData).forEach(puzzleId => {
           puzzleStats[puzzleId].total++;
+          if (unlockedPuzzlesList.includes(puzzleId) || solvedPuzzles.includes(puzzleId)) {
+            puzzleStats[puzzleId].unlocked++;
+          }
           if (solvedPuzzles.includes(puzzleId)) {
             puzzleStats[puzzleId].solved++;
           }
@@ -491,6 +504,9 @@ async function calculatePuzzleSolveStatsFromDB() {
         
         Object.keys(roomData).forEach(roomId => {
           roomStats[roomId].total++;
+          if (unlockedRoomsList.includes(roomId) || clearedRooms.includes(roomId)) {
+            roomStats[roomId].unlocked++;
+          }
           if (clearedRooms.includes(roomId)) {
             roomStats[roomId].cleared++;
           }
@@ -505,11 +521,18 @@ async function calculatePuzzleSolveStatsFromDB() {
   // Convert to percentages for puzzles
   Object.keys(puzzleData).forEach(puzzleId => {
     const total = puzzleStats[puzzleId].total;
-    const solvePercentage = total > 0 ? (puzzleStats[puzzleId].solved / total) * 100 : 0;
+    const unlocked = puzzleStats[puzzleId].unlocked;
+    const solved = puzzleStats[puzzleId].solved;
+    
+    const solvePercentage = total > 0 ? (solved / total) * 100 : 0;
+    const conditionalPercentage = unlocked > 0 ? (solved / unlocked) * 100 : 0;
+    
     puzzleSolveStats[puzzleId] = {
-      solved: puzzleStats[puzzleId].solved,
+      solved: solved,
       total: total,
+      unlocked: unlocked,
       solvePercentage: solvePercentage,
+      conditionalSolvePercentage: conditionalPercentage,
       hasData: total > 0,
       neverUnlocked: !unlockedPuzzles.has(puzzleId)
     };
@@ -518,11 +541,18 @@ async function calculatePuzzleSolveStatsFromDB() {
   // Convert to percentages for rooms
   Object.keys(roomData).forEach(roomId => {
     const total = roomStats[roomId].total;
-    const clearPercentage = total > 0 ? (roomStats[roomId].cleared / total) * 100 : 0;
+    const unlocked = roomStats[roomId].unlocked;
+    const cleared = roomStats[roomId].cleared;
+    
+    const clearPercentage = total > 0 ? (cleared / total) * 100 : 0;
+    const conditionalPercentage = unlocked > 0 ? (cleared / unlocked) * 100 : 0;
+    
     puzzleSolveStats[roomId] = {
-      cleared: roomStats[roomId].cleared,
+      cleared: cleared,
       total: total,
+      unlocked: unlocked,
       solvePercentage: clearPercentage,
+      conditionalSolvePercentage: conditionalPercentage,
       hasData: total > 0,
       neverUnlocked: !unlockedRooms.has(roomId)
     };
@@ -575,16 +605,22 @@ function getHeatmapColorLight(percentage, hasData, neverUnlocked) {
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
+function getActivePercentage(stats) {
+  // Return the appropriate percentage based on conditional toggle
+  return conditionalHeatmap ? stats.conditionalSolvePercentage : stats.solvePercentage;
+}
+
 function togglePuzzleHeatmap() {
   showPuzzleHeatmap = !showPuzzleHeatmap;
   const btn = document.getElementById('heatmapToggleBtn');
+  const conditionalBtn = document.getElementById('conditionalToggleBtn');
   
   if (showPuzzleHeatmap) {
     btn.textContent = '🌡️ Heatmap (On)';
     btn.style.background = '#28a745';
+    conditionalBtn.style.display = 'inline-block';
     calculatePuzzleSolveStatsFromDB().then(() => {
       if (diagram) {
-        // Force re-binding by rebuilding the diagram model
         diagram.nodes.each(node => {
           node.updateTargetBindings();
         });
@@ -593,6 +629,10 @@ function togglePuzzleHeatmap() {
   } else {
     btn.textContent = '🌡️ Heatmap (Off)';
     btn.style.background = '';
+    conditionalBtn.style.display = 'none';
+    conditionalHeatmap = false;
+    conditionalBtn.style.background = '';
+    conditionalBtn.textContent = '📊 Conditional (Off)';
     if (diagram) {
       diagram.nodes.each(node => {
         node.updateTargetBindings();
@@ -601,22 +641,24 @@ function togglePuzzleHeatmap() {
   }
 }
 
-// Debug function - call from console to see what's happening
-window.debugHeatmap = async function() {
-  console.log('=== HEATMAP DEBUG ===');
-  console.log('Puzzle Data:', puzzleData);
-  console.log('Room Data:', roomData);
-  console.log('Current Heatmap Stats:', puzzleSolveStats);
+function toggleConditionalHeatmap() {
+  conditionalHeatmap = !conditionalHeatmap;
+  const btn = document.getElementById('conditionalToggleBtn');
   
-  const progressSnapshot = await db.collection('progress').get();
-  console.log(`Found ${progressSnapshot.size} progress documents`);
-  progressSnapshot.forEach(doc => {
-    console.log(`Team ${doc.id}:`, {
-      solvedPuzzles: doc.data().solvedPuzzles?.length || 0,
-      clearedRooms: doc.data().clearedRooms?.length || 0
+  if (conditionalHeatmap) {
+    btn.textContent = '📊 Conditional (On)';
+    btn.style.background = '#1e40af';
+  } else {
+    btn.textContent = '📊 Conditional (Off)';
+    btn.style.background = '';
+  }
+  
+  if (diagram) {
+    diagram.nodes.each(node => {
+      node.updateTargetBindings();
     });
-  });
-};
+  }
+}
 
 function addHint() {
   const container = document.getElementById("hintsContainer");

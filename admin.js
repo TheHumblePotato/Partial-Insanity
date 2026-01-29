@@ -426,11 +426,11 @@ async function calculatePuzzleSolveStatsFromDB() {
   
   // Initialize all puzzles and rooms
   Object.keys(puzzleData).forEach(puzzleId => {
-    puzzleStats[puzzleId] = { solved: 0, total: 0, unlocked: 0 };
+    puzzleStats[puzzleId] = { solved: 0, total: 0, reachedRoom: 0 };
   });
   
   Object.keys(roomData).forEach(roomId => {
-    roomStats[roomId] = { cleared: 0, total: 0, unlocked: 0 };
+    roomStats[roomId] = { cleared: 0, total: 0, reached: 0 };
   });
 
   try {
@@ -441,31 +441,34 @@ async function calculatePuzzleSolveStatsFromDB() {
     progressSnapshot.forEach(progressDoc => {
       const progress = progressDoc.data() || {};
       const solvedPuzzles = progress.solvedPuzzles || [];
-      const unlockedPuzzlesList = progress.unlockedPuzzles || [];
-      const clearedRooms = progress.clearedRooms || [];
       const unlockedRoomsList = progress.unlockedRooms || [];
+      const clearedRooms = progress.clearedRooms || [];
       
       // Track which puzzles/rooms have ever been unlocked
       solvedPuzzles.forEach(p => unlockedPuzzles.add(p));
-      unlockedPuzzlesList.forEach(p => unlockedPuzzles.add(p));
-      clearedRooms.forEach(r => unlockedRooms.add(r));
       unlockedRoomsList.forEach(r => unlockedRooms.add(r));
+      clearedRooms.forEach(r => unlockedRooms.add(r));
       
+      // Count for each puzzle: total teams and teams that solved it
       Object.keys(puzzleData).forEach(puzzleId => {
-        puzzleStats[puzzleId].total++;
-        if (unlockedPuzzlesList.includes(puzzleId) || solvedPuzzles.includes(puzzleId)) {
-          puzzleStats[puzzleId].unlocked++;
+        const puzzle = puzzleData[puzzleId];
+        const roomId = puzzle.room;
+        
+        // Count as "total" if team reached the room
+        if (roomId && (unlockedRoomsList.includes(roomId) || clearedRooms.includes(roomId))) {
+          puzzleStats[puzzleId].reachedRoom++;
         }
+        
+        puzzleStats[puzzleId].total++;
         if (solvedPuzzles.includes(puzzleId)) {
           puzzleStats[puzzleId].solved++;
         }
       });
       
+      // Count for rooms: total teams and teams that cleared it
       Object.keys(roomData).forEach(roomId => {
         roomStats[roomId].total++;
-        if (unlockedRoomsList.includes(roomId) || clearedRooms.includes(roomId)) {
-          roomStats[roomId].unlocked++;
-        }
+        roomStats[roomId].reached++;
         if (clearedRooms.includes(roomId)) {
           roomStats[roomId].cleared++;
         }
@@ -482,31 +485,34 @@ async function calculatePuzzleSolveStatsFromDB() {
         const teamData = teamDoc.data() || {};
         const progress = teamData.progress || {};
         const solvedPuzzles = progress.solvedPuzzles || [];
-        const unlockedPuzzlesList = progress.unlockedPuzzles || [];
-        const clearedRooms = progress.clearedRooms || [];
         const unlockedRoomsList = progress.unlockedRooms || [];
+        const clearedRooms = progress.clearedRooms || [];
         
         // Track which puzzles/rooms have ever been unlocked
         solvedPuzzles.forEach(p => unlockedPuzzles.add(p));
-        unlockedPuzzlesList.forEach(p => unlockedPuzzles.add(p));
-        clearedRooms.forEach(r => unlockedRooms.add(r));
         unlockedRoomsList.forEach(r => unlockedRooms.add(r));
+        clearedRooms.forEach(r => unlockedRooms.add(r));
         
+        // Count for each puzzle: total teams and teams that solved it
         Object.keys(puzzleData).forEach(puzzleId => {
-          puzzleStats[puzzleId].total++;
-          if (unlockedPuzzlesList.includes(puzzleId) || solvedPuzzles.includes(puzzleId)) {
-            puzzleStats[puzzleId].unlocked++;
+          const puzzle = puzzleData[puzzleId];
+          const roomId = puzzle.room;
+          
+          // Count as "reached room" if team unlocked or cleared the room
+          if (roomId && (unlockedRoomsList.includes(roomId) || clearedRooms.includes(roomId))) {
+            puzzleStats[puzzleId].reachedRoom++;
           }
+          
+          puzzleStats[puzzleId].total++;
           if (solvedPuzzles.includes(puzzleId)) {
             puzzleStats[puzzleId].solved++;
           }
         });
         
+        // Count for rooms: total teams and teams that cleared it
         Object.keys(roomData).forEach(roomId => {
           roomStats[roomId].total++;
-          if (unlockedRoomsList.includes(roomId) || clearedRooms.includes(roomId)) {
-            roomStats[roomId].unlocked++;
-          }
+          roomStats[roomId].reached++;
           if (clearedRooms.includes(roomId)) {
             roomStats[roomId].cleared++;
           }
@@ -521,16 +527,17 @@ async function calculatePuzzleSolveStatsFromDB() {
   // Convert to percentages for puzzles
   Object.keys(puzzleData).forEach(puzzleId => {
     const total = puzzleStats[puzzleId].total;
-    const unlocked = puzzleStats[puzzleId].unlocked;
+    const reachedRoom = puzzleStats[puzzleId].reachedRoom;
     const solved = puzzleStats[puzzleId].solved;
     
     const solvePercentage = total > 0 ? (solved / total) * 100 : 0;
-    const conditionalPercentage = unlocked > 0 ? (solved / unlocked) * 100 : 0;
+    // Conditional: of teams that reached the room, how many solved this puzzle?
+    const conditionalPercentage = reachedRoom > 0 ? (solved / reachedRoom) * 100 : 0;
     
     puzzleSolveStats[puzzleId] = {
       solved: solved,
       total: total,
-      unlocked: unlocked,
+      reachedRoom: reachedRoom,
       solvePercentage: solvePercentage,
       conditionalSolvePercentage: conditionalPercentage,
       hasData: total > 0,
@@ -541,16 +548,17 @@ async function calculatePuzzleSolveStatsFromDB() {
   // Convert to percentages for rooms
   Object.keys(roomData).forEach(roomId => {
     const total = roomStats[roomId].total;
-    const unlocked = roomStats[roomId].unlocked;
+    const reached = roomStats[roomId].reached;
     const cleared = roomStats[roomId].cleared;
     
     const clearPercentage = total > 0 ? (cleared / total) * 100 : 0;
-    const conditionalPercentage = unlocked > 0 ? (cleared / unlocked) * 100 : 0;
+    // Conditional: of teams that reached the room, how many cleared it?
+    const conditionalPercentage = reached > 0 ? (cleared / reached) * 100 : 0;
     
     puzzleSolveStats[roomId] = {
       cleared: cleared,
       total: total,
-      unlocked: unlocked,
+      reached: reached,
       solvePercentage: clearPercentage,
       conditionalSolvePercentage: conditionalPercentage,
       hasData: total > 0,

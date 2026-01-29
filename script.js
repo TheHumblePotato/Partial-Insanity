@@ -1428,8 +1428,7 @@ function renderHints(puzzle) {
         teamProgress.viewedHints.includes(hint.text)
           ? `<div class="hint-text visible">${hint.text}</div>`
           : `<button class="hint-reveal-btn" 
-            onclick="revealHint(${index})"
-            ${teamProgress.viewedHints.length >= 10 ? "disabled" : ""}>
+            onclick="revealHint(${index})">
             Show Hint
         </button>`
       }

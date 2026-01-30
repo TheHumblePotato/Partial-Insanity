@@ -182,6 +182,12 @@ async function loadTeamData() {
         await db.collection("progress").doc(currentUser.uid).set(teamProgress, { merge: true });
       }
 
+      // Check and reset guesses if needed (handles page reloads after reset time)
+      await checkAndResetGuesses();
+      
+      // Schedule the next daily reset
+      scheduleDailyGuessReset();
+
       await loadPuzzleData();
       showPuzzlePage();
       // show topbar only after team data and UI are ready to avoid flicker
@@ -221,6 +227,7 @@ async function loadTeamData() {
               "unlockedPuzzlesInRoom",
               "hintUsage",
               "viewedHints",
+              "hintDaily",
             ];
 
             teamProgress = teamProgress || {};
@@ -238,6 +245,14 @@ async function loadTeamData() {
             // Update currentRoom if server changed it
             if (server.currentRoom && server.currentRoom !== currentRoom) {
               currentRoom = server.currentRoom;
+            }
+
+            // Re-render hints if hint box is open (e.g., another tab revealed a hint)
+            if (hintBoxVisible && currentPuzzle && puzzleData[currentPuzzle]) {
+              const puzzle = puzzleData[currentPuzzle];
+              if (puzzle.hints && puzzle.hints.length > 0) {
+                renderHints(puzzle);
+              }
             }
 
             // Re-render UI to reflect server-side changes
@@ -2071,6 +2086,50 @@ function updateGuessCounter(puzzleId, isMulti) {
   }
 }
 
+// Check if guesses need to be reset based on saved reset time in Firebase
+async function checkAndResetGuesses() {
+  if (!teamProgress) return;
+  
+  const now = Date.now();
+  
+  // If no reset time is set, reset immediately and schedule next reset
+  if (!teamProgress.nextGuessResetTime) {
+    teamProgress.guessCount = {};
+    teamProgress.hintDaily = {};
+    scheduleNextGuessReset();
+    await db.collection("progress").doc(currentUser.uid).set(teamProgress, { merge: true });
+    return;
+  }
+  
+  // If the reset time has passed, reset guesses and schedule next reset
+  if (now >= teamProgress.nextGuessResetTime) {
+    teamProgress.guessCount = {};
+    teamProgress.hintDaily = {};
+    scheduleNextGuessReset();
+    await db.collection("progress").doc(currentUser.uid).set(teamProgress, { merge: true });
+  }
+}
+
+// Calculate and save the next reset time (midnight PST/PDT) to Firebase
+function scheduleNextGuessReset() {
+  const now = new Date();
+  const pstOffset = -7 * 60 * 60 * 1000;
+  const pdtOffset = -8 * 60 * 60 * 1000;
+  const isDST =
+    new Date().getTimezoneOffset() <
+    Math.abs(new Date(2023, 0).getTimezoneOffset());
+  const offset = isDST ? pdtOffset : pstOffset;
+
+  const resetTime = new Date(now.getTime() + offset);
+  resetTime.setHours(24, 0, 0, 0);
+
+  if (resetTime.getTime() < now.getTime()) {
+    resetTime.setDate(resetTime.getDate() + 1);
+  }
+
+  teamProgress.nextGuessResetTime = resetTime.getTime();
+}
+
 function scheduleDailyGuessReset() {
   const now = new Date();
   const pstOffset = -7 * 60 * 60 * 1000;
@@ -2091,8 +2150,7 @@ function scheduleDailyGuessReset() {
 
   setTimeout(async () => {
     if (currentUser) {
-      teamProgress.guessCount = {};
-      await db.collection("progress").doc(currentUser.uid).set(teamProgress, { merge: true });
+      await checkAndResetGuesses();
 
       if (currentPuzzle && document.getElementById("guess-counter")) {
         updateGuessCounter(currentPuzzle, true);

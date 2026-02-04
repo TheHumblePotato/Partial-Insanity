@@ -801,6 +801,7 @@ body.dark .rules-preview-pane { background: rgba(255,255,255,0.02); border: 1px 
 
 .admin-leaderboard-stats {
   display: flex;
+  gap: 20px;
   margin-bottom: 30px;
 }
 

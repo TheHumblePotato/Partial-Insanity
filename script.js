@@ -189,6 +189,13 @@ async function loadTeamData() {
       scheduleDailyGuessReset();
 
       await loadPuzzleData();
+      
+      // Proactively check all rooms for clearing on initial load
+      const clearedAny = await checkAndClearAllRooms();
+      if (clearedAny) {
+        await db.collection("progress").doc(currentUser.uid).set(teamProgress, { merge: true });
+      }
+      
       showPuzzlePage();
       // show topbar only after team data and UI are ready to avoid flicker
       const topbar = document.querySelector('.topbar');
@@ -329,6 +336,59 @@ function isRoomCleared(roomId) {
     default:
       return false;
   }
+}
+
+  // Check all unlocked rooms and mark any cleared ones. Returns true if any were newly cleared.
+async function checkAndClearAllRooms() {
+  let anyCleared = false;
+  const unlockedRooms = teamProgress.unlockedRooms || [];
+  
+  for (const roomId of unlockedRooms) {
+    if (!teamProgress.clearedRooms.includes(roomId) && isRoomCleared(roomId)) {
+      teamProgress.clearedRooms.push(roomId);
+      anyCleared = true;
+      
+      const room = roomData[roomId];
+      if (room && room.clearUnlock) {
+        let unlockType = "";
+        let unlockId = "";
+        if (typeof room.clearUnlock === "string") {
+          [unlockType, unlockId] = room.clearUnlock.split(":");
+        } else {
+          unlockType = room.clearUnlock?.type || "";
+          unlockId = room.clearUnlock?.id || "";
+        }
+        
+        if (unlockType === "room" && !teamProgress.unlockedRooms.includes(unlockId)) {
+          teamProgress.unlockedRooms.push(unlockId);
+          unlockedNewContent[unlockId] = roomId;
+        } else if (unlockType === "puzzle" && !teamProgress.solvedPuzzles.includes(unlockId)) {
+          teamProgress.solvedPuzzles.push(unlockId);
+          teamProgress.lastSolveTime = Date.now();
+          unlockedNewContent[unlockId] = roomId;
+        }
+      }
+      
+      if (room && room.events) {
+        for (const [eventIndex, event] of room.events.entries()) {
+          await handleRoomEvent(event, roomId, eventIndex);
+        }
+      }
+    }
+  }
+  
+  // Update currentRoom to the first uncleared room (or keep current if all cleared)
+  if (anyCleared) {
+    const nextRoom = teamProgress.unlockedRooms.find(
+      (r) => !teamProgress.clearedRooms.includes(r),
+    );
+    if (nextRoom && nextRoom !== teamProgress.currentRoom) {
+      teamProgress.currentRoom = nextRoom;
+      currentRoom = nextRoom;
+    }
+  }
+  
+  return anyCleared;
 }
 
 async function loadPuzzleData() {
@@ -1697,7 +1757,7 @@ async function checkRoomPersistentUnlocks(roomId) {
 
 async function handleCorrectAnswer(puzzleId) {
   const puzzle = puzzleData[puzzleId];
-  const roomId = currentRoom;
+  const roomId = puzzle.room || currentRoom;
 
   if (!teamProgress.solvedPuzzles.includes(puzzleId)) {
     teamProgress.solvedPuzzles.push(puzzleId);
@@ -1737,6 +1797,10 @@ async function handleCorrectAnswer(puzzleId) {
 
   await checkAndTriggerRoomEvents(roomId);
 
+  // Proactively check ALL unlocked rooms for clearing (not just current puzzle's room)
+  const newlyCleared = await checkAndClearAllRooms();
+  
+  // Also check the specific room that had a puzzle solved (for backward compatibility)
   if (isRoomCleared(roomId) && !teamProgress.clearedRooms.includes(roomId)) {
     teamProgress.clearedRooms.push(roomId);
 
@@ -2223,12 +2287,13 @@ async function loadLeaderboard() {
       if (progressDoc.exists) {
         const progressData = progressDoc.data();
 
-        // determine a current room for this team (FINISHED if finished, otherwise first unlocked but not cleared, or last unlocked)
+        // determine a current room for this team (FINISHED if finished, otherwise use stored currentRoom or find first uncleared)
       let currentRoomForTeam;
       if (progressData.finishedAt || progressData.currentRoom === 'FINISHED') {
         currentRoomForTeam = 'FINISHED';
       } else {
-        currentRoomForTeam = getLastUnclearedRoom(progressData) || (progressData.unlockedRooms && progressData.unlockedRooms.length ? progressData.unlockedRooms[progressData.unlockedRooms.length - 1] : null);
+        // Use stored currentRoom (like admin does), with fallback to finding uncleared room
+        currentRoomForTeam = progressData.currentRoom || getLastUnclearedRoom(progressData) || (progressData.unlockedRooms && progressData.unlockedRooms.length ? progressData.unlockedRooms[progressData.unlockedRooms.length - 1] : null);
       }
       const puzzlesInCurrentRoom = currentRoomForTeam === 'FINISHED' ? 0 : countPuzzlesSolvedInRoom(progressData, currentRoomForTeam);
 
